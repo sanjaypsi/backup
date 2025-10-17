@@ -1,0 +1,42 @@
+with ordered as (
+select *, row_number() over (
+    order by group_1 asc -- set sort field here
+) as _order
+from (
+select b.* from (SELECT project, root, group_1, relation, phase, MAX(submitted_at_utc) AS submitted_at_utc
+FROM t_review_info
+WHERE project = 'potoodev' AND root = 'assets' AND deleted = 0  -- < set filters here
+GROUP BY project, root, group_1, relation, phase)
+as a left join
+(select * from t_review_info -- < set required fields here.
+WHERE project = 'potoodev' AND root = 'assets' AND deleted = 0) -- < set filters here
+as b on a.project = b.project AND a.root = b.root AND a.group_1 = b.group_1 AND
+a.relation = b.relation AND a.phase = b.phase AND a.submitted_at_utc = b.submitted_at_utc
+order by group_1 asc) -- set sort field here
+as k
+ ),  -- < s
+
+offset_ordered as (
+select c.*,
+case when c.phase = 'mdl' then c._order else 100000 + c._order end as __order -- < set phase filter here
+from ordered c
+),
+
+ranked as (
+select b.*,
+row_number() over (partition by b.root, b.project, b.group_1, b.relation
+order by
+case when b.phase = 'mdl' then 0 else 1 end -- < set phase filter here
+) as _rank
+from offset_ordered b
+)
+
+select root, project, group_1, relation from  -- < set fields to return here
+-- select * from -- < set fields to return here
+(
+select *
+from ranked
+where _rank=1
+) as t
+order by __order asc
+limit 15 offset 0;
