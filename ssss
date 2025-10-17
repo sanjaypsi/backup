@@ -1,0 +1,1674 @@
+[
+    {
+        "task_id": "e5fba576-a863-46cb-8971-7e31b8cee7a8",
+        "subtask_id": "b6746cd5-7b1b-412b-8755-9709c225e11f",
+        "studio": "ppidev",
+        "project": "potoodev",
+        "project_path": ".",
+        "review_comments": [],
+        "path": "shared/publish/assets/yuhataCasual/com/bld/_review/20200826064501153842.s901t0001",
+        "take_path": "shared/publish/assets/yuhataCasual/com/bld/_review/20200826064501153842.s901t0001",
+        "root": "assets",
+        "groups": [
+            "yuhataCasual"
+        ],
+        "relation": "com",
+        "phase": "bld",
+        "component": "bldA",
+        "take": "20200826064501153842.s901t0001",
+        "approval_status": "approved",
+        "approval_status_updated_user": "tkashima",
+        "approval_status_updated_at_utc": "2022-05-08T14:46:27.287249Z",
+        "work_status": "review",
+        "work_status_updated_user": "tkashima",
+        "work_status_updated_at_utc": "2022-05-08T14:46:27.287249Z",
+        "review_target": [
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mb/yuhataCasual.mb",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 41659524,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mb/yuhataCasual.mb",
+                        "size": 41659524
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/backpackToua_whiteParts_mask_4k.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 626400,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/backpackToua_whiteParts_mask_4k.dds",
+                        "size": 626400
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_c_2k_L.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 313264,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_c_2k_L.dds",
+                        "size": 313264
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_sc_2k_L.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 313264,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_sc_2k_L.dds",
+                        "size": 313264
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/oral_c_1k.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 79336,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/oral_c_1k.dds",
+                        "size": 79336
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwearPattern_n.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwearPattern_n.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0000.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0000.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0001.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0002.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0003.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0004.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0000.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0000.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0001.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0002.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0003.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0004.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_parka_mm.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_parka_mm.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_skirt_mm.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_skirt_mm.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0004.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0005.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0005.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0006.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0006.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0007.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0007.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0008.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0008.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0009.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0009.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0010.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0010.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0011.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0011.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0012.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0012.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0013.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0013.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0014.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0014.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0015.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0015.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0016.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0016.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0017.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0017.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0018.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0018.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0019.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0019.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0020.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0020.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0021.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0021.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0022.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0022.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0023.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0023.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0024.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0024.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0025.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0025.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0004.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0005.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0005.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 20168,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1003.dds",
+                        "size": 20168
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 20168,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1003.dds",
+                        "size": 20168
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mov/yuhataCasual.mb",
+                "to_review": true,
+                "is_attachment": false,
+                "size": -1,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mov/yuhataCasual.mb",
+                        "size": -1
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            }
+        ],
+        "review_data": [
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mb/yuhataCasual.mb",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 41659524,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mb/yuhataCasual.mb",
+                        "size": 41659524
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/backpackToua_whiteParts_mask_4k.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 626400,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/backpackToua_whiteParts_mask_4k.dds",
+                        "size": 626400
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_c_2k_L.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 313264,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_c_2k_L.dds",
+                        "size": 313264
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_sc_2k_L.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 313264,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/eye_sc_2k_L.dds",
+                        "size": 313264
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/faceContourWidth.1003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/oral_c_1k.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 79336,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/oral_c_1k.dds",
+                        "size": 79336
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwearPattern_n.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwearPattern_n.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0000.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0000.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0001.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0002.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0003.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_c.0004.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0000.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0000.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0001.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0002.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0003.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 5376,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/underwear_sc.0004.dds",
+                        "size": 5376
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_parka_mm.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_parka_mm.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_skirt_mm.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataCasual_skirt_mm.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0004.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0005.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0005.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0006.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0006.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0007.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0007.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0008.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0008.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0009.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0009.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0010.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0010.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0011.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0011.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0012.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0012.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0013.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0013.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0014.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0014.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0015.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0015.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0016.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0016.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0017.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0017.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0018.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0018.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0019.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0019.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0020.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0020.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0021.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0021.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0022.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0022.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0023.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0023.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0024.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0024.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0025.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_l.0025.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0003.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0004.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0004.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0005.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_mm.0005.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 20168,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_c_4k.1003.dds",
+                        "size": 20168
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1001.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1001.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1002.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 1248976,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1002.dds",
+                        "size": 1248976
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1003.dds",
+                "to_review": true,
+                "is_attachment": false,
+                "size": 20168,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/tex/yuhataHero_skin_sc_4k.1003.dds",
+                        "size": 20168
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            },
+            {
+                "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mov/yuhataCasual.mb",
+                "to_review": true,
+                "is_attachment": false,
+                "size": -1,
+                "all_files": [
+                    {
+                        "path": "shared/publish/assets/yuhataCasual/com/bld/bldA/20200826064320837221.s901r0001/mov/yuhataCasual.mb",
+                        "size": -1
+                    }
+                ],
+                "type": "content",
+                "is_sequence": false
+            }
+        ],
+        "output_contents": [],
+        "submitted_at_utc": "2020-08-26T06:24:48.019132Z",
+        "submitted_computer": "ws283",
+        "submitted_os": "win",
+        "submitted_os_version": "Windows-10-10.0.18362-SP0",
+        "submitted_user": "tkashima",
+        "executed_at_utc": "2020-08-26T06:45:10.258386Z",
+        "executed_computer": "ws283",
+        "executed_os": "win",
+        "executed_os_version": "Windows-10-10.0.18362-SP0",
+        "executed_user": "tkashima",
+        "all_files": [],
+        "num_all_files": 0,
+        "size_all_files": 0,
+        "target_components": [],
+        "created_at_utc": "2022-05-08T14:46:27.287249Z",
+        "modified_at_utc": "2022-05-08T14:46:27.287249Z",
+        "modified_by": "",
+        "created_by": "",
+        "id": 992
+    }
+]
