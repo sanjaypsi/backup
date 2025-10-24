@@ -2,12 +2,14 @@ import { TableCellProps } from "@material-ui/core/TableCell";
 import { ReactElement } from "react";
 import { Project } from '../types';
 
-// export type AssetsDataTableProps = {
-//   project: Project | null | undefined,
-//   assets: Asset[],
-//   tableFooter: ReactElement,
-//   dateTimeFormat: Intl.DateTimeFormat,
-// };
+export type AssetsDataTableProps = {
+  project: Project | null | undefined,
+  assets: AssetPhaseSummary[], // CHANGE: Use pivoted data
+  tableFooter: ReactElement,
+  dateTimeFormat: Intl.DateTimeFormat,
+  onSortChange: (sortKey: string) => void, // NEW: Sort handler
+  currentSortKey: string,                  // NEW: Current sort key
+};
 
 export type RecordTableHeadProps = {
   columns: Column[],
@@ -18,17 +20,61 @@ export type Colors = Readonly<{
   backgroundColor: string,
 }>;
 
+export type SortDir = 'asc' | 'desc' | 'none'; // NEW: Sort Direction type
+
 export type Column = Readonly<{
   id: string,
   label: string,
   colors?: Colors,
   align?: TableCellProps['align'],
+  sortable?: boolean, // NEW: Is this column sortable?
+  sortKey?: string, // NEW: What is the backend sort key?
 }>;
 
 export type PageProps = Readonly<{
   page: number,
   rowsPerPage: number,
 }>;
+
+// NEW: Matches the Go backend's AssetPhaseSummary struct
+export type AssetPhaseSummary = {
+  root: string,
+  project: string,
+  group_1: string,
+  relation: string,
+
+  mdl_work_status: string | null,
+  mdl_approval_status: string | null,
+  mdl_submitted_at_utc: string | null,
+
+  rig_work_status: string | null,
+  rig_approval_status: string | null,
+  rig_submitted_at_utc: string | null,
+
+  bld_work_status: string | null,
+  bld_approval_status: string | null,
+  bld_submitted_at_utc: string | null,
+
+  dsn_work_status: string | null,
+  dsn_approval_status: string | null,
+  dsn_submitted_at_utc: string | null,
+
+  ldv_work_status: string | null,
+  ldv_approval_status: string | null,
+  ldv_submitted_at_utc: string | null,
+};
+
+// NEW: Matches the Go backend's pivot API response
+export type AssetsPivotResponse = {
+  project: string,
+  root: string,
+  page: number,
+  per_page: number,
+  total: number,
+  count: number,
+  data: AssetPhaseSummary[],
+  ts: string,
+}
 
 export type ReviewInfo = {
   task_id: string,
@@ -72,79 +118,9 @@ export type FilterProps = Readonly<{
 export type ChipDeleteFunction = (value: string) => void;
 
 export type AssetRowProps = Readonly<{
-  asset: Asset,
+  asset: AssetPhaseSummary, // CHANGE: Use pivoted data
   reviewInfos: { [key: string]: ReviewInfo },
   thumbnails: { [key: string]: string },
   dateTimeFormat: Intl.DateTimeFormat,
   isLastRow: boolean,
 }>;
-
-
-
-// ========== New types for the pivot API ==========
-// Define the shape of each row returned by the pivot API
-export type AssetReviewPivotRow = Readonly<{
-  root: string;
-  project: string;
-  group_1: string; // This is the asset name
-  relation: string;
-
-  // Pivoted fields for each phase (MDL, RIG, BLD, DSN, LDV)
-  mdl_work_status: string | null;
-  mdl_approval_status: string | null;
-  mdl_submitted_at_utc: string | null;
-
-  
-  rig_work_status: string | null;
-  rig_approval_status: string | null;
-  rig_submitted_at_utc: string | null;
-
-
-  bld_work_status: string | null;
-  bld_approval_status: string | null;
-  bld_submitted_at_utc: string | null;
-
-  
-  dsn_work_status: string | null;
-  dsn_approval_status: string | null;
-  dsn_submitted_at_utc: string | null;
-
-
-  ldv_work_status: string | null;
-  ldv_approval_status: string | null;
-  ldv_submitted_at_utc: string | null;
-
-
-  // Add all other phases (BLD, DSN, LDV) following the same pattern...
-  
-  // If you need dynamic keys, use a more specific type or document usage.
-  // [key: string]: string | number | null | undefined;
-}>;
-
-// Define the response shape for the pivot endpoint
-export type AssetReviewPivotResponse = {
-  count: number; // Rows returned on this page
-  data: AssetReviewPivotRow[]; // The pivoted data
-  total: number; // Total rows available (for pagination)
-  page: number;
-  perPage: number;
-};
-
-// Update the props for the data table to manage the state needed for the pivot API
-export type AssetsDataTableProps = {
-  project: Project | null | undefined;
-  assets: Readonly<any[]>;
-  tableFooter: React.ReactElement;
-  dateTimeFormat: Intl.DateTimeFormat;
-
-  // New props for controlling the API call
-  currentPage: number;
-  rowsPerPage: number;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-  relationFilter: string;
-
-  // Handlers
-  handleSort: (columnId: string) => void;
-  // Add handlers for page/rowsPerPage change if they are managed here
-};

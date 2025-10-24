@@ -2,7 +2,6 @@ import React, {
   FC,
   useEffect,
   useState,
-  useCallback, // New import for useCallback
 } from 'react';
 import { RouteComponentProps } from "react-router-dom";
 import { Container, Paper, styled } from '@material-ui/core';
@@ -10,13 +9,12 @@ import { ButtonProps } from '@material-ui/core/Button';
 import { SelectProps } from '@material-ui/core/Select';
 import { TablePaginationProps } from '@material-ui/core/TablePagination';
 import { TextFieldProps } from '@material-ui/core/TextField';
-import { useFetchAssets } from './hooks';
+import { useFetchAssetsPivot } from './hooks'; // CHANGE: Import useFetchAssetsPivot
 import { FilterProps, PageProps } from './types';
 import AssetsDataTable from './AssetsDataTable'
 import AssetTableFilter from './AssetDataTableFilter';
 import AssetsDataTableFooter from './AssetsDataTableFooter';
-import { useCurrentProject, } from '../hooks';
-import { useFetchAssetPivotData } from './hooks';  // New import for pivot data fetching
+import { useCurrentProject } from '../hooks';
 import { useCurrentStudio } from '../../studio/hooks';
 import { queryConfig } from '../../new-pipeline-setting/api';
 
@@ -65,31 +63,18 @@ const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
   };
   const [pageProps, setPageProps] = useState<PageProps>(initPageProps);
   const [filterProps, setFilterProps] = useState<FilterProps>(initFilterProps);
+  // NEW: State for sorting, defaulting to 'group_1' (asset name) ascending
+  const [sortKey, setSortKey] = useState<string>('group_1');
+
   const { currentProject } = useCurrentProject();
-  const { assets, total } = useFetchAssets(
+  
+  // CHANGE: Use useFetchAssetsPivot and pass sortKey
+  const { assets, total } = useFetchAssetsPivot(
     currentProject,
     pageProps.page,
     pageProps.rowsPerPage,
+    sortKey,
   );
-
-  // --- NEW SORTING STATE ---
-  const [sortBy, setSortBy] = useState('group_1'); 
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-  // --- NEW: Fetch Pivot Data (Replaces useFetchAssets) ---
-  // Assuming 'relation' filter is derived or empty for simplicity
-  const relationFilter = ''; // Set actual filter value if available in filterProps
-  
-  const { pivotRows, totalRows } = useFetchAssetPivotData(
-    currentProject, // Correctly passes the Project object
-    pageProps.page,
-    pageProps.rowsPerPage,
-    relationFilter, 
-    sortBy,
-    sortOrder,
-  );
-  // Renamed fetched data: assets -> pivotRows, total -> totalRows
-
   const { currentStudio } = useCurrentStudio();
   const [timeZone, setTimeZone] = useState<string | undefined>();
 
@@ -136,6 +121,12 @@ const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
     });
   };
 
+    // NEW: Handler for sorting
+  const handleSortChange = (newSortKey: string) => {
+    setSortKey(newSortKey);
+    setPageProps({ ...pageProps, page: 0 }); // Reset to first page on sort change
+  };
+
   const handleFilterAssetNameChange: TextFieldProps['onChange'] = event => {
     setFilterProps({
       ...filterProps,
@@ -143,21 +134,6 @@ const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
     });
     setPageProps({ ...pageProps, page: 0 });
   };
-
-  // --- NEW: Sorting Handler (using useCallback) ---
-  const handleSort = useCallback((columnId: string) => {
-    // 1. Always reset to the first page on a new sort
-    setPageProps(prev => ({ ...prev, page: 0 }));
-
-    if (columnId === sortBy) {
-        // 2. Toggle the order if the same column is clicked
-        setSortOrder(order => (order === 'asc' ? 'desc' : 'asc'));
-    } else {
-        // 3. Set the new column and default to 'asc'
-        setSortBy(columnId);
-        setSortOrder('asc');
-    }
-  }, [sortBy]); // Dependency on sortBy ensures correct toggling
 
   const handleApprovalStatusesChange: SelectProps['onChange'] = (event: React.ChangeEvent<{ value: unknown }>) => {
     setFilterProps({
@@ -231,19 +207,12 @@ const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
           <StyledContentDiv>
             <AssetsDataTable
               project={currentProject}
-              // Pass the pivot data as 'assets' (or rename AssetsDataTable prop if possible)
-              assets={pivotRows} 
-              
-              // Pass all control state and handler
-              currentPage={pageProps.page}
-              rowsPerPage={pageProps.rowsPerPage}
-              relationFilter={relationFilter} // The filter value
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              handleSort={handleSort} // The sorting handler
-              
+              assets={assets}
               tableFooter={tableFooter}
               dateTimeFormat={dateTimeFormat}
+              // NEW PROPS
+              onSortChange={handleSortChange}
+              currentSortKey={sortKey}
             />
           </StyledContentDiv>
         </StyledPaper>
