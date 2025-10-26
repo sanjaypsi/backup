@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -301,7 +302,24 @@ func registerDataDepHandlers(router *gin.RouterGroup, dataDepUsecase *usecase.Da
 	)
 }
 
-const tbl = "central38.t_review_info"
+// -----------------------------------------------------------------------------
+// HELPERS
+// -----------------------------------------------------------------------------
+// normalize "sort" and "dir/desc" into "-field" or "field"
+func canonicalizeSort(sort, dir string) string {
+	sort = strings.TrimSpace(sort)
+	if sort == "" {
+		return ""
+	}
+	if strings.EqualFold(dir, "desc") && !strings.HasPrefix(sort, "-") {
+		return "-" + sort
+	}
+	return sort
+}
+
+// -----------------------------------------------------------------------------
+// END HELPERS
+// -----------------------------------------------------------------------------
 
 func main() {
 	ctx := context.Background()
@@ -613,41 +631,79 @@ func main() {
 			"/projects/:project/assets/:asset/relations/:relation/reviewInfos",
 			reviewInfoDelivery.ListAssetReviewInfos,
 		)
+		// ============================================================================
+		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
+		// ============================================================================
+		// router.GET("/api/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
+		// 	project := c.Param("project")
+		// 	root := c.DefaultQuery("root", "assets")
+		// 	sort := c.DefaultQuery("sort", "group_1") // e.g. group_1 | mdl_submitted | -bld_appr ...
+		// 	dir := c.DefaultQuery("dir", "asc")       // asc|desc (minus in sort also supported)
+		// 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		// 	per, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
+		// 	if per <= 0 {
+		// 		per = 15
+		// 	}
 
-		// =========================================================================
-		// START: TEMPORARY DIRECT ROUTER FOR LIST ASSET REVIEW PIVOT
-		// =========================================================================
-		// GET /projects/:project/reviews/assets/pivot?relation=&page=1&perPage=15
+		// 	rows, total, err := reviewInfoRepository.GetPivotPage(, gormDB, project, root, sort, dir, page, per)
+		// 	if err != nil {
+		// 		c.JSON(500, gin.H{"error": err.Error()})
+		// 		return
+		// 	}
+		// 	c.JSON(200, gin.H{
+		// 		"total":   total,
+		// 		"page":    page,
+		// 		"perPage": per,
+		// 		"data":    rows,
+		// 	})
+		// })
+		// // ============================================================================
+		// END: UNAUTHENTICATED ENDPOINT BLOCK
+		// ============================================================================
+		// ============================================================================
+		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
+		// ============================================================================
 		apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
-			var params entity.AssetReviewListParams
+			project := c.Param("project")
+			root := c.DefaultQuery("root", "assets")
 
-			// Bind query (?relation=&page=&perPage=&sortBy=&sortDesc=)
-			if err := c.ShouldBindQuery(&params); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
+			sortKey := canonicalizeSort(
+				c.DefaultQuery("sort", "group_1"),
+				c.DefaultQuery("dir", "asc"),
+			)
+
+			phaseCSV := c.DefaultQuery("phase", "")
+
+			page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+			perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
+			if perPage > 500 {
+				perPage = 500
 			}
-			params.Project = strings.ToLower(c.Param("project"))
 
-			// Call repo (it uses params.GetPage()/GetPerPage() to compute offset)
-			rows, total, err := reviewInfoRepository.ListAssetReviewPivot(gormDB, &params)
+			data, total, err := reviewInfoRepository.GetAssetsPivotPage(
+				c.Request.Context(), gormDB, project, root, sortKey, phaseCSV, page, perPage,
+			)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
 
-			c.JSON(http.StatusOK, gin.H{
-				"total":   total,
-				"data":    rows,
-				"page":    params.GetPage(),
-				"perPage": params.GetPerPage(),
+			c.IndentedJSON(http.StatusOK, gin.H{
+				"project":  project,
+				"root":     root,
+				"page":     page,
+				"per_page": perPage,
+				"total":    total,
+				"count":    len(data),
+				"data":     data,
+				"ts":       time.Now().UTC().Format(time.RFC3339),
 			})
 		})
-
-		// =========================================================================
-		// END: TEMPORARY DIRECT ROUTER
-		// =========================================================================
-
+		// ============================================================================
+		// END: UNAUTHENTICATED ENDPOINT BLOCK
+		// ============================================================================
 		// Review Status Log API
+
 		reviewStatusLogRepository, err := repository.NewReviewStatusLog(gormDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -675,11 +731,6 @@ func main() {
 		apiRouter.GET("/projects/:project/reviewStatusLogs", reviewStatusLogDelivery.List)
 		apiRouter.GET("/projects/:project/reviewStatusLogs/:id", reviewStatusLogDelivery.Get)
 		apiRouter.POST("/projects/:project/reviewStatusLogs", reviewStatusLogDelivery.Post)
-
-		// Review Thumbnail API
-		// - GetAssetThumbnail
-		// - PostAssetThumbnail
-		// - DeleteAssetThumbnail
 
 		// Collection API
 		// - Comment API
