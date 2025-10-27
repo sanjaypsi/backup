@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -305,16 +306,78 @@ func registerDataDepHandlers(router *gin.RouterGroup, dataDepUsecase *usecase.Da
 // -----------------------------------------------------------------------------
 // HELPERS
 // -----------------------------------------------------------------------------
-// normalize "sort" and "dir/desc" into "-field" or "field"
-func canonicalizeSort(sort, dir string) string {
-	sort = strings.TrimSpace(sort)
-	if sort == "" {
+const (
+	defaultPerPage = 15
+	maxPerPage     = 200
+	defaultRoot    = "assets"
+	defaultPhase   = "mdl"
+)
+
+var allowedPhases = map[string]struct{}{
+	"mdl": {}, "rig": {}, "bld": {}, "dsn": {}, "ldv": {},
+}
+
+// API → repo sort map
+var sortKeyMap = map[string]string{
+	"group_1":             "group1_only",
+	"relation":            "relation_only",
+	"submitted_at_utc":    "submitted_at_utc",
+	"modified_at_utc":     "modified_at_utc",
+	"phase":               "phase",
+	"group_rel_submitted": "group_rel_submitted",
+
+	"work_status": "work_status", // DEPRECATED ALIAS
+}
+
+func normalizeSortKey(raw string) string {
+	k := strings.ToLower(strings.TrimSpace(raw))
+	if mapped, ok := sortKeyMap[k]; ok {
+		return mapped
+	}
+	return sortKeyMap["group_1"]
+}
+func normalizeDir(raw string) string {
+	d := strings.ToUpper(strings.TrimSpace(raw))
+	if d == "DESC" {
+		return "DESC"
+	}
+	return "ASC"
+}
+func clampPerPage(pp int) int {
+	if pp <= 0 {
+		return defaultPerPage
+	}
+	if pp > maxPerPage {
+		return maxPerPage
+	}
+	return pp
+}
+func mustAtoi(s string) int { i, _ := strconv.Atoi(s); return i }
+
+func paginationLinks(baseURL string, page, perPage, total int) string {
+	if perPage <= 0 {
 		return ""
 	}
-	if strings.EqualFold(dir, "desc") && !strings.HasPrefix(sort, "-") {
-		return "-" + sort
+	last := (total + perPage - 1) / perPage
+	if last < 1 {
+		last = 1
 	}
-	return sort
+	var parts []string
+	build := func(p int, rel string) {
+		if p < 1 || p > last {
+			return
+		}
+		parts = append(parts, fmt.Sprintf(`<%s?page=%d&per_page=%d>; rel="%s"`, baseURL, p, perPage, rel))
+	}
+	build(1, "first")
+	if page > 1 {
+		build(page-1, "prev")
+	}
+	if page < last {
+		build(page+1, "next")
+	}
+	build(last, "last")
+	return strings.Join(parts, ", ")
 }
 
 // -----------------------------------------------------------------------------
@@ -633,72 +696,138 @@ func main() {
 		)
 		// ============================================================================
 		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
-		// ============================================================================
-		// router.GET("/api/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
-		// 	project := c.Param("project")
-		// 	root := c.DefaultQuery("root", "assets")
-		// 	sort := c.DefaultQuery("sort", "group_1") // e.g. group_1 | mdl_submitted | -bld_appr ...
-		// 	dir := c.DefaultQuery("dir", "asc")       // asc|desc (minus in sort also supported)
-		// 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-		// 	per, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
-		// 	if per <= 0 {
-		// 		per = 15
-		// 	}
-
-		// 	rows, total, err := reviewInfoRepository.GetPivotPage(, gormDB, project, root, sort, dir, page, per)
-		// 	if err != nil {
-		// 		c.JSON(500, gin.H{"error": err.Error()})
-		// 		return
-		// 	}
-		// 	c.JSON(200, gin.H{
-		// 		"total":   total,
-		// 		"page":    page,
-		// 		"perPage": per,
-		// 		"data":    rows,
-		// 	})
-		// })
-		// // ============================================================================
-		// END: UNAUTHENTICATED ENDPOINT BLOCK
-		// ============================================================================
-		// ============================================================================
-		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
-		// ============================================================================
-		apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
-			project := c.Param("project")
-			root := c.DefaultQuery("root", "assets")
-
-			sortKey := canonicalizeSort(
-				c.DefaultQuery("sort", "group_1"),
-				c.DefaultQuery("dir", "asc"),
-			)
-
-			phaseCSV := c.DefaultQuery("phase", "")
-
-			page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-			perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
-			if perPage > 500 {
-				perPage = 500
-			}
-
-			data, total, err := reviewInfoRepository.GetAssetsPivotPage(
-				c.Request.Context(), gormDB, project, root, sortKey, phaseCSV, page, perPage,
-			)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		// ===========================================================================
+		router.GET("/api/projects/:project/reviews/pivot", func(c *gin.Context) {
+			project := strings.TrimSpace(c.Param("project"))
+			if project == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "project is required in the path"})
 				return
 			}
 
-			c.IndentedJSON(http.StatusOK, gin.H{
-				"project":  project,
-				"root":     root,
-				"page":     page,
-				"per_page": perPage,
-				"total":    total,
-				"count":    len(data),
-				"data":     data,
-				"ts":       time.Now().UTC().Format(time.RFC3339),
-			})
+			root := c.DefaultQuery("root", defaultRoot)
+
+			// NO DEFAULT PHASE: read as-is; if empty, we won't echo it back.
+			phaseParam := strings.TrimSpace(c.Query("phase")) // "" if not provided
+
+			// If a phase is supplied, allow only known phases (plus "none")
+			if phaseParam != "" {
+				lp := strings.ToLower(phaseParam)
+				if lp != "none" {
+					if _, ok := allowedPhases[lp]; !ok {
+						c.JSON(http.StatusBadRequest, gin.H{
+							"error":          "invalid phase",
+							"allowed_phases": []string{"mdl", "rig", "bld", "dsn", "ldv", "none"},
+						})
+						return
+					}
+				}
+			}
+
+			// Pagination
+			page := mustAtoi(c.DefaultQuery("page", "1"))
+			page = int(math.Max(float64(page), 1))
+			perPage := clampPerPage(mustAtoi(c.DefaultQuery("per_page", fmt.Sprint(defaultPerPage))))
+			limit := perPage
+			offset := (page - 1) * perPage
+
+			// Sorting
+			sortParam := c.DefaultQuery("sort", "group_1")
+			dirParam := c.DefaultQuery("dir", "ASC")
+			orderKey := normalizeSortKey(sortParam)
+			dir := normalizeDir(dirParam)
+
+			// Internal preferredPhase we pass to repo:
+			// - If sorting by group/relation buckets, force "none" (no phase bias).
+			// - Else, use the provided phase if any, otherwise "none".
+			preferredPhase := phaseParam
+			if orderKey == "group1_only" || orderKey == "relation_only" || orderKey == "group_rel_submitted" {
+				preferredPhase = "none"
+			}
+			if preferredPhase == "" {
+				preferredPhase = "none"
+			}
+
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 7*time.Second)
+			defer cancel()
+
+			assets, total, err := reviewInfoRepository.ListAssetsPivot(
+				ctx, project, root, preferredPhase, orderKey, dir, limit, offset,
+			)
+			if err != nil {
+				log.Printf("[pivot-submissions] query error for project %q: %v", project, err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+				return
+			}
+
+			// Response
+			c.Header("Cache-Control", "public, max-age=15")
+			baseURL := fmt.Sprintf("/api/projects/%s/reviews/pivot", project)
+			if links := paginationLinks(baseURL, page, perPage, int(total)); links != "" {
+				c.Header("Link", links)
+			}
+
+			// Build payload; only echo "phase" if user supplied it
+			resp := gin.H{
+				"assets":    assets,
+				"total":     total,
+				"page":      page,
+				"per_page":  perPage,
+				"sort":      sortParam,
+				"dir":       strings.ToLower(dir),
+				"project":   project,
+				"root":      root,
+				"has_next":  offset+limit < int(total),
+				"has_prev":  page > 1,
+				"page_last": (int(total) + perPage - 1) / perPage,
+			}
+			if phaseParam != "" {
+				resp["phase"] = phaseParam
+			}
+
+			c.IndentedJSON(http.StatusOK, resp)
 		})
+		// =========================================================================
+		// END: UNUATHENTICATED ENDPOINT BLOCK
+		// =========================================================================
+		// ============================================================================
+		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
+		// ============================================================================
+		// apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
+		// 	project := c.Param("project")
+		// 	root := c.DefaultQuery("root", "assets")
+
+		// 	sortKey := canonicalizeSort(
+		// 		c.DefaultQuery("sort", "group_1"),
+		// 		c.DefaultQuery("dir", "asc"),
+		// 	)
+
+		// 	phaseCSV := c.DefaultQuery("phase", "")
+
+		// 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		// 	perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
+		// 	if perPage > 500 {
+		// 		perPage = 500
+		// 	}
+
+		// 	data, total, err := reviewInfoRepository.GetAssetsPivotPage(
+		// 		c.Request.Context(), gormDB, project, root, sortKey, phaseCSV, page, perPage,
+		// 	)
+		// 	if err != nil {
+		// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		// 		return
+		// 	}
+
+		// 	c.IndentedJSON(http.StatusOK, gin.H{
+		// 		"project":  project,
+		// 		"root":     root,
+		// 		"page":     page,
+		// 		"per_page": perPage,
+		// 		"total":    total,
+		// 		"count":    len(data),
+		// 		"data":     data,
+		// 		"ts":       time.Now().UTC().Format(time.RFC3339),
+		// 	})
+		// })
 		// ============================================================================
 		// END: UNAUTHENTICATED ENDPOINT BLOCK
 		// ============================================================================
