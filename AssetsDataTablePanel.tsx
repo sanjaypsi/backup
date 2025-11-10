@@ -1,22 +1,16 @@
-import React, {
-  FC,
-  useEffect,
-  useState,
-  useCallback, // New import for useCallback
-} from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { RouteComponentProps } from "react-router-dom";
 import { Container, Paper, styled } from '@material-ui/core';
 import { ButtonProps } from '@material-ui/core/Button';
 import { SelectProps } from '@material-ui/core/Select';
 import { TablePaginationProps } from '@material-ui/core/TablePagination';
 import { TextFieldProps } from '@material-ui/core/TextField';
-import { useFetchAssets } from './hooks';
-import { FilterProps, PageProps } from './types';
-import AssetsDataTable from './AssetsDataTable'
+import { useFetchAssetsPivot } from './hooks';
+import { FilterProps, PageProps, SortDir } from './types';
+import AssetsDataTable from './AssetsDataTable';
 import AssetTableFilter from './AssetDataTableFilter';
 import AssetsDataTableFooter from './AssetsDataTableFooter';
-import { useCurrentProject, } from '../hooks';
-import { useFetchAssetPivotData } from './hooks';  // New import for pivot data fetching
+import { useCurrentProject } from '../hooks';
 import { useCurrentStudio } from '../../studio/hooks';
 import { queryConfig } from '../../new-pipeline-setting/api';
 
@@ -24,7 +18,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  padding: 0,
+  padding: 10,
   '& > *': {
     display: 'flex',
     overflow: 'hidden',
@@ -49,158 +43,165 @@ const StyledContentDiv = styled('div')(({ theme }) => ({
   flexDirection: 'row',
 }));
 
-const StyledTableDiv = styled('div')(({
+const StyledTableDiv = styled('div')({
   paddingBottom: 8,
-}));
+});
+
+const initPageProps: PageProps = { page: 0, rowsPerPage: 15 };
+const initFilterProps: FilterProps = {
+  assetNameKey: '',
+  applovalStatues: [],
+  workStatues: [],
+  selectPhasePriority: '',
+  selectApprovalStatus: '',
+  selectWorkStatus: '',
+  onPhasePriorityChange: undefined,
+  onApprovalStatusChange: undefined,
+  onWorkStatusChange: undefined,
+};
 
 const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
-  const initPageProps = {
-    page: 0,
-    rowsPerPage: 15,
-  };
-  const initFilterProps = {
-    assetNameKey: '',
-    applovalStatues: [],
-    workStatues: [],
-  };
   const [pageProps, setPageProps] = useState<PageProps>(initPageProps);
   const [filterProps, setFilterProps] = useState<FilterProps>(initFilterProps);
+
+  // Server-side sorting + phase (drives fetch)
+  const [sortKey, setSortKey] = useState<string>('group_1');   // server sort key
+  const [sortDir, setSortDir] = useState<SortDir>('asc');      // 'asc' | 'desc'
+  const [phasePriority, setPhasePriority] = useState<string>('none'); // mdl|rig|bld|dsn|ldv|none
+
+  // UI-only (instant header arrows; debounced commit to server state)
+  const [uiSortKey, setUiSortKey] = useState<string>('group_1');
+  const [uiSortDir, setUiSortDir] = useState<SortDir>('asc');
+
+  // Debounce timer
+  const commitTimerRef = useRef<number | null>(null);
+
   const { currentProject } = useCurrentProject();
-  const { assets, total } = useFetchAssets(
-    currentProject,
-    pageProps.page,
-    pageProps.rowsPerPage,
-  );
-
-  // --- NEW SORTING STATE ---
-  const [sortBy, setSortBy] = useState('group_1'); 
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-  // --- NEW: Fetch Pivot Data (Replaces useFetchAssets) ---
-  // Assuming 'relation' filter is derived or empty for simplicity
-  const relationFilter = ''; // Set actual filter value if available in filterProps
-  
-  const { pivotRows, totalRows } = useFetchAssetPivotData(
-    currentProject, // Correctly passes the Project object
-    pageProps.page,
-    pageProps.rowsPerPage,
-    relationFilter, 
-    sortBy,
-    sortOrder,
-  );
-  // Renamed fetched data: assets -> pivotRows, total -> totalRows
-
   const { currentStudio } = useCurrentStudio();
   const [timeZone, setTimeZone] = useState<string | undefined>();
 
+  // Map UI column key → { server sort, phase }
+  // Accepts 'group_1', 'relation', and '<phase>_(work|appr|submitted)'
+  const resolveServerSort = (key: string): { sort: string; phase: string } => {
+    if (key === 'group_1') return { sort: 'group_1', phase: 'none' };
+    if (key === 'relation') return { sort: 'relation', phase: 'none' };
+
+    const m = key.match(/^(mdl|rig|bld|dsn|ldv)_(work|appr|submitted)$/i);
+    if (!m) return { sort: 'group_1', phase: 'none' };
+
+    const phase = m[1].toLowerCase();
+    const field = m[2].toLowerCase();
+
+    if (field === 'submitted') return { sort: 'submitted_at_utc', phase };
+    // Until backend exposes approval-only ordering, map work/appr to work_status
+    return { sort: 'work_status', phase };
+  };
+
+  // Fetch pivot data using the (debounced) server sort state
+  const { assets, total } = useFetchAssetsPivot(
+    currentProject,
+    pageProps.page,
+    pageProps.rowsPerPage,
+    sortKey,
+    sortDir,
+    phasePriority,
+  );
+
+  // Studio timezone
   useEffect(() => {
-    if (currentStudio == null) {
-      return
-    }
+    if (currentStudio == null) return;
     const controller = new AbortController();
     (async () => {
       try {
-        const res: string | null = await queryConfig(
-          'studio',
-          currentStudio.key_name,
-          'timezone',
-        ).catch(e => {
-          if (e.name === 'AbortError') {
-            return;
-          }
-          throw e;
-        });
-        if (res != null) {
-          setTimeZone(res);
-        }
+        const res: string | null = await queryConfig('studio', currentStudio.key_name, 'timezone')
+          .catch(e => {
+            if (e && e.name === 'AbortError') return null;
+            throw e;
+          });
+        if (res != null) setTimeZone(res);
       } catch (e) {
+        // non-fatal
+        // eslint-disable-next-line no-console
         console.error(e);
+        setTimeZone(undefined);
       }
     })();
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [currentStudio]);
 
+  // Cleanup pending debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (commitTimerRef.current != null) {
+        window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Pagination
   const handleRowsPerPageChange: TablePaginationProps['onChangeRowsPerPage'] = event => {
-    setPageProps({
-      page: 0,
-      rowsPerPage: parseInt(event.target.value),
-    });
+    setPageProps({ page: 0, rowsPerPage: parseInt(event.target.value, 10) });
+  };
+  const handlePageChange: TablePaginationProps['onChangePage'] = (_event, newPage) => {
+    setPageProps(p => ({ ...p, page: newPage }));
   };
 
-  const handlePageChange: TablePaginationProps['onChangePage'] = (event, newPage) => {
-    setPageProps({
-      ...pageProps,
-      page: newPage,
-    });
-  };
+  // 2s debounced sort: instant UI arrows; delayed server fetch
+const handleSortChange = (newUiKey: string) => {
+  const { sort, phase } = resolveServerSort(newUiKey);
 
+  // Compute next SERVER dir
+  const nextServerDir: SortDir =
+    sortKey === sort ? (sortDir === 'asc' ? 'desc' : 'asc') : 'asc';
+
+  // Clear pending debounce
+  if (commitTimerRef.current != null) {
+    window.clearTimeout(commitTimerRef.current);
+  }
+
+  // Debounce BOTH: server + UI arrow
+  commitTimerRef.current = window.setTimeout(() => {
+    setPhasePriority(phase);
+    setSortKey(sort);
+    setSortDir(nextServerDir);
+
+    // ✅ UI updates AFTER fetch is triggered
+    setUiSortKey(newUiKey);
+    setUiSortDir(nextServerDir);
+
+    commitTimerRef.current = null;
+  }, 5000);
+};
+
+  // Filters
   const handleFilterAssetNameChange: TextFieldProps['onChange'] = event => {
-    setFilterProps({
-      ...filterProps,
-      assetNameKey: event.target.value,
-    });
-    setPageProps({ ...pageProps, page: 0 });
+    setFilterProps(p => ({ ...p, assetNameKey: event.target.value }));
+    setPageProps(p => ({ ...p, page: 0 }));
   };
-
-  // --- NEW: Sorting Handler (using useCallback) ---
-  const handleSort = useCallback((columnId: string) => {
-    // 1. Always reset to the first page on a new sort
-    setPageProps(prev => ({ ...prev, page: 0 }));
-
-    if (columnId === sortBy) {
-        // 2. Toggle the order if the same column is clicked
-        setSortOrder(order => (order === 'asc' ? 'desc' : 'asc'));
-    } else {
-        // 3. Set the new column and default to 'asc'
-        setSortBy(columnId);
-        setSortOrder('asc');
-    }
-  }, [sortBy]); // Dependency on sortBy ensures correct toggling
-
   const handleApprovalStatusesChange: SelectProps['onChange'] = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setFilterProps({
-      ...filterProps,
-      applovalStatues: event.target.value as string[],
-    });
-    setPageProps({ ...pageProps, page: 0 });
+    setFilterProps(p => ({ ...p, applovalStatues: event.target.value as string[] }));
+    setPageProps(p => ({ ...p, page: 0 }));
   };
-
   const handleWorkStatusesChange: SelectProps['onChange'] = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setFilterProps({
-      ...filterProps,
-      workStatues: event.target.value as string[],
-    });
-    setPageProps({ ...pageProps, page: 0 });
+    setFilterProps(p => ({ ...p, workStatues: event.target.value as string[] }));
+    setPageProps(p => ({ ...p, page: 0 }));
   };
-
   const handleApprovalStatusesChipDelete = (name: string) => {
-    setFilterProps({
-      ...filterProps,
-      applovalStatues: filterProps.applovalStatues.filter(value => value !== name),
-    });
-    setPageProps({ ...pageProps, page: 0 });
+    setFilterProps(p => ({ ...p, applovalStatues: p.applovalStatues.filter(v => v !== name) }));
+    setPageProps(p => ({ ...p, page: 0 }));
   };
-
   const handleWorkStatusesChipDelete = (name: string) => {
-    setFilterProps({
-      ...filterProps,
-      workStatues: filterProps.workStatues.filter(value => value !== name),
-    });
-    setPageProps({ ...pageProps, page: 0 });
+    setFilterProps(p => ({ ...p, workStatues: p.workStatues.filter(v => v !== name) }));
+    setPageProps(p => ({ ...p, page: 0 }));
   };
+  const handleFilterResetClick: ButtonProps['onClick'] = () => setFilterProps(initFilterProps);
 
-  const handleFilterResetClick: ButtonProps['onClick'] = () => { setFilterProps(initFilterProps); };
-
-  const dateTimeFormat = new Intl.DateTimeFormat(
-    undefined,
-    {
-      timeZone: timeZone,
-      dateStyle: 'medium',
-      timeStyle: 'medium'
-    }
-  );
+  const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+    timeZone,
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+  });
 
   const tableFooter = (
     <AssetsDataTableFooter
@@ -224,26 +225,18 @@ const AssetsDataTablePanel: FC<RouteComponentProps> = () => {
         onApprovalStatusChipDelete={handleApprovalStatusesChipDelete}
         onWorkStatusChipDelete={handleWorkStatusesChipDelete}
         onResetClick={handleFilterResetClick}
-      >
-      </AssetTableFilter>
+      />
       <StyledTableDiv>
         <StyledPaper>
           <StyledContentDiv>
             <AssetsDataTable
               project={currentProject}
-              // Pass the pivot data as 'assets' (or rename AssetsDataTable prop if possible)
-              assets={pivotRows} 
-              
-              // Pass all control state and handler
-              currentPage={pageProps.page}
-              rowsPerPage={pageProps.rowsPerPage}
-              relationFilter={relationFilter} // The filter value
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              handleSort={handleSort} // The sorting handler
-              
+              assets={assets}
               tableFooter={tableFooter}
               dateTimeFormat={dateTimeFormat}
+              onSortChange={handleSortChange}
+              currentSortKey={uiSortKey}   // UI key (instant arrow)
+              currentSortDir={uiSortDir}   // UI dir (instant arrow)
             />
           </StyledContentDiv>
         </StyledPaper>
