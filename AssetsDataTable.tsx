@@ -6,39 +6,20 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  TableSortLabel, 
 } from "@material-ui/core";
 import {
   AssetRowProps,
-  AssetReviewPivotRow, // New type for single pivot row
   AssetsDataTableProps,
   Colors,
   Column,
   RecordTableHeadProps,
+  SortDir, 
+  AssetPhaseSummary, 
 } from "./types";
-// Import the new pivot hook and the existing thumbnail hook
-import { useFetchAssetPivotData, useFetchAssetThumbnails } from './hooks'; 
+import {useFetchAssetThumbnails } from './hooks';
 
 
-// --- TYPE DEFINITIONS for Local Use (Must be defined in types.ts too) ---
-
-// // Redefine AssetRowProps to use the single pivoted row
-type PivotAssetRowProps = Readonly<{
-  pivotRow: AssetReviewPivotRow; // The single row of pivoted data
-  thumbnails: { [key: string]: string };
-  dateTimeFormat: Intl.DateTimeFormat;
-  isLastRow: boolean;
-}>;
-
-// Redefine RecordTableHeadProps to handle sorting state
-type SortableRecordTableHeadProps = RecordTableHeadProps & {
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-  handleSort: (columnId: string) => void;
-};
-// --------------------------------------------------------------------------
-
-
-// --- CONSTANTS (Remain the same) ---
 const ASSET_PHASES: { [key: string]: Colors } = {
   mdl: {
     lineColor: '#3295fd',
@@ -67,7 +48,6 @@ type Status = Readonly<{
   color: string,
 }>;
 
-// const APPROVAL_STATUS: { [key: string]: Status } = { /* ... omitted for brevity ... */ };
 const APPROVAL_STATUS: { [key: string]: Status } = {
   check: {
     displayName: 'Check',
@@ -128,18 +108,13 @@ const APPROVAL_STATUS: { [key: string]: Status } = {
   other: {
     displayName: 'Other',
     color: '#9a9a9a',
-  },
+    },
   omit: {
     displayName: 'Omit',
     color: '#646464',
   },
-  approved: {
-    displayName: 'Approved',
-    color: '#b9eec9',
-  },
 };
 
-// const WORK_STATUS: { [key: string]: Status } = { /* ... omitted for brevity ... */ };
 const WORK_STATUS: { [key: string]: Status } = {
   check: {
     displayName: 'Check',
@@ -189,108 +164,132 @@ const WORK_STATUS: { [key: string]: Status } = {
     displayName: 'Lead Other',
     color: '#dbdbdb',
   },
-  review: {
-    displayName: 'Review',
-    color: '#dbdbdb',
-  },
-
-
 };
 
-// Columns array updated to use 'group_1' and pivot row IDs
 const columns: Column[] = [
   {
     id: 'thumbnail',
     label: 'Thumbnail',
   },
   {
-    id: 'group_1', // Use group_1 which holds the asset name in the pivot row
+    id: 'group_1_name',
     label: 'Name',
+    sortable: true,
+    sortKey: 'group_1',
   },
   {
     id: 'mdl_work_status',
     label: 'MDL WORK',
     colors: ASSET_PHASES['mdl'],
+    sortable: true,
+    sortKey: 'mdl_work', 
   },
   {
     id: 'mdl_approval_status',
     label: 'MDL APPR',
     colors: ASSET_PHASES['mdl'],
+    sortable: true,
+    sortKey: 'mdl_appr', 
   },
   {
-    id: 'mdl_submitted_at_utc', // Use the actual UTC field name for sorting
+    id: 'mdl_submitted_at',
     label: 'MDL Submitted At',
     colors: ASSET_PHASES['mdl'],
+    sortable: true,
+    sortKey: 'mdl_submitted', 
   },
-  // ... (RIG, BLD, DSN, LDV columns follow the same ID pattern) ...
   {
     id: 'rig_work_status',
     label: 'RIG WORK',
     colors: ASSET_PHASES['rig'],
+    sortable: true,
+    sortKey: 'rig_work',
   },
   {
     id: 'rig_approval_status',
     label: 'RIG APPR',
     colors: ASSET_PHASES['rig'],
+    sortable: true,
+    sortKey: 'rig_appr',
   },
   {
-    id: 'rig_submitted_at_utc',
+    id: 'rig_submitted_at',
     label: 'RIG Submitted At',
     colors: ASSET_PHASES['rig'],
+    sortable: true,
+    sortKey: 'rig_submitted',
   },
   {
     id: 'bld_work_status',
     label: 'BLD WORK',
     colors: ASSET_PHASES['bld'],
+    sortable: true,
+    sortKey: 'bld_work',
   },
   {
     id: 'bld_approval_status',
     label: 'BLD APPR',
     colors: ASSET_PHASES['bld'],
+    sortable: true,
+    sortKey: 'bld_appr', 
   },
   {
-    id: 'bld_submitted_at_utc',
+    id: 'bld_submitted_at',
     label: 'BLD Submitted At',
     colors: ASSET_PHASES['bld'],
+    sortable: true,
+    sortKey: 'bld_submitted', 
   },
   {
     id: 'dsn_work_status',
     label: 'DSN WORK',
     colors: ASSET_PHASES['dsn'],
+    sortable: true,
+    sortKey: 'dsn_work',
   },
   {
     id: 'dsn_approval_status',
     label: 'DSN APPR',
     colors: ASSET_PHASES['dsn'],
+    sortable: true,
+    sortKey: 'dsn_appr',
   },
   {
-    id: 'dsn_submitted_at_utc',
+    id: 'dsn_submitted_at',
     label: 'DSN Submitted At',
     colors: ASSET_PHASES['dsn'],
+    sortable: true,
+    sortKey: 'dsn_submitted',
   },
   {
     id: 'ldv_work_status',
     label: 'LDV WORK',
     colors: ASSET_PHASES['ldv'],
+    sortable: true,
+    sortKey: 'ldv_work',
   },
   {
     id: 'ldv_approval_status',
     label: 'LDV APPR',
     colors: ASSET_PHASES['ldv'],
+    sortable: true,
+    sortKey: 'ldv_appr',
   },
   {
-    id: 'ldv_submitted_at_utc',
+    id: 'ldv_submitted_at',
     label: 'LDV Submitted At',
     colors: ASSET_PHASES['ldv'],
+    sortable: true,
+    sortKey: 'ldv_submitted',
   },
   {
     id: 'relation',
     label: 'Relation',
+    sortable: true,
+    sortKey: 'relation', 
   },
 ];
 
-
-// --- UTILITY COMPONENTS (Remain the same) ---
 type TooltipTableCellProps = {
   tooltipText: string,
   status: Status | undefined,
@@ -302,20 +301,31 @@ type TooltipTableCellProps = {
 const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = (
   { tooltipText, status, leftBorderStyle, rightBorderStyle, bottomBorderStyle = 'none' }
 ) => {
-  const isTooltipTextEmpty = !tooltipText || tooltipText.trim() === '';
-  const statusText = status ? status.displayName : '';
+  const [open, setOpen] = React.useState(false);
+  const isTooltipTextEmpty = tooltipText && tooltipText.trim().length > 0;
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+  };
+
+  const handleTooltipOpen = () => {
+    setOpen(true);
+  };
+
+  const statusText = (status != null) ? status['displayName'] : '-';
 
   return (
     <TableCell
       style={{
         color: (status != null) ? status['color'] : '',
-        fontStyle: isTooltipTextEmpty ? 'normal' : 'oblique',
+        fontStyle: (tooltipText === '') ? 'normal' : 'oblique',
         borderLeft: leftBorderStyle,
         borderRight: rightBorderStyle,
         borderBottom: bottomBorderStyle,
       }}
+      onClick={isTooltipTextEmpty ? handleTooltipOpen : undefined}
     >
-      {!isTooltipTextEmpty ? (
+      {isTooltipTextEmpty ? (
         <Tooltip
           title={
             <div
@@ -323,6 +333,8 @@ const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = (
               {tooltipText}
             </div>
           }
+          onClose={handleTooltipClose}
+          open={open}
           arrow
         >
           <span>{statusText}</span>
@@ -334,27 +346,37 @@ const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = (
   );
 };
 
-
-// --- 1. RECORD TABLE HEAD (Sorting Implementation) ---
-const RecordTableHead: React.FC<SortableRecordTableHeadProps> = ({
-  columns,
-  sortBy,
-  sortOrder,
-  handleSort,
+// UPDATED: RecordTableHead now accepts currentSortDir
+const RecordTableHead: React.FC<RecordTableHeadProps & {
+  onSortChange: (sortKey: string) => void,
+  currentSortKey: string,
+  currentSortDir: SortDir, // ADDED: Current sort direction
+}> = ({
+  columns, onSortChange, currentSortKey, currentSortDir, // Use currentSortDir
 }) => {
+  const getSortDir = (id: string, activeSortKey: string, activeSortDir: SortDir): SortDir => {
+    // Only return the direction if the key matches the active key
+    if (activeSortKey === id) return activeSortDir; 
+    return 'none';
+  };
+
+  const createSortHandler = (id: string) => () => {
+    // Pass the column's ID to the panel. The panel handles the direction toggle.
+    onSortChange(id);
+  };
+
   return (
     <TableHead>
       <TableRow>
         {columns.map((column) => {
           const borderLineStyle = column.colors ? `solid 3px ${column.colors.lineColor}` : 'none';
           const borderTopStyle = column.colors ? borderLineStyle : 'none';
-          const borderLeftStyle = (column.id.indexOf('work_status') !== -1 || column.id === 'group_1') ? borderLineStyle : 'none';
-          const borderRightStyle = (column.id.indexOf('submitted_at_utc') !== -1 || column.id === 'relation') ? borderLineStyle : 'none';
+          const borderLeftStyle = (column.id.indexOf('work_status') !== -1) ? borderLineStyle : 'none';
+          const borderRightStyle = (column.id.indexOf('submitted_at') !== -1) ? borderLineStyle : 'none';
           
-          // Determine if the column is sortable (exclude thumbnail, include pivoted fields)
-          const isSortable = column.id !== 'thumbnail' && !column.id.includes('review_comments');
-          const isCurrentSort = column.id === sortBy;
-          const sortIcon = isCurrentSort ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
+          const columnSortKey = column.sortKey || column.id;
+          // PASS currentSortKey and currentSortDir
+          const sortDir = getSortDir(columnSortKey, currentSortKey, currentSortDir);
 
           return (
             <TableCell
@@ -365,13 +387,32 @@ const RecordTableHead: React.FC<SortableRecordTableHeadProps> = ({
                   borderTop: borderTopStyle,
                   borderLeft: borderLeftStyle,
                   borderRight: borderRightStyle,
-                  cursor: isSortable ? 'pointer' : 'default', // Add cursor
                 }
               }
-              // Attach the sorting handler
-              onClick={isSortable ? () => handleSort(column.id) : undefined}
             >
-              {column.label} {sortIcon}
+              {column.sortable ? (
+              <TableSortLabel
+                active={sortDir !== 'none'}
+                hideSortIcon
+                direction={sortDir === 'desc' ? 'desc' : 'asc'}
+                onClick={createSortHandler(columnSortKey)}
+                IconComponent={() => (
+                  <span style={{
+                    fontSize: "16px",
+                    fontWeight: 750,
+                    lineHeight: "24px",
+                    marginLeft: "10px",
+                    userSelect: "none"
+                  }}>
+                    {sortDir === 'desc' ? '▼' : '▲'}
+                  </span>
+                )}
+              >
+                  {column.label}
+                </TableSortLabel>
+              ) : (
+                column.label
+              )}
             </TableCell>
           );
         })}
@@ -380,230 +421,125 @@ const RecordTableHead: React.FC<SortableRecordTableHeadProps> = ({
   );
 };
 
-// --- 2. ASSET ROW (Rendering Pivot Data) ---
-const AssetRow: React.FC<PivotAssetRowProps> = ({
-  pivotRow, thumbnails, dateTimeFormat, isLastRow
+// AssetRow remains the same
+const AssetRow: React.FC<AssetRowProps> = ({
+  asset, thumbnails, dateTimeFormat, isLastRow
 }) => {
-    // Helper to pull status map based on value
-    const getStatus = (value: string | null | undefined, type: 'work' | 'approval'): Status | undefined => {
-        if (!value) return undefined;
-        const statusMap = type === 'work' ? WORK_STATUS : APPROVAL_STATUS;
-        console.log(`Getting status for value: ${value}, type: ${type}`); // Debug log
-        return (statusMap[value])
-    };
-
-    const assetKey = `${pivotRow.group_1}-${pivotRow.relation}`;
+  // Helper to safely get value and status based on phase prefix
+  const getPhaseData = (phase: string) => {
+    const workStatusKey = `${phase}_work_status` as keyof AssetPhaseSummary;
+    const approvalStatusKey = `${phase}_approval_status` as keyof AssetPhaseSummary;
+    const submittedAtKey = `${phase}_submitted_at_utc` as keyof AssetPhaseSummary;
     
-    // We assume review_comments are returned as a single string field in the pivot row
-    const getComments = (phase: string): string => {
-        const key = `${phase}_review_comments` as keyof AssetReviewPivotRow;
-        return (pivotRow[key] as string) || '';
+    const tooltipText: string = ''; 
+
+    const workStatusValue = asset[workStatusKey];
+    const approvalStatusValue = asset[approvalStatusKey];
+    const submittedAtValue = asset[submittedAtKey];
+
+    const workStatus: Status | undefined = workStatusValue ? WORK_STATUS[String(workStatusValue).toLowerCase()] : undefined;
+    const approvalStatus: Status | undefined = approvalStatusValue ? APPROVAL_STATUS[String(approvalStatusValue).toLowerCase()] : undefined;
+    
+    const submittedAt = submittedAtValue ? new Date(submittedAtValue as string) : null;
+    const localTimeText = submittedAt ? dateTimeFormat.format(submittedAt) : '-';
+
+    return {
+      workStatus, approvalStatus, submittedAt, localTimeText, tooltipText
     };
+  };
 
-    return (
-        <TableRow>
-            {/* Thumbnail Cell */}
-            <TableCell>
-                {thumbnails[assetKey] ? (
-                    <img
-                        src={thumbnails[assetKey]}
-                        alt={`${pivotRow.group_1} thumbnail`}
-                        style={{ width: '100px', height: 'auto' }}
-                    />
-                ) : (
-                    <span>No Thumbnail</span>
-                )}
+  return (
+    <TableRow>
+      <TableCell>
+        {thumbnails[`${asset.group_1}-${asset.relation}`] ? ( 
+          <img
+            src={thumbnails[`${asset.group_1}-${asset.relation}`]}
+            alt={`${asset.group_1} thumbnail`}
+            style={{ width: '100px', height: 'auto' }}
+          />
+        ) : (
+          <span>No Thumbnail</span>
+        )}
+      </TableCell>
+      <TableCell>{asset.group_1}</TableCell>
+      {Object.entries(ASSET_PHASES).map(([phase, { lineColor }]) => {
+        const { workStatus, approvalStatus, localTimeText, tooltipText } = getPhaseData(phase);
+        const borderLineStyle = `solid 3px ${lineColor}`;
+
+        return (
+          <React.Fragment key={`${asset.group_1}-${asset.relation}-${phase}-work-appr`}>
+            <MultiLineTooltipTableCell
+              tooltipText={tooltipText}
+              status={workStatus}
+              leftBorderStyle={borderLineStyle}
+              rightBorderStyle={'none'}
+              bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
+            />
+            <MultiLineTooltipTableCell
+              tooltipText={tooltipText}
+              status={approvalStatus}
+              leftBorderStyle={'none'}
+              rightBorderStyle={'none'}
+              bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
+            />
+            <TableCell
+              style={{
+                borderLeft: 'none',
+                borderRight: borderLineStyle,
+                borderBottom: isLastRow ? borderLineStyle : 'none',
+              }}
+            >
+              {localTimeText}
             </TableCell>
-            
-            {/* Name Cell */}
-            <TableCell>{pivotRow.group_1}</TableCell>
-            
-            {/* Phase Cells (Pivoted Data) */}
-            {Object.entries(ASSET_PHASES).map(([phase, { lineColor }]) => {
-                const workStatusKey = getDataString(`${phase}_work_status`);
-                const workStatus: Status | undefined = workStatusKey ? WORK_STATUS[workStatusKey] : undefined;
-                // const workStatus: Status | undefined = getStatus(getDataString(`${phase}_work_status`), 'work');
-
-                const approvalStatusKey = getDataString(`${phase}_approval_status`);
-                const approvalStatus: Status | undefined = approvalStatusKey ? APPROVAL_STATUS[approvalStatusKey] : undefined;
-
-                // const approvalStatus: Status | undefined = getStatus(getDataString(`${phase}_approval_status`), 'approval');
-                const tooltipText: string = getComments(phase);
-                
-                const submittedAtUtc = getDataString(`${phase}_submitted_at_utc`);
-                const submittedAt = submittedAtUtc ? new Date(submittedAtUtc) : null;
-                const localTimeText = submittedAt ? dateTimeFormat.format(submittedAt) : '-';
-                const borderLineStyle = `solid 3px ${lineColor}`;
-                
-                // Helper to safely access dynamic field from pivotRow
-                function getDataString(key: string): string | null {
-                    // console.log(`Getting data for key: ${key}`); // Debug log
-                    return (pivotRow as any)[key] || null;
-                }
-
-                return (
-                    <React.Fragment key={`${assetKey}-${phase}`}>
-                        {/* Work Status */}
-                        <MultiLineTooltipTableCell
-                          tooltipText={tooltipText}
-                          status={workStatus}
-                          leftBorderStyle={borderLineStyle}
-                          rightBorderStyle={'none'}
-                          bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-                        />
-                        <MultiLineTooltipTableCell
-                          tooltipText={tooltipText}
-                          status={approvalStatus}
-                          leftBorderStyle={'none'}
-                          rightBorderStyle={'none'}
-                          bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-                        />
-                        <TableCell
-                          style={{
-                            borderLeft: 'none',
-                            borderRight: borderLineStyle,
-                            borderBottom: isLastRow ? borderLineStyle : 'none',
-                          }}
-                        >
-                            {localTimeText}
-                        </TableCell>
-                    </React.Fragment>
-                );
-            })}
-            
-            {/* Relation Cell */}
-            <TableCell>{pivotRow.relation}</TableCell>
-        </TableRow>
-    );
+          </React.Fragment>
+        );
+      })}
+      <TableCell>{asset.relation}</TableCell>
+    </TableRow>
+  );
 };
 
-// const AssetRow: React.FC<AssetRowProps> = ({
-//   asset, reviewInfos, thumbnails, dateTimeFormat, isLastRow
-// }) => {
-//   return (
-//     <TableRow>
-//       <TableCell>
-//         {thumbnails[`${asset.name}-${asset.relation}`] ? (
-//           <img
-//             src={thumbnails[`${asset.name}-${asset.relation}`]}
-//             alt={`${asset.name} thumbnail`}
-//             style={{ width: '100px', height: 'auto' }}
-//           />
-//         ) : (
-//           <span>No Thumbnail</span>
-//         )}
-//       </TableCell>
-//       <TableCell>{asset.name}</TableCell>
-//       {Object.entries(ASSET_PHASES).map(([phase, { lineColor }]) => {
-//         const reviewInfoName = `${asset.name}-${asset.relation}-${phase}`;
-//         const info = reviewInfos[reviewInfoName];
-        
-//         const workStatus: Status | undefined = info && WORK_STATUS[info.work_status];
-//         const approvalStatus: Status | undefined = info && APPROVAL_STATUS[info.approval_status];
-//         const tooltipText: string = info && info.review_comments
-//           .filter(reviewComment => reviewComment.text !== '')
-//           .map(reviewComment => `${reviewComment.language}:\n${reviewComment.text}`)
-//           .join('\n') || '';
-//         const submittedAt = info ? new Date(info.submitted_at_utc) : null;
-//         const localTimeText = submittedAt ? dateTimeFormat.format(submittedAt) : '-';
-//         const borderLineStyle = `solid 3px ${lineColor}`;
-
-//         return (
-//           <React.Fragment key={`${reviewInfoName}-work-appr`}>
-//             <MultiLineTooltipTableCell
-//               tooltipText={tooltipText}
-//               status={workStatus}
-//               leftBorderStyle={borderLineStyle}
-//               rightBorderStyle={'none'}
-//               bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-//             />
-//             <MultiLineTooltipTableCell
-//               tooltipText={tooltipText}
-//               status={approvalStatus}
-//               leftBorderStyle={'none'}
-//               rightBorderStyle={'none'}
-//               bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-//             />
-//             <TableCell
-//               style={{
-//                 borderLeft: 'none',
-//                 borderRight: borderLineStyle,
-//                 borderBottom: isLastRow ? borderLineStyle : 'none',
-//               }}
-//             >
-//               {localTimeText}
-//             </TableCell>
-//           </React.Fragment>
-//         );
-//       })}
-//       <TableCell>{asset.relation}</TableCell>
-//     </TableRow>
-//   );
-// };
-
-// --- 3. ASSETS DATA TABLE (Main Component) ---
-const AssetsDataTable: React.FC<AssetsDataTableProps> = ({
+// AssetsDataTable simplified
+const AssetsDataTable: React.FC<AssetsDataTableProps & {
+  currentSortKey: string;
+  currentSortDir: SortDir;
+  onSortChange: (sortKey: string) => void;
+}> = ({
   project,
+  assets, 
   tableFooter,
   dateTimeFormat,
-  // State props for the pivot API call
-  currentPage,
-  rowsPerPage,
-  sortBy,
-  sortOrder,
-  relationFilter,
-  handleSort, // Sorting handler
+  onSortChange,
+  currentSortKey,
+  currentSortDir,
 }) => {
   if (project == null) {
     return null;
   }
   
-  // A. Fetch the Pivoted Data using the new hook
-  // Assuming useFetchAssetPivotData is now defined in hooks.ts
-  const { pivotRows, totalRows } = useFetchAssetPivotData(
-    project,
-    currentPage, 
-    rowsPerPage,
-    relationFilter, 
-    sortBy, 
-    sortOrder
-  );
-
-  // console.log("Pivot Data  ************:", pivotRows); // Debug log
-  // console.log("Total Rows  ************:", totalRows); // Debug log
-
-  // B. Prepare the asset list for the Thumbnail hook
-  // The thumbnail hook is called once per row displayed
-  const assetsForThumbnails = pivotRows.map(row => ({ 
-      name: row.group_1, 
-      relation: row.relation 
-  }));
-  
-  // C. Fetch Thumbnails (Still per-asset for now)
-  const { thumbnails } = useFetchAssetThumbnails(project, assetsForThumbnails);
-  // NOTE: The old useFetchAssetReviewInfos is removed entirely, as its job is done by the pivot hook.
+  // Fetch thumbnails
+  const { thumbnails } = useFetchAssetThumbnails(project, assets.map(a => ({ name: a.group_1, relation: a.relation })));
 
   return (
     <Table stickyHeader>
       <RecordTableHead
+        key='asset-data-table-head'
         columns={columns}
-        // Pass sorting state and handler to the header
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        handleSort={handleSort}
+        onSortChange={onSortChange}
+        currentSortKey={currentSortKey}
+        currentSortDir={currentSortDir} // PASS: currentSortDir
       />
       <TableBody>
-        {pivotRows.map((pivotRow, index) => (
+        {assets.map((asset, index) => (
           <AssetRow
-            key={`${pivotRow.group_1}-${pivotRow.relation}-${index}`}
-            pivotRow={pivotRow} // Pass the single pivot row object
+            key={`${asset.group_1}-${asset.relation}-${index}`}
+            asset={asset}
             thumbnails={thumbnails}
             dateTimeFormat={dateTimeFormat}
-            isLastRow={(index === pivotRows.length - 1)}
+            isLastRow={index === assets.length - 1}
           />
         ))}
       </TableBody>
-      {/* totalRows should ideally be used in the tableFooter component for pagination metadata */}
       {tableFooter || null}
     </Table>
   );
