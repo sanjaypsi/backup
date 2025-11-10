@@ -697,7 +697,7 @@ func main() {
 		// ============================================================================
 		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
 		// ===========================================================================
-		router.GET("/api/projects/:project/reviews/pivot", func(c *gin.Context) {
+		apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
 			project := strings.TrimSpace(c.Param("project"))
 			if project == "" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "project is required in the path"})
@@ -787,50 +787,8 @@ func main() {
 			c.IndentedJSON(http.StatusOK, resp)
 		})
 		// =========================================================================
-		// END: UNUATHENTICATED ENDPOINT BLOCK
-		// =========================================================================
-		// ============================================================================
-		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
-		// ============================================================================
-		// apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
-		// 	project := c.Param("project")
-		// 	root := c.DefaultQuery("root", "assets")
-
-		// 	sortKey := canonicalizeSort(
-		// 		c.DefaultQuery("sort", "group_1"),
-		// 		c.DefaultQuery("dir", "asc"),
-		// 	)
-
-		// 	phaseCSV := c.DefaultQuery("phase", "")
-
-		// 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-		// 	perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
-		// 	if perPage > 500 {
-		// 		perPage = 500
-		// 	}
-
-		// 	data, total, err := reviewInfoRepository.GetAssetsPivotPage(
-		// 		c.Request.Context(), gormDB, project, root, sortKey, phaseCSV, page, perPage,
-		// 	)
-		// 	if err != nil {
-		// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		// 		return
-		// 	}
-
-		// 	c.IndentedJSON(http.StatusOK, gin.H{
-		// 		"project":  project,
-		// 		"root":     root,
-		// 		"page":     page,
-		// 		"per_page": perPage,
-		// 		"total":    total,
-		// 		"count":    len(data),
-		// 		"data":     data,
-		// 		"ts":       time.Now().UTC().Format(time.RFC3339),
-		// 	})
-		// })
-		// ============================================================================
 		// END: UNAUTHENTICATED ENDPOINT BLOCK
-		// ============================================================================
+		// =========================================================================
 		// Review Status Log API
 
 		reviewStatusLogRepository, err := repository.NewReviewStatusLog(gormDB)
