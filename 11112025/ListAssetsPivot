@@ -1,0 +1,428 @@
+package delivery
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/PolygonPictures/central30-web/front/entity"
+	"github.com/PolygonPictures/central30-web/front/libs"
+	"github.com/PolygonPictures/central30-web/front/usecase"
+	"github.com/gin-gonic/gin"
+)
+
+type listReviewInfoParams struct {
+	Studio        *string    `form:"studio"`
+	TaskID        *string    `form:"task_id"`
+	SubtaskID     *string    `form:"subtask_id"`
+	Root          *string    `form:"root"`
+	Group         *string    `form:"groups"`
+	Relation      *string    `form:"relation"`
+	Phase         *string    `form:"phase"`
+	Component     *string    `form:"component"`
+	Take          *string    `form:"take"`
+	PerPage       *int       `form:"per_page"`
+	Page          *int       `form:"page"`
+	ModifiedSince *time.Time `form:"modified_since"`
+}
+
+func (p *listReviewInfoParams) Entity(project string) *entity.ListReviewInfoParams {
+	var group []string
+	if p.Group != nil {
+		group = strings.Split(*p.Group, "/")
+	}
+	var relation []string
+	if p.Relation != nil {
+		relation = strings.Split(*p.Relation, ",")
+	}
+	var phase []string
+	if p.Phase != nil {
+		phase = strings.Split(*p.Phase, ",")
+	}
+	params := &entity.ListReviewInfoParams{
+		Project:   project,
+		Studio:    p.Studio,
+		TaskID:    p.TaskID,
+		SubtaskID: p.SubtaskID,
+		Root:      p.Root,
+		Group:     group,
+		Relation:  relation,
+		Phase:     phase,
+		Component: p.Component,
+		Take:      p.Take,
+		BaseListParams: &entity.BaseListParams{
+			PerPage: p.PerPage,
+			Page:    p.Page,
+		},
+	}
+	if p.ModifiedSince != nil {
+		params.ModifiedSince = p.ModifiedSince
+	}
+
+	return params
+}
+
+type createReviewInfoParams struct {
+	TaskID                    string              `json:"task_id"`
+	SubtaskID                 string              `json:"subtask_id"`
+	Studio                    string              `json:"studio"`
+	ProjectPath               string              `json:"project_path"`
+	ReviewComments            []*libs.CommentInfo `json:"review_comments"`
+	Path                      *string             `json:"path"`
+	TakePath                  string              `json:"take_path" binding:"required_without=Path"`
+	Root                      string              `json:"root"`
+	Groups                    []string            `json:"groups"`
+	Relation                  string              `json:"relation"`
+	Phase                     string              `json:"phase"`
+	Component                 string              `json:"component"`
+	Take                      string              `json:"take"`
+	ApprovalStatus            string              `json:"approval_status"`
+	ApprovalStatusUpdatedUser string              `json:"approval_status_updated_user"`
+	WorkStatus                string              `json:"work_status"`
+	WorkStatusUpdatedUser     string              `json:"work_status_updated_user"`
+	ReviewTarget              []*libs.Content     `json:"review_target"`
+	ReviewData                []*libs.Content     `json:"review_data"`
+	OutputContents            []*libs.Content     `json:"output_contents"`
+	SubmittedAtUtc            time.Time           `json:"submitted_at_utc"`
+	SubmittedComputer         string              `json:"submitted_computer"`
+	SubmittedOS               string              `json:"submitted_os"`
+	SubmittedOSVersion        string              `json:"submitted_os_version"`
+	SubmittedUser             string              `json:"submitted_user"`
+	ExecutedAtUtc             time.Time           `json:"executed_at_utc"`
+	ExecutedComputer          string              `json:"executed_computer"`
+	ExecutedOS                string              `json:"executed_os"`
+	ExecutedOSVersion         string              `json:"executed_os_version"`
+	ExecutedUser              string              `json:"executed_user"`
+	AllFiles                  []*libs.File        `json:"all_files"`
+	NumAllFiles               uint32              `json:"num_all_files"`
+	SizeAllFiles              uint64              `json:"size_all_files"`
+	TargetComponents          []string            `json:"target_components"`
+
+	Duration                    *int32  `json:"duration,omitempty"`
+	DurationTimeline            *string `json:"duration_timeline,omitempty"`
+	ExportShotsVersions         *bool   `json:"export_shotsVersions,omitempty"`
+	ExportShotsVersionsRevision *string `json:"export_shotsVersions_revision,omitempty"`
+	ExportShotsVersionsPath     *string `json:"export_shotsVersions_path,omitempty"`
+}
+
+func (p *createReviewInfoParams) Entity(
+	project string,
+	createdBy *string,
+) *entity.CreateReviewInfoParams {
+	takePath := p.TakePath
+	if takePath == "" && p.Path != nil {
+		takePath = *p.Path
+	}
+	return &entity.CreateReviewInfoParams{
+		Project:   project,
+		CreatedBy: createdBy,
+
+		TaskID:                    p.TaskID,
+		SubtaskID:                 p.SubtaskID,
+		Studio:                    p.Studio,
+		ProjectPath:               p.ProjectPath,
+		ReviewComments:            p.ReviewComments,
+		TakePath:                  takePath,
+		Root:                      p.Root,
+		Groups:                    p.Groups,
+		Relation:                  p.Relation,
+		Phase:                     p.Phase,
+		Component:                 p.Component,
+		Take:                      p.Take,
+		ApprovalStatus:            p.ApprovalStatus,
+		ApprovalStatusUpdatedUser: p.ApprovalStatusUpdatedUser,
+		WorkStatus:                p.WorkStatus,
+		WorkStatusUpdatedUser:     p.WorkStatusUpdatedUser,
+		ReviewTarget:              p.ReviewTarget,
+		ReviewData:                p.ReviewData,
+		OutputContents:            p.OutputContents,
+		SubmittedAtUtc:            p.SubmittedAtUtc,
+		SubmittedComputer:         p.SubmittedComputer,
+		SubmittedOS:               p.SubmittedOS,
+		SubmittedOSVersion:        p.SubmittedOSVersion,
+		SubmittedUser:             p.SubmittedUser,
+		ExecutedAtUtc:             p.ExecutedAtUtc,
+		ExecutedComputer:          p.ExecutedComputer,
+		ExecutedOS:                p.ExecutedOS,
+		ExecutedOSVersion:         p.ExecutedOSVersion,
+		ExecutedUser:              p.ExecutedUser,
+		AllFiles:                  p.AllFiles,
+		NumAllFiles:               p.NumAllFiles,
+		SizeAllFiles:              p.SizeAllFiles,
+		TargetComponents:          p.TargetComponents,
+
+		Duration:                    p.Duration,
+		DurationTimeline:            p.DurationTimeline,
+		ExportShotsVersions:         p.ExportShotsVersions,
+		ExportShotsVersionsRevision: p.ExportShotsVersionsRevision,
+		ExportShotsVersionsPath:     p.ExportShotsVersionsPath,
+	}
+}
+
+type updateReviewInfoParams struct {
+	ApprovalStatus            *string `json:"approval_status,omitempty"`
+	ApprovalStatusUpdatedUser *string `json:"approval_status_updated_user,omitempty"`
+	WorkStatus                *string `json:"work_status,omitempty"`
+	WorkStatusUpdatedUser     *string `json:"work_status_updated_user,omitempty"`
+}
+
+func (p *updateReviewInfoParams) Entity(
+	project string,
+	id int32,
+	modifiedBy *string,
+) *entity.UpdateReviewInfoParams {
+	return &entity.UpdateReviewInfoParams{
+		ApprovalStatus:            p.ApprovalStatus,
+		ApprovalStatusUpdatedUser: p.ApprovalStatusUpdatedUser,
+		WorkStatus:                p.WorkStatus,
+		WorkStatusUpdatedUser:     p.WorkStatusUpdatedUser,
+		Project:                   project,
+		ID:                        id,
+		ModifiedBy:                modifiedBy,
+	}
+}
+
+func NewReviewInfo(
+	uc *usecase.ReviewInfo,
+) *ReviewInfo {
+	return &ReviewInfo{
+		uc: uc,
+	}
+}
+
+type ReviewInfo struct {
+	uc *usecase.ReviewInfo
+}
+
+func (h *ReviewInfo) List(c *gin.Context) {
+	var p listReviewInfoParams
+	if err := c.ShouldBindQuery(&p); err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := p.Entity(c.Param("project"))
+	entities, total, err := h.uc.List(c.Request.Context(), params)
+	if err != nil {
+		internalServerError(c, err)
+		return
+	}
+
+	res := libs.CreateListResponse("reviews", entities, c.Request, params, total)
+	c.PureJSON(http.StatusOK, res)
+}
+
+func (h *ReviewInfo) Get(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := &entity.GetReviewParams{
+		Project: c.Param("project"),
+		ID:      int32(id),
+	}
+	e, err := h.uc.Get(c.Request.Context(), params)
+	if err != nil {
+		if errors.Is(err, entity.ErrRecordNotFound) {
+			badRequest(c, fmt.Errorf("review info with ID %d not found", params.ID))
+			return
+		}
+		internalServerError(c, err)
+		return
+	}
+	c.PureJSON(http.StatusOK, e)
+}
+
+func (h *ReviewInfo) Post(c *gin.Context) {
+	var p createReviewInfoParams
+	if err := c.ShouldBind(&p); err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := p.Entity(c.Param("project"), nil)
+	e, err := h.uc.Create(c.Request.Context(), params)
+	if err != nil {
+		internalServerError(c, err)
+		return
+	}
+	c.PureJSON(http.StatusOK, e)
+}
+
+func (h *ReviewInfo) Update(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		badRequest(c, err)
+		return
+	}
+	var p updateReviewInfoParams
+	if err := c.ShouldBind(&p); err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := p.Entity(c.Param("project"), int32(id), nil)
+	e, err := h.uc.Update(c.Request.Context(), params)
+	if err != nil {
+		if errors.Is(err, entity.ErrRecordNotFound) {
+			badRequest(c, fmt.Errorf("review info with ID %d not found", params.ID))
+			return
+		}
+		internalServerError(c, err)
+		return
+	}
+	c.PureJSON(http.StatusOK, e)
+}
+
+func (h *ReviewInfo) Delete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := &entity.DeleteReviewInfoParams{
+		Project:    c.Param("project"),
+		ID:         int32(id),
+		ModifiedBy: nil,
+	}
+	if err := h.uc.Delete(c.Request.Context(), params); err != nil {
+		if errors.Is(err, entity.ErrRecordNotFound) {
+			badRequest(c, fmt.Errorf("review info with ID %d not found", params.ID))
+			return
+		}
+		internalServerError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+type assetListParams struct {
+	Studio  *string `form:"studio"`
+	PerPage *int    `form:"per_page"`
+	Page    *int    `form:"page"`
+}
+
+func (p *assetListParams) Entity(project string) *entity.AssetListParams {
+	params := &entity.AssetListParams{
+		Project: project,
+		Studio:  p.Studio,
+		BaseListParams: &entity.BaseListParams{
+			PerPage: p.PerPage,
+			Page:    p.Page,
+		},
+	}
+
+	return params
+}
+
+func (h *ReviewInfo) ListAssets(c *gin.Context) {
+	var p assetListParams
+	if err := c.ShouldBindQuery(&p); err != nil {
+		badRequest(c, err)
+		return
+	}
+	params := p.Entity(c.Param("project"))
+	entities, total, err := h.uc.ListAssets(c.Request.Context(), params)
+	if err != nil {
+		internalServerError(c, err)
+		return
+	}
+
+	res := libs.CreateListResponse("assets", entities, c.Request, params, total)
+	c.PureJSON(http.StatusOK, res)
+}
+
+func (p *listReviewInfoParams) assetReviewInfoEntity(
+	project string,
+	asset string,
+	relation string,
+) *entity.AssetReviewInfoListParams {
+	params := &entity.AssetReviewInfoListParams{
+		Project:  project,
+		Asset:    asset,
+		Relation: relation,
+	}
+
+	return params
+}
+
+func (h *ReviewInfo) ListAssetReviewInfos(c *gin.Context) {
+	var p listReviewInfoParams
+	if err := c.ShouldBindQuery(&p); err != nil {
+		badRequest(c, err)
+		return
+	}
+
+	params := p.assetReviewInfoEntity(
+		c.Param("project"),
+		c.Param("asset"),
+		c.Param("relation"),
+	)
+	entities, err := h.uc.ListAssetReviewInfos(c.Request.Context(), params)
+	if err != nil {
+		internalServerError(c, err)
+		return
+	}
+
+	res := map[string]interface{}{
+		"reviews": entities,
+	}
+	c.PureJSON(http.StatusOK, res)
+}
+
+// /
+func splitCSV(v string) []string {
+	if v == "" {
+		return nil
+	}
+	raw := strings.Split(v, ",")
+	out := make([]string, 0, len(raw))
+	for _, s := range raw {
+		if trimmed := strings.TrimSpace(s); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
+// ============================================================
+// ListAssetsPivot — filtered, phase-aware asset review listing
+// Route: GET /api/projects/:project/reviews/assets/pivot
+// ============================================================
+func (h *ReviewInfo) ListAssetsPivot(c *gin.Context) {
+	project := c.Param("project")
+	if project == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "project is required"})
+		return
+	}
+
+	perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "15"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	offset := (page - 1) * perPage
+
+	sortKey := c.DefaultQuery("sort", "group_1")
+	dir := strings.ToLower(c.DefaultQuery("dir", "asc"))
+	preferredPhase := strings.ToLower(c.DefaultQuery("phase", "none"))
+
+	nameKey := strings.TrimSpace(c.DefaultQuery("name", ""))
+	apprStatuses := splitCSV(c.DefaultQuery("appr", ""))
+	workStatuses := splitCSV(c.DefaultQuery("work", ""))
+
+	list, total, err := h.uc.ListAssetsPivot(
+		c.Request.Context(),
+		project, "assets", preferredPhase,
+		sortKey, dir,
+		perPage, offset,
+		nameKey, apprStatuses, workStatuses,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"assets": list,
+		"total":  total,
+	})
+}
