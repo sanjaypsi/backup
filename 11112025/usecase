@@ -1,0 +1,254 @@
+package usecase
+
+import (
+	"context"
+	"time"
+
+	"github.com/PolygonPictures/central30-web/front/entity"
+	"github.com/PolygonPictures/central30-web/front/repository"
+	"github.com/gin-gonic/gin/binding"
+	"gorm.io/gorm"
+)
+
+type ReviewInfo struct {
+	repo         *repository.ReviewInfo
+	prjRepo      *repository.ProjectInfo
+	stuRepo      *repository.StudioInfo
+	docRepo      entity.DocumentRepository
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+}
+
+func NewReviewInfo(
+	repo *repository.ReviewInfo,
+	pr *repository.ProjectInfo,
+	sr *repository.StudioInfo,
+	dr entity.DocumentRepository,
+	readTimeout time.Duration,
+	writeTimeout time.Duration,
+) *ReviewInfo {
+	return &ReviewInfo{
+		repo:         repo,
+		prjRepo:      pr,
+		stuRepo:      sr,
+		docRepo:      dr,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+	}
+}
+
+func (uc *ReviewInfo) checkForProject(db *gorm.DB, project string) error {
+	_, err := uc.prjRepo.Get(db, &entity.GetProjectInfoParams{
+		KeyName: project,
+	})
+	return err
+}
+
+func (uc *ReviewInfo) checkForStudio(db *gorm.DB, studio string) error {
+	_, err := uc.stuRepo.Get(db, &entity.GetStudioInfoParams{
+		KeyName: studio,
+	})
+	return err
+}
+
+func (uc *ReviewInfo) List(
+	ctx context.Context,
+	params *entity.ListReviewInfoParams,
+) ([]*entity.ReviewInfo, int, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, 0, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, 0, err
+	}
+	if params.Studio != nil {
+		if err := uc.checkForStudio(db, *params.Studio); err != nil {
+			return nil, 0, err
+		}
+	}
+	return uc.repo.List(db, params)
+}
+
+func (uc *ReviewInfo) Get(
+	ctx context.Context,
+	params *entity.GetReviewParams,
+) (*entity.ReviewInfo, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, err
+	}
+	return uc.repo.Get(db, params)
+}
+
+func (uc *ReviewInfo) Create(
+	ctx context.Context,
+	params *entity.CreateReviewInfoParams,
+) (*entity.ReviewInfo, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, err
+	}
+	if err := uc.checkForStudio(db, params.Studio); err != nil {
+		return nil, err
+	}
+	var e *entity.ReviewInfo
+	if err := uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+		var err error
+		e, err = uc.repo.Create(tx, params)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	// Create a comment when creating a review.
+	// https://docs.google.com/spreadsheets/d/14VSOi7h_zh5TP0JK3nBXjVoAQhrete3XahPZ96h30Wo/edit#gid=734852926
+	var user string
+	if params.CreatedBy != nil {
+		user = *params.CreatedBy
+	}
+	commentdata := []map[string]interface{}{}
+	defaultrole := "artist"
+	for _, commentinfo := range params.ReviewComments {
+		role := commentinfo.ResponsiblePersonRole
+		if role == nil {
+			role = &defaultrole
+		}
+		comment := map[string]interface{}{
+			"language":                commentinfo.Language,
+			"text":                    commentinfo.Text,
+			"attachments":             commentinfo.Attachments,
+			"need_translation":        commentinfo.NeedTranslation,
+			"is_translated":           commentinfo.IsTranslated,
+			"responsible_person_role": role,
+		}
+		commentdata = append(commentdata, comment)
+	}
+
+	if _, err := uc.docRepo.CreateDocument(
+		context.WithValue(timeoutCtx, entity.KeyUser, user),
+		params.Project,
+		"comment",
+		map[string]interface{}{
+			"root":                 params.Root,
+			"groups":               params.Groups,
+			"relation":             params.Relation,
+			"phase":                params.Phase,
+			"original_comment_id":  nil,
+			"task_id":              params.TaskID,
+			"subtask_id":           params.SubtaskID,
+			"path":                 params.TakePath,
+			"take":                 params.Take,
+			"comment_data":         commentdata,
+			"studio":               params.Studio,
+			"project":              params.Project,
+			"submitted_at_utc":     params.SubmittedAtUtc.Format(time.RFC3339Nano),
+			"submitted_user":       params.SubmittedUser,
+			"submitted_computer":   params.SubmittedComputer,
+			"submitted_os":         params.SubmittedOS,
+			"submitted_os_version": params.SubmittedOSVersion,
+			"component":            params.Component,
+			"type":                 "review",
+			"tool":                 "ppiCentralWeb",
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return e, nil
+}
+
+func (uc *ReviewInfo) Update(
+	ctx context.Context,
+	params *entity.UpdateReviewInfoParams,
+) (*entity.ReviewInfo, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, err
+	}
+	var e *entity.ReviewInfo
+	if err := uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+		var err error
+		e, err = uc.repo.Update(tx, params)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return e, nil
+}
+
+func (uc *ReviewInfo) Delete(
+	ctx context.Context,
+	params *entity.DeleteReviewInfoParams,
+) error {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+	defer cancel()
+	return uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+		if err := uc.checkForProject(tx, params.Project); err != nil {
+			return err
+		}
+		return uc.repo.Delete(tx, params)
+	})
+}
+
+func (uc *ReviewInfo) ListAssets(
+	ctx context.Context,
+	params *entity.AssetListParams,
+) ([]*entity.Asset, int, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, 0, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, 0, err
+	}
+	if params.Studio != nil {
+		if err := uc.checkForStudio(db, *params.Studio); err != nil {
+			return nil, 0, err
+		}
+	}
+	return uc.repo.ListAssets(db, params)
+}
+
+func (uc *ReviewInfo) ListAssetReviewInfos(
+	ctx context.Context,
+	params *entity.AssetReviewInfoListParams,
+) ([]*entity.ReviewInfo, error) {
+	if err := binding.Validator.ValidateStruct(params); err != nil {
+		return nil, err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
+	defer cancel()
+	db := uc.repo.WithContext(timeoutCtx)
+	if err := uc.checkForProject(db, params.Project); err != nil {
+		return nil, err
+	}
+	if params.Studio != nil {
+		if err := uc.checkForStudio(db, *params.Studio); err != nil {
+			return nil, err
+		}
+	}
+	return uc.repo.ListAssetReviewInfos(db, params)
+}
