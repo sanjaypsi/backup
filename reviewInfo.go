@@ -410,45 +410,51 @@ type phaseRow struct {
 }
 
 // ---------- Dynamic Sorting Function ----------
+// reviewInfo.go
+
+// ---------- Dynamic Sorting Function ----------
 func buildOrderClause(alias, key, dir string) string {
+	// ... (dir and col function remain the same) ...
 	dir = strings.ToUpper(strings.TrimSpace(dir))
 	if dir != "ASC" && dir != "DESC" {
 		dir = "ASC"
 	}
 	col := func(c string) string {
-		if alias == "" {
-			return c
+		if alias != "" {
+			return alias + "." + c
 		}
-		return alias + "." + c
+		return c
 	}
 
 	switch key {
+	// Generic Sorts (use column directly)
+	case "submitted_at_utc", "modified_at_utc", "phase":
+		return col(key) + " " + dir
 
-	case "submitted_at_utc":
-		return col("submitted_at_utc") + " " + dir
-
-	case "modified_at_utc":
-		return col("modified_at_utc") + " " + dir
-
-	case "phase":
-		return col("phase") + " " + dir
-
+	// Asset Name/Relation Sorts (use compound keys)
 	case "group1_only":
 		return fmt.Sprintf("LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
 			col("group_1"), dir, col("relation"), col("submitted_at_utc"), col("submitted_at_utc"), dir)
-
 	case "relation_only":
 		return fmt.Sprintf("LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
 			col("relation"), dir, col("group_1"), col("submitted_at_utc"), col("submitted_at_utc"), dir)
-
 	case "group_rel_submitted":
 		return fmt.Sprintf("LOWER(%s) ASC, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
 			col("group_1"), col("relation"), col("submitted_at_utc"), col("submitted_at_utc"), dir)
 
-	case "work_status":
-		return fmt.Sprintf("LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("work_status"), dir, col("group_1"), col("submitted_at_utc"), col("submitted_at_utc"), dir)
+	// Phase-Specific Sorts (use generic work/submitted status columns, let phase-bias handle the priority)
+	case "mdl_submitted", "rig_submitted", "bld_submitted", "dsn_submitted", "ldv_submitted":
+		// Sort by submitted_at_utc column, relying on `preferredPhase` to bring the right rows to the top.
+		return fmt.Sprintf("(%s IS NULL) ASC, %s %s, LOWER(%s) ASC, LOWER(%s) ASC",
+			col("submitted_at_utc"), col("submitted_at_utc"), dir, col("group_1"), col("relation"))
 
+	case "mdl_work_status", "rig_work_status", "bld_work_status", "dsn_work_status", "ldv_work_status":
+		// Sort by work_status column, relying on `preferredPhase` to bring the right rows to the top.
+		return fmt.Sprintf("(%s IS NULL) ASC, %s %s, LOWER(%s) ASC, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
+			col("work_status"), col("work_status"), dir, col("group_1"), col("relation"),
+			col("submitted_at_utc"), col("submitted_at_utc"), dir)
+
+	// Default sort
 	default:
 		return fmt.Sprintf("LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
 			col("group_1"), dir, col("relation"), col("submitted_at_utc"), col("submitted_at_utc"), dir)
