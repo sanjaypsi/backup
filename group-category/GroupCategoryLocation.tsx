@@ -34,6 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: 'column',
       overflow: 'hidden',
     },
+    
     // Header row for the tree view next to roots - Added New SanjayK -PSI
     headerRow: {
       display: 'flex',
@@ -379,8 +380,77 @@ const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) =>
 };
 
 // --------- NEW: read-only tree view built from categories + groups ----------
+type TreeNode = {
+  name: string,
+  fullPath: string,
+  children: TreeNode[],
+  isGroup: boolean,
+  category?: Category,
+};
+
 type GroupCategoryTreeProps = {
   categories: Category[],
+  onRemoveGroup?: (category: Category, groupPath: string) => void,
+};
+
+const buildTreeFromCategories = (categories: Category[]): TreeNode[] => {
+  type MapNode = { 
+    node: TreeNode,
+    children: Record<string, MapNode>,
+  };
+
+  const root: Record<string, MapNode> = {};
+
+  const getOrCreate =(
+    map: Record<string, MapNode>, 
+    name: string, 
+    fullPath: string, 
+    isGroup: boolean,
+    category?: Category,
+  ): MapNode => {
+    if (!map[name]) {
+      map[name] = {
+        node: { name, fullPath, children: [], isGroup, category },
+        children: {},
+      };
+    } else if (isGroup) {
+      // mark existing node as group if needed
+      map[name].node.isGroup = true;
+      map[name].node.category = category;
+    }
+    return map[name];
+  };
+
+  // Build the tree structure
+  categories.forEach(category => {
+    const pathParts = category.path.split('/').filter(Boolean);
+    let current = root;
+    let fullPath = '';
+    pathParts.forEach((part, idx) => {
+      fullPath += (idx === 0 ? '' : '/') + part;
+      current = getOrCreate(current, part, fullPath, false).children;
+    });
+    // Attach groups as children
+    category.groups.forEach(groupPath => {
+      const groupParts = groupPath.split('/').filter(Boolean);
+      let groupCurrent = current;
+      let groupFullPath = category.path;
+      groupParts.forEach((groupPart, idx) => {
+        groupFullPath += '/' + groupPart;
+        groupCurrent = getOrCreate(groupCurrent, groupPart, groupFullPath, idx === groupParts.length - 1, category).children;
+      });
+    });
+  });
+
+  // Convert MapNode tree to TreeNode[]
+  const mapNodeToTreeNode = (map: Record<string, MapNode>): TreeNode[] => {
+    return Object.values(map).map(({ node, children }) => ({
+      ...node,
+      children: mapNodeToTreeNode(children),
+    }));
+  };
+
+  return mapNodeToTreeNode(root);
 };
 
 const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({ categories }) => {
@@ -465,11 +535,35 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
   const classes = useStyles();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
+  
   const handleDeleteGroup = (target: Category) => {
     setCategories(
       categories.map(c => c.id === target.id ? target : c),
     );
   };
+
+  // Handler to remove a group from a category
+  const handleRemoveGroup = (category: Category, groupPath: string) => {
+    if (!project) {
+      return;
+    }
+    updateGroupCategory(
+      project.key_name,
+      category.id,
+      'remove',
+      [groupPath],
+    ).then(res => {
+      if (res == null) {
+        return;
+      }
+      setCategories(
+        categories.map(c => c.id === res.id ? res : c),
+      );
+    }).catch(err => {
+      console.error(err);
+    });
+  };
+
   useEffect(() => {
     if (selectedCategory == null) {
       return;
@@ -532,7 +626,10 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
             {root !== "" && (
               <>
                 {viewMode === 'tree' && (
-                  <GroupCategoryTree categories={categories} />
+                  <GroupCategoryTree 
+                  categories={categories} 
+                  onRemoveGroup={handleRemoveGroup} // pass down the handler remove group
+                  />
                 )}
                 {viewMode === 'list' && (
                   <GroupCategoryList 
