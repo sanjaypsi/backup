@@ -34,8 +34,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexDirection: 'column',
       overflow: 'hidden',
     },
-    
-    // Header row for the tree view next to roots - Added New SanjayK -PSI
+
     headerRow: {
       display: 'flex',
       backgroundColor: theme.palette.background.paper,
@@ -49,26 +48,53 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
 
+    // 🔹 3-column layout
     container: {
-      witdh: '100%',
+      width: '100%',
+      height: '100%',
       backgroundColor: theme.palette.background.paper,
-      display: 'flex',
-      overflow: 'auto hidden',
-      '& > nav, & > div': {
-        overflow: 'auto',
-        marginRight: theme.spacing(.5),
-        flexShrink: 0,
-        '&:first-child': {
-          marginLeft: theme.spacing(.5),
-        },
-      },
+      display: 'grid',
+      gridTemplateColumns: '125px 350px 1fr', // Roots | Tree | Right side
+      columnGap: theme.spacing(0.5),
+      overflow: 'hidden',
     },
+
+    rootsColumn: {
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      marginLeft: theme.spacing(0.5),
+    },
+
+    treeColumn: {
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      borderLeft: `1px solid ${theme.palette.divider}`,
+      paddingLeft: theme.spacing(1),
+    },
+
+    rightColumn: {
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+    },
+
     treeText: {
       fontFamily: 'monospace',
-      fontSize: 12,
+      fontSize: 14,
       whiteSpace: 'pre',
       margin: 0,
-      padding: theme.spacing(1, 0),
+      padding: theme.spacing(0.1, 0),
+      userSelect: 'text',
+      color: theme.palette.text.primary,
+    },
+
+    treeRow: {
+      display: 'grid',
+      gridTemplateColumns: '16px auto', // arrow | text (no delete now)
+      alignItems: 'center',
+      columnGap: theme.spacing(0.5),
+      // padding: theme.spacing(0.2, 0),
     },
   }),
 );
@@ -453,70 +479,97 @@ const buildTreeFromCategories = (categories: Category[]): TreeNode[] => {
   return mapNodeToTreeNode(root);
 };
 
-const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({ categories }) => {
+// Component to render the tree
+const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
+  categories,
+  onRemoveGroup,
+}) => {
   const classes = useStyles();
 
-  // build generic tree structure from category.path + category.groups
-  const tree = useMemo(() => {
-    type Node = { [name: string]: Node };
-    const root: Node = {};
-
-    const ensurePath = (base: Node, parts: string[]) => {
-      let node = base;
-      parts.forEach(part => {
-        if (!node[part]) {
-          node[part] = {};
-        }
-        node = node[part];
-      });
-      return node;
-    };
-
-    categories.forEach(cat => {
-      const catParts = cat.path.split('/').filter(Boolean);
-      const catNode = ensurePath(root, catParts);
-
-      // attach groups under the category node
-      cat.groups.forEach(groupPath => {
-        const groupParts = groupPath.split('/').filter(Boolean);
-        ensurePath(catNode, groupParts);
-      });
-    });
-
-    return root;
-  }, [categories]);
-
-  const buildLines = (node: { [name: string]: any }, prefix = ''): string[] => {
-    const entries = Object.entries(node).sort(([a], [b]) =>
-      a.localeCompare(b),
-    );
-    const lines: string[] = [];
-
-    entries.forEach(([name, child], idx) => {
-      const isLast = idx === entries.length - 1;
-      const connector = isLast ? '└─ ' : '├─ ';
-      lines.push(prefix + connector + name);
-      const childPrefix = prefix + (isLast ? '   ' : '│  ');
-      lines.push(...buildLines(child, childPrefix));
-    });
-
-    return lines;
+  const tree = useMemo(
+    () => buildTreeFromCategories(categories),
+    [categories],
+  );
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const toggleNode = (fullPath: string) => {
+    setCollapsed(prev => ({
+      ...prev,
+      [fullPath]: !prev[fullPath],
+    }));
   };
 
-  const lines = buildLines(tree);
+  // Recursive function to render tree nodes with ASCII prefixes
+  const renderNodes = (
+    nodes: TreeNode[],
+    depth = 0,
+    isLastArray: boolean[] = [],
+  ): React.ReactNode =>
+    nodes.map((node, index) => {
+      const isLast = index === nodes.length - 1;
+      const thisIsLastArray = [...isLastArray, isLast];
 
-  return (
-    <div>
-      <pre className={classes.treeText}>
-        {lines.length === 0 ? '(no data)' : lines.join('\n')}
-      </pre>
-    </div>
-  );
+      // Build ASCII prefix – your existing logic
+      let prefix = '';
+      if (depth > 0) {
+        for (let i = 0; i < depth - 1; i++) {
+          const isRootColumn = i === 0;
+          if (isRootColumn) {
+            prefix += '   ';
+          } else {
+            prefix += thisIsLastArray[i] ? '   ' : '│  ';
+          }
+        }
+        prefix += isLast ? '└─ ' : '├─ ';
+      }
+
+      const isLeafGroup =
+        node.isGroup &&
+        node.category &&
+        (!node.children || node.children.length === 0);
+
+      const hasChildren = node.children && node.children.length > 0;
+      const isCollapsed = !!collapsed[node.fullPath];
+
+      return (
+        <React.Fragment key={node.fullPath}>
+          <div className={classes.treeRow}>
+            {/* column 1: + / - toggle */}
+            <span
+              style={{
+                cursor: hasChildren ? 'pointer' : 'default',
+                userSelect: 'none',
+              }}
+              onClick={() => hasChildren && toggleNode(node.fullPath)}
+            >
+            {hasChildren ? (isCollapsed ? '▶' : '▼') : ''}
+            </span>
+
+            {/* column 2: ASCII tree text */}
+            <span
+              className={classes.treeText}
+              style={{ fontWeight: depth === 0 ? 'bold' : 'normal',
+              paddingLeft: hasChildren ? 0 : 16
+               }}
+            >
+              {prefix}
+              {node.name}
+
+            </span>
+
+          </div>
+
+          {/* children: render ONLY when not collapsed */}
+          {!isCollapsed &&
+            renderNodes(node.children, depth + 1, thisIsLastArray)}
+        </React.Fragment>
+      );
+    });
+
+  // Return the rendered tree
+  return <div>{renderNodes(tree)}</div>;
 };
 
 // --------------------------------------------------------------------------
-
-
 type GroupCategoryLocationProps = {
   project?: Project | null,
   root: string,
@@ -603,6 +656,7 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
                   style={{
                     cursor: "pointer",
                     fontWeight: viewMode === "tree" ? "bold" : "normal",
+                    textAlign: "right",
                   }}
                 >
                   Tree View
@@ -612,6 +666,7 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
                   style={{
                     cursor: "pointer",
                     fontWeight: viewMode === "list" ? "bold" : "normal",
+                    textAlign: "right",
                   }}
                 >
                   List View
@@ -621,28 +676,45 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
           </div>
           {/* Content area */}
           <div className={classes.container}>
-            <RootList project={project} selected={root} setSelected={setRoot} />
-            {/* NEW: tree view next to roots, for current root */}
-            {root !== "" && (
-              <>
-                {viewMode === 'tree' && (
-                  <GroupCategoryTree 
-                  categories={categories} 
-                  onRemoveGroup={handleRemoveGroup} // pass down the handler remove group
-                  />
-                )}
-                {viewMode === 'list' && (
-                  <GroupCategoryList 
-                    project={project}
-                    root={root}
-                    selected={selectedCategory}
-                    setSelected={setSelectedCategory}
-                    categories={categories}
-                    setCategories={setCategories}
-                  />
-                )}
-              </>
-            )}
+            <div className={classes.rootsColumn}>
+              <RootList project={project} selected={root} setSelected={setRoot} />
+            </div>
+
+            <div className={classes.treeColumn}>
+              {root !== "" && (
+                <>
+                  {viewMode === 'tree' && (
+                    <div style={{ paddingLeft: "50px", overflow: 'auto' }}>
+                    <GroupCategoryTree 
+                    categories={categories} 
+                    onRemoveGroup={handleRemoveGroup} // pass down the handler remove group
+                    />
+                    </div>
+                  )}
+                  {viewMode === 'list' && (
+                    <div style={{ paddingLeft: "50px", overflow: 'auto' }}>
+                    <GroupCategoryList 
+                      project={project}
+                      root={root}
+                      selected={selectedCategory}
+                      setSelected={setSelectedCategory}
+                      categories={categories}
+                      setCategories={setCategories}
+                    />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className={classes.rightColumn}>
+              {selectedCategory != null && (
+                <GroupList
+                  project={project}
+                  category={selectedCategory}
+                  onDelete={handleDeleteGroup}
+                />
+              )}
+            </div>
           </div>
         </>
       )}
