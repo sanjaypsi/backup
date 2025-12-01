@@ -63,20 +63,22 @@ const useStyles = makeStyles((theme: Theme) =>
       overflowY: 'auto',
       overflowX: 'hidden',
       marginLeft: theme.spacing(0.5),
+      columnGap: theme.spacing(0.1),
     },
 
     treeColumn: {
       overflowY: 'auto',
       overflowX: 'hidden',
       borderLeft: `1px solid ${theme.palette.divider}`,
-      paddingLeft: theme.spacing(1),
+      paddingLeft: theme.spacing(0.1),
     },
 
     rightColumn: {
       overflowY: 'auto',
       overflowX: 'hidden',
-      paddingLeft: theme.spacing(1),
-      paddingRight: theme.spacing(1),
+      paddingLeft: theme.spacing(0.5),
+      paddingRight: theme.spacing(0.5),
+      columnGap: theme.spacing(0.5),
     },
 
     treeText: {
@@ -84,17 +86,27 @@ const useStyles = makeStyles((theme: Theme) =>
       fontSize: 14,
       whiteSpace: 'pre',
       margin: 0,
-      padding: theme.spacing(0.1, 0),
+      padding: theme.spacing(0.25, 0.1),
       userSelect: 'text',
       color: theme.palette.text.primary,
     },
 
+    selectedTreeText: {
+      backgroundColor: theme.palette.action.selected,
+      borderRadius: theme.shape.borderRadius,
+    },
+
+    selectedTreeRow: {
+      backgroundColor: theme.palette.action.selected,
+      borderRadius: theme.shape.borderRadius,
+    },
+
     treeRow: {
       display: 'grid',
-      gridTemplateColumns: '16px auto', // arrow | text (no delete now)
+      gridTemplateColumns: '10px auto', // arrow | text (no delete now)
       alignItems: 'center',
-      columnGap: theme.spacing(0.5),
-      // padding: theme.spacing(0.2, 0),
+      columnGap: theme.spacing(0),
+      cursor: 'pointer',
     },
   }),
 );
@@ -417,6 +429,8 @@ type TreeNode = {
 type GroupCategoryTreeProps = {
   categories: Category[],
   onRemoveGroup?: (category: Category, groupPath: string) => void,
+  onSelectCategory?: (category: Category) => void,
+  selectedCategory?: Category | null,
 };
 
 const buildTreeFromCategories = (categories: Category[]): TreeNode[] => {
@@ -483,6 +497,8 @@ const buildTreeFromCategories = (categories: Category[]): TreeNode[] => {
 const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
   categories,
   onRemoveGroup,
+  onSelectCategory,
+  selectedCategory,
 }) => {
   const classes = useStyles();
 
@@ -490,7 +506,19 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
     () => buildTreeFromCategories(categories),
     [categories],
   );
+
+  // category.path -> Category map so we can select categories node too
+  const pathToCategory: Record<string, Category> = useMemo(() => {
+    const map: Record<string, Category> = {};
+    categories.forEach(cat => {
+      map[cat.path] = cat;
+    });
+    return map;
+  }, [categories]);
+
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+
   const toggleNode = (fullPath: string) => {
     setCollapsed(prev => ({
       ...prev,
@@ -529,27 +557,53 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
 
       const hasChildren = node.children && node.children.length > 0;
       const isCollapsed = !!collapsed[node.fullPath];
+      const isSelected = selectedPath === node.fullPath;
+      const nodeCategory = pathToCategory[node.fullPath] || node.category || null;
 
+      const handleClick = () => {
+        if (nodeCategory && onSelectCategory) {
+          onSelectCategory(nodeCategory);
+        }
+      };
+        
       return (
         <React.Fragment key={node.fullPath}>
-          <div className={classes.treeRow}>
-            {/* column 1: + / - toggle */}
+          <div 
+          className={`${classes.treeRow} ${isSelected ? classes.selectedTreeRow : ''}`}
+              style={{ paddingLeft: `${depth * 16}px` }}
+              onClick={() => setSelectedPath(node.fullPath)}>
+            {/* column 1: expand/collapse arrow */} 
             <span
-              style={{
-                cursor: hasChildren ? 'pointer' : 'default',
-                userSelect: 'none',
+              onClick ={(e) => {
+                e.stopPropagation();
+                if (hasChildren) {
+                  toggleNode(node.fullPath);
+                }
               }}
-              onClick={() => hasChildren && toggleNode(node.fullPath)}
+              style={{ cursor: hasChildren ? 'pointer' : 'default',
+                userSelect: 'none',
+                paddingLeft: depth * 4,
+              }}
             >
             {hasChildren ? (isCollapsed ? '▶' : '▼') : ''}
             </span>
 
             {/* column 2: ASCII tree text */}
             <span
-              className={classes.treeText}
-              style={{ fontWeight: depth === 0 ? 'bold' : 'normal',
-              paddingLeft: hasChildren ? 0 : 16
+              className={classes.treeText + (isSelected && depth > 0 ? ` ${classes.selectedTreeText}` : '' )}
+              style={{
+                fontWeight: depth === 0 || isSelected ? 'bold' : 'normal',
+                paddingLeft: hasChildren ? 8 : 16,
+                cursor: nodeCategory ? 'pointer' : 'default',
                }}
+              onClick={() => {
+                if (depth > 0) {
+                  setSelectedPath(node.fullPath);
+                }
+                if (nodeCategory && onSelectCategory) {
+                  onSelectCategory(nodeCategory);
+                }
+              }}
             >
               {prefix}
               {node.name}
