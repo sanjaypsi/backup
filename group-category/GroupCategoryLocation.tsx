@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { queryPreference } from '../../pipeline-setting/api';
-import { Project } from '../types';
 import {
   Button,
   createStyles,
@@ -19,10 +17,13 @@ import {
   Paper,
   Theme,
 } from '@material-ui/core';
-import { Category } from './types';
 import AddIcon from '@material-ui/icons/Add';
-import { createGroupCategory, deleteGroupCategory, updateGroupCategory } from './api';
 import DeleteIcon from '@material-ui/icons/Delete';
+
+import { queryPreference } from '../../pipeline-setting/api';
+import { Project } from '../types';
+import { Category } from './types';
+import { createGroupCategory, deleteGroupCategory, updateGroupCategory } from './api';
 import AddDialog from './GroupCategoryAddDialog';
 import DeleteDialog from './GroupCategoryDeleteDialog';
 
@@ -48,13 +49,12 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
 
-    // 🔹 3-column layout
     container: {
       width: '100%',
       height: '100%',
       backgroundColor: theme.palette.background.paper,
       display: 'grid',
-      gridTemplateColumns: '125px 350px 1fr', // Roots | Tree | Right side
+      gridTemplateColumns: '125px 350px 1fr', // Roots | Tree/List | Groups
       columnGap: theme.spacing(0.5),
       overflow: 'hidden',
     },
@@ -63,7 +63,6 @@ const useStyles = makeStyles((theme: Theme) =>
       overflowY: 'auto',
       overflowX: 'hidden',
       marginLeft: theme.spacing(0.5),
-      columnGap: theme.spacing(0.1),
     },
 
     treeColumn: {
@@ -78,7 +77,6 @@ const useStyles = makeStyles((theme: Theme) =>
       overflowX: 'hidden',
       paddingLeft: theme.spacing(0.5),
       paddingRight: theme.spacing(0.5),
-      columnGap: theme.spacing(0.5),
     },
 
     treeText: {
@@ -91,11 +89,6 @@ const useStyles = makeStyles((theme: Theme) =>
       color: theme.palette.text.primary,
     },
 
-    selectedTreeText: {
-      backgroundColor: theme.palette.action.selected,
-      borderRadius: theme.shape.borderRadius,
-    },
-
     selectedTreeRow: {
       backgroundColor: theme.palette.action.selected,
       borderRadius: theme.shape.borderRadius,
@@ -103,18 +96,21 @@ const useStyles = makeStyles((theme: Theme) =>
 
     treeRow: {
       display: 'grid',
-      gridTemplateColumns: '10px auto', // arrow | text (no delete now)
+      gridTemplateColumns: '12px auto', // arrow | text
       alignItems: 'center',
-      columnGap: theme.spacing(0),
+      columnGap: theme.spacing(0.5),
       cursor: 'pointer',
     },
   }),
 );
 
+// -----------------------------------------------------------------------------
+// Root list (left column)
+// -----------------------------------------------------------------------------
 type RootListProps = {
-  project: Project,
-  selected: string,
-  setSelected: React.Dispatch<React.SetStateAction<string>>,
+  project: Project;
+  selected: string;
+  setSelected: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const RootList: React.FC<RootListProps> = ({
@@ -133,9 +129,7 @@ const RootList: React.FC<RootListProps> = ({
     const controller = new AbortController();
 
     (async () => {
-      // The studio of the logged-in user cannot be determined because the authentication
-      // feature has not been implemented yet.
-      const studio = project.key_name == 'potoodev' ? 'ppidev' : 'ppi';
+      const studio = project.key_name === 'potoodev' ? 'ppidev' : 'ppi';
 
       const res: string[] | null = await queryPreference(
         'default',
@@ -145,10 +139,12 @@ const RootList: React.FC<RootListProps> = ({
         controller.signal,
       ).catch(err => {
         if (err.name === 'AbortError') {
-          return;
+          return null;
         }
         console.error(err);
+        return null;
       });
+
       if (res != null) {
         setRoots(res);
       }
@@ -159,7 +155,7 @@ const RootList: React.FC<RootListProps> = ({
     };
   }, [project]);
 
-  const handlelistItemClick = (root: string) => {
+  const handleListItemClick = (root: string) => {
     setSelected(root);
   };
 
@@ -170,7 +166,7 @@ const RootList: React.FC<RootListProps> = ({
           button
           selected={selected === root}
           key={index}
-          onClick={() => handlelistItemClick(root)}
+          onClick={() => handleListItemClick(root)}
         >
           {root}
         </ListItem>
@@ -179,13 +175,17 @@ const RootList: React.FC<RootListProps> = ({
   );
 };
 
+// -----------------------------------------------------------------------------
+// Middle column – category list (List View)
+// -----------------------------------------------------------------------------
 type GroupCategoryListProps = {
-  project: Project,
-  root: string,
-  selected: Category | null,
-  setSelected: React.Dispatch<React.SetStateAction<Category | null>>,
-  categories: Category[],
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>,
+  project: Project;
+  root: string;
+  selected: Category | null;
+  setSelected: React.Dispatch<React.SetStateAction<Category | null>>;
+  categories: Category[];
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
+  setSelectedPath?: (path: string | null) => void;
 };
 
 const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
@@ -195,11 +195,14 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
   setSelected,
   categories,
   setCategories,
+  setSelectedPath,
 }) => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryTitles, setCategoryTitles] = useState<string[]>([]);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
+    null,
+  );
 
   useEffect(() => {
     if (categoryTitles.length !== 0) {
@@ -209,9 +212,7 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
     const controller = new AbortController();
 
     (async () => {
-      // The studio of the logged-in user cannot be determined because the authentication
-      // feature has not been implemented yet.
-      const studio = project.key_name == 'potoodev' ? 'ppidev' : 'ppi';
+      const studio = project.key_name === 'potoodev' ? 'ppidev' : 'ppi';
 
       const res: string[] | null = await queryPreference(
         'default',
@@ -221,10 +222,12 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
         controller.signal,
       ).catch(err => {
         if (err.name === 'AbortError') {
-          return;
+          return null;
         }
         console.error(err);
+        return null;
       });
+
       if (res != null) {
         setCategoryTitles(res);
       }
@@ -233,36 +236,28 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
     return () => {
       controller.abort();
     };
-
   }, [root]);
 
-  const handleListItemClick = (
-    category: Category | null,
-  ) => {
+  const handleListItemClick = (category: Category | null) => {
     setSelected(category);
+    if (setSelectedPath) {
+      setSelectedPath(category ? category.path : null); // root of category
+    }
   };
 
-  const handleClickOpen = () => {
-    setAddDialogOpen(true);
-  };
-
-  const handleAddDialogClose = () => {
-    setAddDialogOpen(false);
-  };
+  const handleClickOpen = () => setAddDialogOpen(true);
+  const handleAddDialogClose = () => setAddDialogOpen(false);
 
   const handleAddDialogAccept = (path: string) => {
-    createGroupCategory(
-      project.key_name,
-      root,
-      path,
-    ).catch(err => {
-      console.error(err);
-    }).then(res => {
-      if (res == null) {
-        return;
-      }
-      setCategories([...categories, res]);
-    });
+    createGroupCategory(project.key_name, root, path)
+      .catch(err => {
+        console.error(err);
+        return null;
+      })
+      .then(res => {
+        if (res == null) return;
+        setCategories([...categories, res]);
+      });
 
     setAddDialogOpen(false);
   };
@@ -278,17 +273,18 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
   };
 
   const handleAcceptDeleteDialog = () => {
-    if (categoryToDelete == null) {
-      return;
-    }
-    deleteGroupCategory(
-      project.key_name,
-      categoryToDelete.id,
-    ).catch(err => {
-      console.error(err);
-    }).then(() => {
-      setCategories(categories.filter(c => c.id !== categoryToDelete.id));
-    });
+    if (categoryToDelete == null) return;
+
+    deleteGroupCategory(project.key_name, categoryToDelete.id)
+      .catch(err => {
+        console.error(err);
+      })
+      .then(() => {
+        setCategories(
+          categories.filter(c => c.id !== categoryToDelete.id),
+        );
+      });
+
     setDeleteDialogOpen(false);
     setCategoryToDelete(null);
   };
@@ -300,7 +296,7 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
           <ListItem
             key={category.id}
             button
-            selected={selected != null ? category == selected : false}
+            selected={selected != null ? category === selected : false}
             onClick={() => handleListItemClick(category)}
           >
             <ListItemText primary={category.path} />
@@ -319,7 +315,9 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
         ))}
         {categoryTitles.length !== 0 && (
           <ListItem button onClick={handleClickOpen}>
-            <ListItemIcon><AddIcon fontSize="small" /></ListItemIcon>
+            <ListItemIcon>
+              <AddIcon fontSize="small" />
+            </ListItemIcon>
           </ListItem>
         )}
       </List>
@@ -344,15 +342,45 @@ const GroupCategoryList: React.FC<GroupCategoryListProps> = ({
   );
 };
 
+// -----------------------------------------------------------------------------
+// Right column – groups list (filtered by selectedPath)
+// -----------------------------------------------------------------------------
 type GroupListProps = {
-  project: Project,
-  category: Category,
-  onDelete: (category: Category) => void,
+  project: Project;
+  category: Category;
+  onDelete: (category: Category) => void;
+  selectedPath?: string | null;
 };
 
-const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) => {
+const GroupList: React.FC<GroupListProps> = ({
+  project,
+  category,
+  onDelete,
+  selectedPath,
+}) => {
   const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const groupsToShow = useMemo(() => {
+    if (!selectedPath || !selectedPath.startsWith(category.path)) {
+      // nothing specific selected under this category → show all
+      return category.groups;
+    }
+
+    if (selectedPath === category.path) {
+      // clicked the category root
+      return category.groups;
+    }
+
+    // relative path under the category
+    const rel = selectedPath.slice(category.path.length + 1); // remove "category/"
+    if (!rel) return category.groups;
+
+    return category.groups.filter(g => {
+      if (g === rel) return true; // clicked leaf → show only that group
+      return g.startsWith(rel + '/'); // clicked folder → all groups beneath
+    });
+  }, [category, selectedPath]);
 
   const handleDeleteClick = (group: string) => {
     setGroupToDelete(group);
@@ -365,20 +393,22 @@ const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) =>
   };
 
   const handleAcceptDeleteDialog = () => {
-    if (groupToDelete == null) {
-      return;
-    }
+    if (groupToDelete == null) return;
+
     updateGroupCategory(
       project.key_name,
       category.id,
       'remove',
       [groupToDelete],
-    ).then(res => {
-      if (res == null) {
-        return;
-      }
-      onDelete(res);
-    });
+    )
+      .then(res => {
+        if (res == null) return;
+        onDelete(res);
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
     setDeleteDialogOpen(false);
     setGroupToDelete(null);
   };
@@ -386,8 +416,8 @@ const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) =>
   return (
     <>
       <List component="nav">
-        {category.groups.map(group =>
-          <ListItem key={group} button >
+        {groupsToShow.map(group => (
+          <ListItem key={group} button>
             {group}
             <ListItemSecondaryAction>
               <IconButton
@@ -399,17 +429,22 @@ const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) =>
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
-        )}
+        ))}
       </List>
+
       {groupToDelete != null && (
         <Dialog open={deleteDialogOpen} aria-labelledby="delete-dialog-title">
           <DialogTitle id="delete-dialog-title">Delete Group</DialogTitle>
           <DialogContent>
-            <DialogContentText>Group: {groupToDelete}</DialogContentText>
+            <DialogContentText>
+              Group: {groupToDelete}
+            </DialogContentText>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button onClick={handleAcceptDeleteDialog} color="secondary">Accept</Button>
+            <Button onClick={handleAcceptDeleteDialog} color="secondary">
+              Accept
+            </Button>
           </DialogActions>
         </Dialog>
       )}
@@ -417,88 +452,82 @@ const GroupList: React.FC<GroupListProps> = ({ project, category, onDelete }) =>
   );
 };
 
-// --------- NEW: read-only tree view built from categories + groups ----------
+// -----------------------------------------------------------------------------
+// Tree view (middle column – Tree mode)
+// -----------------------------------------------------------------------------
 type TreeNode = {
-  name: string,
-  fullPath: string,
-  children: TreeNode[],
-  isGroup: boolean,
-  category?: Category,
+  name: string;
+  fullPath: string;
+  children: TreeNode[];
 };
 
 type GroupCategoryTreeProps = {
-  categories: Category[],
-  onRemoveGroup?: (category: Category, groupPath: string) => void,
-  onSelectCategory?: (category: Category) => void,
-  selectedCategory?: Category | null,
+  categories: Category[];
+  onRemoveGroup?: (category: Category, groupPath: string) => void;
+  onSelectNode?: (category: Category, fullPath: string) => void;
+  selectedPath?: string | null;
 };
 
 const buildTreeFromCategories = (categories: Category[]): TreeNode[] => {
-  type MapNode = { 
-    node: TreeNode,
-    children: Record<string, MapNode>,
+  type MapNode = {
+    node: TreeNode;
+    children: Record<string, MapNode>;
   };
 
   const root: Record<string, MapNode> = {};
 
-  const getOrCreate =(
-    map: Record<string, MapNode>, 
-    name: string, 
-    fullPath: string, 
-    isGroup: boolean,
-    category?: Category,
+  const getOrCreate = (
+    map: Record<string, MapNode>,
+    name: string,
+    fullPath: string,
   ): MapNode => {
     if (!map[name]) {
       map[name] = {
-        node: { name, fullPath, children: [], isGroup, category },
+        node: { name, fullPath, children: [] },
         children: {},
       };
-    } else if (isGroup) {
-      // mark existing node as group if needed
-      map[name].node.isGroup = true;
-      map[name].node.category = category;
     }
     return map[name];
   };
 
-  // Build the tree structure
   categories.forEach(category => {
+    // category path (e.g. "sample/testAsset")
     const pathParts = category.path.split('/').filter(Boolean);
     let current = root;
     let fullPath = '';
+
     pathParts.forEach((part, idx) => {
       fullPath += (idx === 0 ? '' : '/') + part;
-      current = getOrCreate(current, part, fullPath, false).children;
+      current = getOrCreate(current, part, fullPath).children;
     });
-    // Attach groups as children
+
+    // group paths under the category
     category.groups.forEach(groupPath => {
       const groupParts = groupPath.split('/').filter(Boolean);
       let groupCurrent = current;
       let groupFullPath = category.path;
+
       groupParts.forEach((groupPart, idx) => {
         groupFullPath += '/' + groupPart;
-        groupCurrent = getOrCreate(groupCurrent, groupPart, groupFullPath, idx === groupParts.length - 1, category).children;
+        groupCurrent = getOrCreate(groupCurrent, groupPart, groupFullPath)
+          .children;
       });
     });
   });
 
-  // Convert MapNode tree to TreeNode[]
-  const mapNodeToTreeNode = (map: Record<string, MapNode>): TreeNode[] => {
-    return Object.values(map).map(({ node, children }) => ({
+  const mapNodeToTreeNode = (map: Record<string, MapNode>): TreeNode[] =>
+    Object.values(map).map(({ node, children }) => ({
       ...node,
       children: mapNodeToTreeNode(children),
     }));
-  };
 
   return mapNodeToTreeNode(root);
 };
 
-// Component to render the tree
 const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
   categories,
-  onRemoveGroup,
-  onSelectCategory,
-  selectedCategory,
+  onSelectNode,
+  selectedPath,
 }) => {
   const classes = useStyles();
 
@@ -507,17 +536,37 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
     [categories],
   );
 
-  // category.path -> Category map so we can select categories node too
+  // path -> owning category
   const pathToCategory: Record<string, Category> = useMemo(() => {
     const map: Record<string, Category> = {};
+
     categories.forEach(cat => {
+      // category node
       map[cat.path] = cat;
+
+      // paths under this category
+      cat.groups.forEach(groupPath => {
+        const parts = groupPath.split('/').filter(Boolean);
+        let currentPath = cat.path;
+
+        parts.forEach(part => {
+          currentPath = `${currentPath}/${part}`;
+          map[currentPath] = cat;
+        });
+      });
     });
+
     return map;
   }, [categories]);
 
+  const getCategoryForPath = (path: string): Category | undefined => {
+    if (pathToCategory[path]) return pathToCategory[path];
+
+    return categories.find(cat => path.startsWith(cat.path + '/'));
+
+  };
+
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   const toggleNode = (fullPath: string) => {
     setCollapsed(prev => ({
@@ -526,7 +575,6 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
     }));
   };
 
-  // Recursive function to render tree nodes with ASCII prefixes
   const renderNodes = (
     nodes: TreeNode[],
     depth = 0,
@@ -536,7 +584,6 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
       const isLast = index === nodes.length - 1;
       const thisIsLastArray = [...isLastArray, isLast];
 
-      // Build ASCII prefix – your existing logic
       let prefix = '';
       if (depth > 0) {
         for (let i = 0; i < depth - 1; i++) {
@@ -550,86 +597,73 @@ const GroupCategoryTree: React.FC<GroupCategoryTreeProps> = ({
         prefix += isLast ? '└─ ' : '├─ ';
       }
 
-      const isLeafGroup =
-        node.isGroup &&
-        node.category &&
-        (!node.children || node.children.length === 0);
-
       const hasChildren = node.children && node.children.length > 0;
       const isCollapsed = !!collapsed[node.fullPath];
-      const isSelected = selectedPath === node.fullPath;
-      const nodeCategory = pathToCategory[node.fullPath] || node.category || null;
 
-      const handleClick = () => {
-        if (nodeCategory && onSelectCategory) {
-          onSelectCategory(nodeCategory);
+      const nodeCategory: Category | undefined =
+        pathToCategory[node.fullPath];
+
+      const isSelected = selectedPath === node.fullPath;
+
+      const handleSelect = () => {
+        if (nodeCategory && onSelectNode) {
+          onSelectNode(nodeCategory, node.fullPath);
         }
       };
-        
+
       return (
         <React.Fragment key={node.fullPath}>
-          <div 
-          className={`${classes.treeRow} ${isSelected ? classes.selectedTreeRow : ''}`}
-              style={{ paddingLeft: `${depth * 16}px` }}
-              onClick={() => setSelectedPath(node.fullPath)}>
-            {/* column 1: expand/collapse arrow */} 
+          <div
+            className={`${classes.treeRow} ${
+              isSelected ? classes.selectedTreeRow : ''
+            }`}
+            style={{ paddingLeft: `${depth * 16}px` }}
+            onClick={handleSelect}
+          >
+            {/* arrow */}
             <span
-              onClick ={(e) => {
+              onClick={e => {
                 e.stopPropagation();
-                if (hasChildren) {
-                  toggleNode(node.fullPath);
-                }
+                if (hasChildren) toggleNode(node.fullPath);
               }}
-              style={{ cursor: hasChildren ? 'pointer' : 'default',
+              style={{
+                cursor: hasChildren ? 'pointer' : 'default',
                 userSelect: 'none',
-                paddingLeft: depth * 4,
               }}
             >
-            {hasChildren ? (isCollapsed ? '▶' : '▼') : ''}
+              {hasChildren ? (isCollapsed ? '▶' : '▼') : ''}
             </span>
 
-            {/* column 2: ASCII tree text */}
+            {/* text */}
             <span
-              className={classes.treeText + (isSelected && depth > 0 ? ` ${classes.selectedTreeText}` : '' )}
+              className={classes.treeText}
               style={{
                 fontWeight: depth === 0 || isSelected ? 'bold' : 'normal',
-                paddingLeft: hasChildren ? 8 : 16,
-                cursor: nodeCategory ? 'pointer' : 'default',
-               }}
-              onClick={() => {
-                if (depth > 0) {
-                  setSelectedPath(node.fullPath);
-                }
-                if (nodeCategory && onSelectCategory) {
-                  onSelectCategory(nodeCategory);
-                }
               }}
             >
               {prefix}
               {node.name}
-
             </span>
-
           </div>
 
-          {/* children: render ONLY when not collapsed */}
           {!isCollapsed &&
             renderNodes(node.children, depth + 1, thisIsLastArray)}
         </React.Fragment>
       );
     });
 
-  // Return the rendered tree
   return <div>{renderNodes(tree)}</div>;
 };
 
-// --------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Main container
+// -----------------------------------------------------------------------------
 type GroupCategoryLocationProps = {
-  project?: Project | null,
-  root: string,
-  setRoot: React.Dispatch<React.SetStateAction<string>>,
-  categories: Category[],
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>,
+  project?: Project | null;
+  root: string;
+  setRoot: React.Dispatch<React.SetStateAction<string>>;
+  categories: Category[];
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
 };
 
 const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
@@ -640,87 +674,88 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
   setCategories,
 }) => {
   const classes = useStyles();
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
-  
-  const handleDeleteGroup = (target: Category) => {
+
+  const handleDeleteGroup = (updated: Category) => {
     setCategories(
-      categories.map(c => c.id === target.id ? target : c),
+      categories.map(c => (c.id === updated.id ? updated : c)),
     );
   };
 
-  // Handler to remove a group from a category
   const handleRemoveGroup = (category: Category, groupPath: string) => {
-    if (!project) {
-      return;
-    }
+    if (!project) return;
+
     updateGroupCategory(
       project.key_name,
       category.id,
       'remove',
       [groupPath],
-    ).then(res => {
-      if (res == null) {
-        return;
-      }
-      setCategories(
-        categories.map(c => c.id === res.id ? res : c),
-      );
-    }).catch(err => {
-      console.error(err);
-    });
+    )
+      .then(res => {
+        if (res == null) return;
+        setCategories(
+          categories.map(c => (c.id === res.id ? res : c)),
+        );
+      })
+      .catch(err => {
+        console.error(err);
+      });
   };
 
+  // when categories change, keep selectedCategory in sync
   useEffect(() => {
-    if (selectedCategory == null) {
-      return;
-    }
-    for (const category of categories) {
-      if (category.id === selectedCategory.id) {
-        setSelectedCategory(category);
-        return;
-      }
-    }
-    setSelectedCategory(null);
+    if (!selectedCategory) return;
+
+    const updated = categories.find(c => c.id === selectedCategory.id);
+    setSelectedCategory(updated || null);
   }, [categories]);
+
+  const handleTreeSelect = (category: Category, fullPath: string) => {
+    setSelectedCategory(category);
+    setSelectedPath(fullPath);
+  };
 
   return (
     <Paper className={classes.root}>
-      {project != null && (
+      {project && (
         <>
-          {/* Header row for the tree view next to roots - Added New SanjayK -PSI */}
+          {/* Header */}
           <div className={classes.headerRow}>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "150px 1fr",
-                columnGap: "16px",
+                display: 'grid',
+                gridTemplateColumns: '150px 1fr',
+                columnGap: 16,
               }}
             >
               <div>Groups</div>
-              {/* right header: Tree / list toggle view */}
               <div
                 style={{
-                  display: "flex",
+                  display: 'flex',
                   gap: 24,
                 }}
               >
                 <span
-                  onClick={() => setViewMode("tree")}
+                  onClick={() => setViewMode('tree')}
                   style={{
-                    cursor: "pointer",
-                    fontWeight: viewMode === "tree" ? "bold" : "normal",
-                    textAlign: "right",
+                    cursor: 'pointer',
+                    fontWeight: viewMode === 'tree' ? 'bold' : 'normal',
+                    textAlign: 'right',
                   }}
                 >
                   Tree View
                 </span>
                 <span
-                  onClick={() => setViewMode("list")}
+                  onClick={() => setViewMode('list')}
                   style={{
-                    cursor: "pointer",
-                    fontWeight: viewMode === "list" ? "bold" : "normal",
-                    textAlign: "right",
+                    cursor: 'pointer',
+                    fontWeight: viewMode === 'list' ? 'bold' : 'normal',
+                    textAlign: 'right',
                   }}
                 >
                   List View
@@ -728,44 +763,67 @@ const GroupCategoryLocation: React.FC<GroupCategoryLocationProps> = ({
               </div>
             </div>
           </div>
-          {/* Content area */}
+
+          {/* Body */}
           <div className={classes.container}>
+            {/* Column 1 – roots */}
             <div className={classes.rootsColumn}>
-              <RootList project={project} selected={root} setSelected={setRoot} />
+              <RootList
+                project={project}
+                selected={root}
+                setSelected={setRoot}
+              />
             </div>
 
+            {/* Column 2 – tree or list */}
             <div className={classes.treeColumn}>
-              {root !== "" && (
+              {root !== '' && (
                 <>
                   {viewMode === 'tree' && (
-                    <div style={{ paddingLeft: "50px", overflow: 'auto' }}>
-                    <GroupCategoryTree 
-                    categories={categories} 
-                    onRemoveGroup={handleRemoveGroup} // pass down the handler remove group
-                    />
+                    <div
+                      style={{
+                        paddingLeft: 50,
+                        overflow: 'auto',
+                      }}
+                    >
+                      <GroupCategoryTree
+                        categories={categories}
+                        onSelectNode={handleTreeSelect}
+                        selectedPath={selectedPath}
+                      />
                     </div>
                   )}
+
                   {viewMode === 'list' && (
-                    <div style={{ paddingLeft: "50px", overflow: 'auto' }}>
-                    <GroupCategoryList 
-                      project={project}
-                      root={root}
-                      selected={selectedCategory}
-                      setSelected={setSelectedCategory}
-                      categories={categories}
-                      setCategories={setCategories}
-                    />
+                    <div
+                      style={{
+                        paddingLeft: 50,
+                        overflow: 'auto',
+                      }}
+                    >
+                      <GroupCategoryList
+                        project={project}
+                        root={root}
+                        selected={selectedCategory}
+                        setSelected={setSelectedCategory}
+                        categories={categories}
+                        setCategories={setCategories}
+                        setSelectedPath={setSelectedPath}
+                      />
                     </div>
                   )}
                 </>
               )}
             </div>
+
+            {/* Column 3 – groups for selected node */}
             <div className={classes.rightColumn}>
-              {selectedCategory != null && (
+              {selectedCategory && (
                 <GroupList
                   project={project}
                   category={selectedCategory}
                   onDelete={handleDeleteGroup}
+                  selectedPath={selectedPath}
                 />
               )}
             </div>
