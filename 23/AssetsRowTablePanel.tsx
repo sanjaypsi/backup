@@ -3,7 +3,13 @@
     AssetsRowTablePanel.tsx
 
   Module Description:
-    "Assets Row" page with synchronized group sidebar + table alignment.
+    "Assets Row" page mock UI:
+      - Dark theme table
+      - Two modes:
+          1) List  : flat rows (NO group header rows)
+          2) Group : group header rows inside the table (like your screenshot)
+      - No extra "MDL / RIG / ..." top header row
+      - Workflow columns have "box" borders per group (MDL/RIG/BLD/DSN/LDV)
 ─────────────────────────────────────────────────────────────────────────── */
 
 import React from 'react';
@@ -19,10 +25,6 @@ import {
   Typography,
   TextField,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Collapse,
   styled,
 } from '@material-ui/core';
 
@@ -33,21 +35,26 @@ import FilterListIcon from '@material-ui/icons/FilterList';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
-// ---------------------------------------------------------------------------
-// Layout constants (MUST match between sidebar + table)
-// ---------------------------------------------------------------------------
-const GROUP_ROW_H = 32;
-const ASSET_ROW_H = 44;
-const LEFT_W = 260;
+// ─────────────────────────────────────────────────────────────────────────────
+// Theme constants
 
-// ---------------------------------------------------------------------------
+const BG = '#1e1e1e';
+const PANEL = '#252525';
+const HEADER_BG = '#2d2d2d';
+const TEXT = '#ffffff';
+const TEXT_DIM = '#b0b0b0';
+const GRID = 'rgba(255,255,255,0.06)';
+const ACCENT = '#00b7ff';
+
+const GROUP_BORDER = 'rgba(255,255,255,0.28)'; // box border color for workflow groups
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Styled Components
-// ---------------------------------------------------------------------------
 
 const Root = styled(Container)(({ theme }) => ({
   position: 'relative',
   padding: 0,
-  backgroundColor: '#1e1e1e',
+  backgroundColor: BG,
   minHeight: '100vh',
   '& > *': {
     padding: theme.spacing(1),
@@ -58,168 +65,151 @@ const Toolbar = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  background: '#2d2d2d',
+  background: HEADER_BG,
   borderBottom: '1px solid rgba(255,255,255,0.08)',
   padding: theme.spacing(1),
   height: 48,
   boxSizing: 'border-box',
 }));
 
-const ContentRow = styled('div')({
-  display: 'flex',
+const TableWrap = styled(Paper)({
   width: '100%',
-  alignItems: 'stretch',
-  overflow: 'hidden',
-});
-
-const LeftPanel = styled('div')({
-  width: LEFT_W,
-  minWidth: LEFT_W,
-  backgroundColor: '#252525',
-  borderRight: '1px solid rgba(255,255,255,0.12)',
-  display: 'flex',
-  flexDirection: 'column',
-});
-
-const LeftPanelHeader = styled('div')({
-  height: 32,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingLeft: 12,
-  paddingRight: 8,
-  backgroundColor: '#2d2d2d',
-  borderBottom: '1px solid rgba(255,255,255,0.08)',
-  boxSizing: 'border-box',
-});
-
-const LeftPanelBody = styled('div')({
-  flex: 1,
-  overflowY: 'auto',
-  overflowX: 'hidden',
-});
-
-const TableShell = styled(Paper)({
-  flex: 1,
-  backgroundColor: '#1e1e1e',
+  overflowX: 'auto',
+  backgroundColor: BG,
   borderRadius: 0,
   boxShadow: 'none',
-  display: 'flex',
-  flexDirection: 'column',
-  minWidth: 0,
-});
-
-const TableScroller = styled('div')({
-  flex: 1,
-  overflow: 'auto', // single scroll area for the table
-  minWidth: 0,
 });
 
 const HeaderCell = styled(TableCell)({
-  fontWeight: 600,
+  fontWeight: 700,
   textTransform: 'uppercase',
-  fontSize: 11,
-  letterSpacing: 0.5,
+  fontSize: 12,
+  letterSpacing: 0.1,
   whiteSpace: 'nowrap',
   padding: '8px 10px',
-  backgroundColor: '#2d2d2d !important',
-  color: '#ffffff',
-  borderBottom: '1px solid rgba(255,255,255,0.12)',
+  backgroundColor: `${HEADER_BG} !important`,
+  color: TEXT,
+  borderBottom: '1px solid rgba(255,255,255,0.14)',
 });
 
 const DataCell = styled(TableCell)({
-  color: '#b0b0b0',
+  color: TEXT_DIM,
+  padding: '8px 10px',
   fontSize: 12,
-  borderBottom: '1px solid rgba(255,255,255,0.05)',
-  padding: '0 10px', // IMPORTANT: remove vertical padding for perfect height match
-  height: ASSET_ROW_H,
-  lineHeight: `${ASSET_ROW_H}px`, // IMPORTANT: consistent vertical centering
-  whiteSpace: 'nowrap',
+  borderBottom: `1px solid ${GRID}`,
+  height: 44,
   boxSizing: 'border-box',
+  verticalAlign: 'middle',
   paddingLeft: 25,
 });
 
-const GroupRowCell = styled(TableCell)({
-  padding: '0 10px',
-  height: GROUP_ROW_H,
-  lineHeight: `${GROUP_ROW_H}px`,
-  fontSize: 12,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  color: '#00b7ff',
-  backgroundColor: '#1e1e1e',
-  borderBottom: '1px solid rgba(255,255,255,0.05)',
-  boxSizing: 'border-box',
-});
-
 const Thumb = styled('div')({
-  width: 32,
-  height: 24,
+  width: 50,
+  height: 25,
   borderRadius: 2,
-  background: 'rgba(255,255,255,0.1)',
-  border: '1px solid rgba(255,255,255,0.2)',
+  background: 'rgba(255,255,255,0.10)',
+  border: '1px solid rgba(255,255,255,0.18)',
   flex: '0 0 auto',
+  marginLeft: 20,
 });
 
-const RowItem = styled('div')({
+const NameCellRow = styled('div')({
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
-  height: 28,
+  gap: 10, // gap between thumbnail and name
+  marginLeft: 20,
 });
 
-// ---------------------------------------------------------------------------
-// Types & Mock Data
-// ---------------------------------------------------------------------------
+const GroupNameRow = styled('div')({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  fontWeight: 800,
+  letterSpacing: 0.3,
+  color: ACCENT,
+});
 
-const HEADER_COLUMNS = [
-  { id: 'thumbnail', label: 'Thumbnail', minWidth: 100 },
+// ─────────────────────────────────────────────────────────────────────────────
+// Types & Data
+
+type WorkflowKey =
+  | 'mdl_work' | 'mdl_appr' | 'mdl_submitted'
+  | 'rig_work' | 'rig_appr' | 'rig_submitted'
+  | 'bld_work' | 'bld_appr' | 'bld_submitted'
+  | 'dsn_work' | 'dsn_appr' | 'dsn_submitted'
+  | 'ldv_work' | 'ldv_appr' | 'ldv_submitted';
+
+type ColumnId = 'thumbnail' | 'name' | WorkflowKey | 'relation';
+
+type AssetRow = {
+  id: string;
+  name: string;
+  relation: string;
+} & Record<WorkflowKey, string>;
+
+type GroupRow = {
+  id: string;
+  label: string;
+  assets: AssetRow[];
+};
+
+const HEADER_COLUMNS: Array<{ id: ColumnId; label: string; minWidth: number }> = [
+  { id: 'thumbnail', label: 'Thumbe', minWidth: 100 },
   { id: 'name', label: 'Name', minWidth: 150 },
-  { id: 'mdl_work', label: 'MDL Work', minWidth: 80 },
-  { id: 'mdl_appr', label: 'MDL Appr', minWidth: 80 },
+
+  { id: 'mdl_work', label: 'MDL Work', minWidth: 85 },
+  { id: 'mdl_appr', label: 'MDL Appr', minWidth: 85 },
   { id: 'mdl_submitted', label: 'MDL Submitted At', minWidth: 110 },
-  { id: 'rig_work', label: 'RIG Work', minWidth: 80 },
-  { id: 'rig_appr', label: 'RIG Appr', minWidth: 80 },
+
+  { id: 'rig_work', label: 'RIG Work', minWidth: 85 },
+  { id: 'rig_appr', label: 'RIG Appr', minWidth: 85 },
   { id: 'rig_submitted', label: 'RIG Submitted At', minWidth: 110 },
-  { id: 'bld_work', label: 'BLD Work', minWidth: 80 },
-  { id: 'bld_appr', label: 'BLD Appr', minWidth: 80 },
+
+  { id: 'bld_work', label: 'BLD Work', minWidth: 85 },
+  { id: 'bld_appr', label: 'BLD Appr', minWidth: 85 },
   { id: 'bld_submitted', label: 'BLD Submitted At', minWidth: 110 },
-  { id: 'dsn_work', label: 'DSN Work', minWidth: 80 },
-  { id: 'dsn_appr', label: 'DSN Appr', minWidth: 80 },
+
+  { id: 'dsn_work', label: 'DSN Work', minWidth: 85 },
+  { id: 'dsn_appr', label: 'DSN Appr', minWidth: 85 },
   { id: 'dsn_submitted', label: 'DSN Submitted At', minWidth: 110 },
-  { id: 'ldv_work', label: 'LDV Work', minWidth: 80 },
-  { id: 'ldv_appr', label: 'LDV Appr', minWidth: 80 },
+
+  { id: 'ldv_work', label: 'LDV Work', minWidth: 85 },
+  { id: 'ldv_appr', label: 'LDV Appr', minWidth: 85 },
   { id: 'ldv_submitted', label: 'LDV Submitted At', minWidth: 110 },
-  { id: 'relation', label: 'Relation', minWidth: 90 },
+
+  { id: 'relation', label: 'Relation', minWidth: 70 },
 ];
 
-const generateMockData = (id: string, name: string) => ({
+const generateMockData = (id: string, name: string): AssetRow => ({
   id,
   name,
-  thumbnail: '—',
   mdl_work: Math.random() > 0.5 ? 'In Progress' : 'Done',
   mdl_appr: Math.random() > 0.5 ? 'Pending' : 'Approved',
   mdl_submitted: '2023-11-20',
+
   rig_work: 'In Progress',
   rig_appr: '—',
   rig_submitted: '—',
+
   bld_work: 'Waiting',
   bld_appr: '—',
   bld_submitted: '—',
+
   dsn_work: 'Done',
   dsn_appr: 'Approved',
   dsn_submitted: '2023-10-15',
+
   ldv_work: '—',
   ldv_appr: '—',
   ldv_submitted: '—',
+
   relation: 'Master',
 });
 
-const MOCK_GROUPS = [
+const MOCK_GROUPS: GroupRow[] = [
   {
     id: 'camera',
-    label: 'camera',
-    count: 3,
+    label: 'CAMERA',
     assets: [
       generateMockData('camAim', 'camAim'),
       generateMockData('camHero', 'camHero'),
@@ -228,8 +218,7 @@ const MOCK_GROUPS = [
   },
   {
     id: 'character',
-    label: 'character',
-    count: 4,
+    label: 'CHARACTER',
     assets: [
       generateMockData('ando', 'ando'),
       generateMockData('baseFemale', 'baseFemale'),
@@ -239,27 +228,54 @@ const MOCK_GROUPS = [
   },
   {
     id: 'fx',
-    label: 'fx',
-    count: 1,
+    label: 'FX',
     assets: [generateMockData('fx_smoke', 'fx_smoke')],
   },
   {
     id: 'other',
-    label: 'other',
-    count: 1,
+    label: 'OTHER',
     assets: [generateMockData('env_prop', 'env_prop')],
   },
 ];
 
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// Workflow "box" borders per group
+
+const WORKFLOW_GROUPS = [
+  { id: 'MDL', start: 'mdl_work', end: 'mdl_submitted' },
+  { id: 'RIG', start: 'rig_work', end: 'rig_submitted' },
+  { id: 'BLD', start: 'bld_work', end: 'bld_submitted' },
+  { id: 'DSN', start: 'dsn_work', end: 'dsn_submitted' },
+  { id: 'LDV', start: 'ldv_work', end: 'ldv_submitted' },
+] as const;
+
+const workflowStartCols = new Set<string>(WORKFLOW_GROUPS.map((g) => g.start));
+const workflowEndCols = new Set<string>(WORKFLOW_GROUPS.map((g) => g.end));
+const workflowCols = new Set<string>(
+  WORKFLOW_GROUPS.flatMap((g) => {
+    const keys: string[] = [];
+    const prefix = g.start.split('_')[0]; // mdl, rig, ...
+    keys.push(`${prefix}_work`, `${prefix}_appr`, `${prefix}_submitted`);
+    return keys;
+  })
+);
+
+const getWorkflowBoxStyle = (colId: ColumnId): React.CSSProperties => {
+  if (!workflowCols.has(colId)) return {};
+  return {
+    borderLeft: workflowStartCols.has(colId) ? `2px solid ${GROUP_BORDER}` : undefined,
+    borderRight: workflowEndCols.has(colId) ? `2px solid ${GROUP_BORDER}` : undefined,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
 
 const AssetsRowTablePanel: React.FC = () => {
   const [search, setSearch] = React.useState('');
   const [barView, setBarView] = React.useState<'list' | 'group'>('group');
-  const [leftOpen, setLeftOpen] = React.useState(true);
 
+  // Used only in group mode
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({
     camera: true,
     character: true,
@@ -267,52 +283,24 @@ const AssetsRowTablePanel: React.FC = () => {
     other: true,
   });
 
-  // ---- scroll sync refs
-  const leftScrollRef = React.useRef<HTMLDivElement | null>(null);
-  const tableScrollRef = React.useRef<HTMLDivElement | null>(null);
-  const syncingRef = React.useRef<'left' | 'table' | null>(null);
-
-  const syncScroll = React.useCallback((from: 'left' | 'table') => {
-    if (syncingRef.current && syncingRef.current !== from) return;
-
-    syncingRef.current = from;
-
-    const leftEl = leftScrollRef.current;
-    const tableEl = tableScrollRef.current;
-    if (!leftEl || !tableEl) return;
-
-    if (from === 'left') {
-      tableEl.scrollTop = leftEl.scrollTop;
-    } else {
-      leftEl.scrollTop = tableEl.scrollTop;
-    }
-
-    // release lock next frame
-    requestAnimationFrame(() => {
-      syncingRef.current = null;
-    });
-  }, []);
-
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Filter columns based on view mode (your original rule)
-  const headerColumns = React.useMemo(() => {
-    if (barView !== 'group') return HEADER_COLUMNS;
-    return HEADER_COLUMNS.filter((c) => c.id !== 'thumbnail' && c.id !== 'name');
-  }, [barView]);
-
-  // mock search filter (optional)
-  const groupsFiltered = React.useMemo(() => {
+  const filteredGroups = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return MOCK_GROUPS;
 
-    return MOCK_GROUPS.map((g) => {
-      const assets = g.assets.filter((a) => a.name.toLowerCase().includes(q));
-      return { ...g, assets, count: assets.length };
-    }).filter((g) => g.assets.length > 0);
+    return MOCK_GROUPS.map((g) => ({
+      ...g,
+      assets: g.assets.filter((a) => a.name.toLowerCase().includes(q)),
+    })).filter((g) => g.assets.length > 0);
   }, [search]);
+
+  const flatRows = React.useMemo(() => {
+    // list mode should be flat (no group headers)
+    return filteredGroups.flatMap((g) => g.assets);
+  }, [filteredGroups]);
 
   return (
     <Root maxWidth={false}>
@@ -320,19 +308,13 @@ const AssetsRowTablePanel: React.FC = () => {
         <Toolbar>
           <Box display="flex" alignItems="center" style={{ gap: 8 }}>
             <IconButton onClick={() => setBarView('list')} style={{ padding: 6 }}>
-              <ViewListIcon style={{ fontSize: 18, color: barView === 'list' ? '#00b7ff' : '#b0b0b0' }} />
+              <ViewListIcon style={{ fontSize: 18, color: barView === 'list' ? ACCENT : TEXT_DIM }} />
             </IconButton>
             <IconButton onClick={() => setBarView('group')} style={{ padding: 6 }}>
-              <ViewModuleIcon style={{ fontSize: 18, color: barView === 'group' ? '#00b7ff' : '#b0b0b0' }} />
+              <ViewModuleIcon style={{ fontSize: 18, color: barView === 'group' ? ACCENT : TEXT_DIM }} />
             </IconButton>
 
-            {barView === 'group' && (
-              <IconButton onClick={() => setLeftOpen((v) => !v)} style={{ padding: 6 }}>
-                <MenuIcon style={{ fontSize: 18, color: '#fff' }} />
-              </IconButton>
-            )}
-
-            <Typography variant="subtitle2" style={{ color: '#fff', marginLeft: 8 }}>
+            <Typography variant="subtitle2" style={{ color: TEXT, marginLeft: 8, fontWeight: 700 }}>
               Assets Row Table
             </Typography>
           </Box>
@@ -343,132 +325,200 @@ const AssetsRowTablePanel: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search Assets..."
               variant="outlined"
-              InputProps={{ style: { height: 30, color: '#fff', fontSize: 12, backgroundColor: '#444' } }}
+              InputProps={{
+                style: { height: 30, color: TEXT, fontSize: 12, backgroundColor: '#3a3a3a' },
+              }}
               style={{ width: 220 }}
             />
             <IconButton style={{ padding: 6 }}>
-              <FilterListIcon style={{ fontSize: 18, color: '#b0b0b0' }} />
+              <FilterListIcon style={{ fontSize: 18, color: TEXT_DIM }} />
+            </IconButton>
+            <IconButton style={{ padding: 6 }}>
+              <MenuIcon style={{ fontSize: 18, color: TEXT_DIM }} />
             </IconButton>
           </Box>
         </Toolbar>
 
-        <ContentRow>
-          {/* LEFT PANEL */}
-          {barView === 'group' && leftOpen && (
-            <LeftPanel>
-              <LeftPanelHeader>
-                <Typography variant="caption" style={{ color: '#fff', fontWeight: 600 }}>
-                  Groups
-                </Typography>
-                <Typography variant="caption" style={{ color: '#666' }}>
-                  (mock)
-                </Typography>
-              </LeftPanelHeader>
+        <TableWrap>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                {HEADER_COLUMNS.map((c) => (
+                  <HeaderCell
+                    key={c.id}
+                    style={{
+                      minWidth: c.minWidth,
+                      ...getWorkflowBoxStyle(c.id),
+                      // a little stronger divider after NAME like your screenshot
+                      borderRight: c.id === 'name' ? `2px solid ${GROUP_BORDER}` : undefined,
+                    }}
+                  >
+                    {c.label}
+                  </HeaderCell>
+                ))}
+              </TableRow>
+            </TableHead>
 
-              <LeftPanelBody ref={leftScrollRef} onScroll={() => syncScroll('left')}>
-                <List dense disablePadding>
-                  {groupsFiltered.map((g) => {
-                    const isOpen = !!openGroups[g.id];
-                    return (
-                      <React.Fragment key={g.id}>
-                        {/* Group header (height fixed) */}
-                        <ListItem
-                          button
-                          onClick={() => toggleGroup(g.id)}
-                          style={{ height: GROUP_ROW_H }}
-                        >
-                          <ListItemText
-                            primary={`${g.label} (${g.count})`}
-                            primaryTypographyProps={{
-                              style: { fontSize: 12, color: '#fff', fontWeight: 600 },
+            <TableBody>
+              {barView === 'list' && (
+                <>
+                  {flatRows.map((asset) => (
+                    <TableRow key={asset.id} hover>
+                      {HEADER_COLUMNS.map((col) => {
+                        const v = (asset as any)[col.id] as string | undefined;
+                        const isThumb = col.id === 'thumbnail';
+                        const isName = col.id === 'name';
+
+                        return (
+                          <DataCell
+                            key={col.id}
+                            style={{
+                              ...getWorkflowBoxStyle(col.id),
+                              borderRight: col.id === 'name' ? `2px solid ${GROUP_BORDER}` : undefined,
                             }}
-                          />
-                          {isOpen ? (
-                            <ExpandLessIcon style={{ color: '#666' }} />
-                          ) : (
-                            <ExpandMoreIcon style={{ color: '#666' }} />
-                          )}
-                        </ListItem>
+                          >
+                            {isThumb ? (
+                              <Thumb />
+                            ) : isName ? (
+                              <NameCellRow>
+                                <span style={{ color: TEXT, fontWeight: 600 }}>{asset.name}</span>
+                              </NameCellRow>
+                            ) : v === '—' || v === undefined ? (
+                              <span style={{ opacity: 0.3 }}>—</span>
+                            ) : (
+                              v
+                            )}
+                          </DataCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </>
+              )}
 
-                        {/* Asset rows (height fixed to match table) */}
-                        <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                          {g.assets.map((a) => (
-                            <ListItem
-                              key={a.id}
-                              button
-                              style={{ paddingLeft: 24, height: ASSET_ROW_H }}
-                            >
-                              <RowItem>
-                                <Thumb />
-                                <Typography style={{ color: '#ddd', fontSize: 12 }}>{a.name}</Typography>
-                              </RowItem>
-                            </ListItem>
-                          ))}
-                        </Collapse>
-                      </React.Fragment>
-                    );
-                  })}
-                </List>
-              </LeftPanelBody>
-            </LeftPanel>
-          )}
-
-          {/* RIGHT PANEL */}
-          <TableShell>
-            <TableScroller ref={tableScrollRef} onScroll={() => syncScroll('table')}>
-              <Table stickyHeader size="small">
-                <TableHead>
-                  <TableRow>
-                    {headerColumns.map((c) => (
-                      <HeaderCell key={c.id} style={{ minWidth: c.minWidth }}>
-                        {c.label}
-                      </HeaderCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {groupsFiltered.map((group) => {
-                    const isOpen = barView === 'list' || openGroups[group.id];
+              {barView === 'group' && (
+                <>
+                  {filteredGroups.map((group) => {
+                    const isOpen = !!openGroups[group.id];
 
                     return (
                       <React.Fragment key={group.id}>
-                        {/* GROUP HEADER ROW (ALWAYS rendered => top group never missing) */}
+                        {/* Group header row inside the table */}
                         <TableRow>
-                          <GroupRowCell colSpan={headerColumns.length}>
-                            {group.label}
-                          </GroupRowCell>
+                          {/* THUMB column */}
+                          <DataCell
+                            style={{
+                              padding: '6px 8px',
+                              background: BG,
+                              borderBottom: `2px solid rgba(255,255,255,0.10)`,
+                            }}
+                          >
+                            <IconButton
+                              onClick={() => toggleGroup(group.id)}
+                              style={{ padding: 4 }}
+                              aria-label="toggle group"
+                            >
+                              {isOpen ? (
+                                <ExpandLessIcon style={{ color: TEXT_DIM, fontSize: 18 }} />
+                              ) : (
+                                <ExpandMoreIcon style={{ color: TEXT_DIM, fontSize: 18 }} />
+                              )}
+                            </IconButton>
+                          </DataCell>
+
+                          {/* NAME column */}
+                          <DataCell
+                            // style={{
+                            //   background: PANEL,
+                            //   borderBottom: `1px solid rgba(255,255,255,0.10)`,
+                            //   borderRight: `2px solid ${GROUP_BORDER}`,
+                            //   paddingLeft: 6,
+                            // }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'left', marginLeft: -100 }}>
+                              <span style={{ color: ACCENT, fontWeight: 800 }}>{group.label}</span>
+                              {/* <span style={{ marginLeft: 8, color: TEXT_DIM, fontSize: 11 }}>({group.assets.length})</span> */}
+                            </div>
+                          </DataCell>
+
+                          {/* Remaining columns: render as group spans to avoid extra inner vertical lines */}
+                          {WORKFLOW_GROUPS.map((g) => (
+                            <DataCell
+                              key={g.id}
+                              colSpan={3}
+                              // style={{
+                              //   background: PANEL,
+                              //   borderBottom: `1px solid rgba(255,255,255,0.10)`,
+                              //   borderLeft: `2px solid ${GROUP_BORDER}`,
+                              //   borderRight: `2px solid ${GROUP_BORDER}`,
+                              // }}
+                            />
+                          ))}
+                          <DataCell
+                            style={{
+                              background: PANEL,
+                              borderBottom: `2px solid rgba(255,255,255,0.10)`,
+                            }}
+                          />
                         </TableRow>
 
-                        {/* ASSET ROWS */}
+                        {/* Group assets */}
                         {isOpen &&
                           group.assets.map((asset) => (
-                            <TableRow key={asset.id} hover style={{ height: ASSET_ROW_H }}>
-                              {headerColumns.map((col) => {
-                                const val = asset[col.id as keyof typeof asset];
+                            <TableRow key={asset.id} hover>
+                              {HEADER_COLUMNS.map((col) => {
+                                const v = (asset as any)[col.id] as string | undefined;
+                                const isThumb = col.id === 'thumbnail';
+                                const isName = col.id === 'name';
+
                                 return (
-                                  <DataCell key={col.id}>
-                                    {val === '—' ? <span style={{ opacity: 0.3 }}>—</span> : val}
+                                  <DataCell
+                                    key={col.id}
+                                    style={{
+                                      ...getWorkflowBoxStyle(col.id),
+                                      borderRight: col.id === 'name' ? `2px solid ${GROUP_BORDER}` : undefined,
+                                    }}
+                                  >
+                                    {isThumb ? (
+                                      <Thumb />
+                                    ) : isName ? (
+                                      <NameCellRow>
+                                        <span style={{ color: TEXT, fontWeight: 600 }}>{asset.name}</span>
+                                      </NameCellRow>
+                                    ) : v === '—' || v === undefined ? (
+                                      <span style={{ opacity: 0.3 }}>—</span>
+                                    ) : (
+                                      v
+                                    )}
                                   </DataCell>
                                 );
                               })}
                             </TableRow>
                           ))}
-
-                        {/* When collapsed, keep alignment by not adding random spacer heights */}
-                        {!isOpen && (
-                          <TableRow style={{ height: 0 }}>
-                            <TableCell style={{ padding: 0, border: 0 }} colSpan={headerColumns.length} />
-                          </TableRow>
-                        )}
                       </React.Fragment>
                     );
                   })}
-                </TableBody>
-              </Table>
-            </TableScroller>
-          </TableShell>
-        </ContentRow>
+                </>
+              )}
+
+              {/* Empty state */}
+              {barView === 'list' && flatRows.length === 0 && (
+                <TableRow>
+                  <DataCell colSpan={HEADER_COLUMNS.length} style={{ color: TEXT_DIM }}>
+                    No assets found.
+                  </DataCell>
+                </TableRow>
+              )}
+              {barView === 'group' && filteredGroups.length === 0 && (
+                <TableRow>
+                  <DataCell colSpan={HEADER_COLUMNS.length} style={{ color: TEXT_DIM }}>
+                    No assets found.
+                  </DataCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableWrap>
       </Box>
     </Root>
   );
