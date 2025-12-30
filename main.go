@@ -303,106 +303,171 @@ func registerDataDepHandlers(router *gin.RouterGroup, dataDepUsecase *usecase.Da
 	)
 }
 
-// -----------------------------------------------------------------------------
-// HELPERS
-// -----------------------------------------------------------------------------
-const (
-	defaultPerPage = 15
-	maxPerPage     = 200
-	defaultRoot    = "assets"
-	defaultPhase   = "mdl"
-)
+// -------------------------------------------------------
+// DEFAULTS & ALLOWED VALUES
+// -------------------------------------------------------
+
+var defaultRoot = "assets"
+var defaultPerPage = 15
 
 var allowedPhases = map[string]struct{}{
-	"mdl": {}, "rig": {}, "bld": {}, "dsn": {}, "ldv": {},
+	"mdl":  {},
+	"rig":  {},
+	"bld":  {},
+	"dsn":  {},
+	"ldv":  {},
+	"none": {},
 }
 
-// API → repo sort map
-// main.go
-var sortKeyMap = map[string]string{
-	"group_1":             "group1_only",
-	"relation":            "relation_only",
-	"submitted_at_utc":    "submitted_at_utc",    // Generic (no phase)
-	"modified_at_utc":     "modified_at_utc",     // Generic (no phase)
-	"phase":               "phase",               // Generic (no phase)
-	"group_rel_submitted": "group_rel_submitted", // Generic (no phase)
+// -------------------------------------------------------
+// INT PARSING HELPERS
+// -------------------------------------------------------
 
-	// Add specific phase sort keys (New keys from frontend fix)
-	"mdl_submitted": "mdl_submitted",
-	"rig_submitted": "rig_submitted",
-	"bld_submitted": "bld_submitted",
-	"dsn_submitted": "dsn_submitted",
-	"ldv_submitted": "ldv_submitted",
-
-	"mdl_work": "mdl_work",
-	"rig_work": "rig_work",
-	"bld_work": "bld_work",
-	"dsn_work": "dsn_work",
-	"ldv_work": "ldv_work",
-
-	"mdl_appr": "mdl_appr", // work status is used for approval status sort when phase is specified
-	"rig_appr": "rig_appr",
-	"bld_appr": "bld_appr",
-	"dsn_appr": "dsn_appr",
-	"ldv_appr": "ldv_appr",
-
-	"work_status": "work_status", // Keep deprecated alias
-}
-
-func normalizeSortKey(raw string) string {
-	k := strings.ToLower(strings.TrimSpace(raw))
-	if mapped, ok := sortKeyMap[k]; ok {
-		return mapped
+func mustAtoi(s string) int {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
 	}
-	return sortKeyMap["group_1"]
+	return n
 }
-func normalizeDir(raw string) string {
-	d := strings.ToUpper(strings.TrimSpace(raw))
-	if d == "DESC" {
-		return "DESC"
-	}
-	return "ASC"
-}
-func clampPerPage(pp int) int {
-	if pp <= 0 {
+
+func clampPerPage(n int) int {
+	if n <= 0 {
 		return defaultPerPage
 	}
-	if pp > maxPerPage {
-		return maxPerPage
+	if n > 200 {
+		return 200
 	}
-	return pp
+	return n
 }
-func mustAtoi(s string) int { i, _ := strconv.Atoi(s); return i }
+
+// -------------------------------------------------------
+// SORT NORMALIZATION
+// -------------------------------------------------------
+
+func normalizeDir(dir string) string {
+	switch strings.ToUpper(strings.TrimSpace(dir)) {
+	case "DESC":
+		return "DESC"
+	default:
+		return "ASC"
+	}
+}
+
+// Maps frontend sort keys → backend order keys
+func normalizeSortKey(key string) string {
+	key = strings.TrimSpace(strings.ToLower(key))
+
+	switch key {
+	case "group_1", "group1", "name":
+		return "group1_only"
+
+	case "relation":
+		return "relation_only"
+
+	case "group_rel":
+		return "group_rel_submitted"
+
+	case "submitted", "submitted_at", "submitted_at_utc":
+		return "submitted_at_utc"
+
+	case "mdl_work":
+		return "mdl_work"
+	case "rig_work":
+		return "rig_work"
+	case "bld_work":
+		return "bld_work"
+	case "dsn_work":
+		return "dsn_work"
+	case "ldv_work":
+		return "ldv_work"
+
+	case "mdl_appr":
+		return "mdl_appr"
+	case "rig_appr":
+		return "rig_appr"
+	case "bld_appr":
+		return "bld_appr"
+	case "dsn_appr":
+		return "dsn_appr"
+	case "ldv_appr":
+		return "ldv_appr"
+
+	case "mdl_submitted":
+		return "mdl_submitted"
+	case "rig_submitted":
+		return "rig_submitted"
+	case "bld_submitted":
+		return "bld_submitted"
+	case "dsn_submitted":
+		return "dsn_submitted"
+	case "ldv_submitted":
+		return "ldv_submitted"
+
+	default:
+		return "group1_only"
+	}
+}
+
+// -------------------------------------------------------
+// FILTER PARSING
+// -------------------------------------------------------
+
+func parseStatusParam(c *gin.Context, key string) []string {
+	raw := strings.TrimSpace(c.Query(key))
+	if raw == "" {
+		return nil
+	}
+
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+
+	for _, p := range parts {
+		p = strings.ToLower(strings.TrimSpace(p))
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+
+	if len(out) == 0 {
+		return nil
+	}
+
+	return out
+}
+
+// -------------------------------------------------------
+// PAGINATION LINK HEADER (RFC 5988)
+// -------------------------------------------------------
 
 func paginationLinks(baseURL string, page, perPage, total int) string {
-	if perPage <= 0 {
+	if total <= 0 {
 		return ""
 	}
-	last := (total + perPage - 1) / perPage
-	if last < 1 {
-		last = 1
-	}
-	var parts []string
-	build := func(p int, rel string) {
-		if p < 1 || p > last {
-			return
-		}
-		parts = append(parts, fmt.Sprintf(`<%s?page=%d&per_page=%d>; rel="%s"`, baseURL, p, perPage, rel))
-	}
-	build(1, "first")
-	if page > 1 {
-		build(page-1, "prev")
-	}
-	if page < last {
-		build(page+1, "next")
-	}
-	build(last, "last")
-	return strings.Join(parts, ", ")
-}
 
-// -----------------------------------------------------------------------------
-// END HELPERS
-// -----------------------------------------------------------------------------
+	lastPage := int(math.Ceil(float64(total) / float64(perPage)))
+	if lastPage < 1 {
+		lastPage = 1
+	}
+
+	var links []string
+
+	if page > 1 {
+		links = append(links,
+			fmt.Sprintf(`<%s?page=1&per_page=%d>; rel="first"`, baseURL, perPage),
+			fmt.Sprintf(`<%s?page=%d&per_page=%d>; rel="prev"`, baseURL, page-1, perPage),
+		)
+	}
+
+	if page < lastPage {
+		links = append(links,
+			fmt.Sprintf(`<%s?page=%d&per_page=%d>; rel="next"`, baseURL, page+1, perPage),
+			fmt.Sprintf(`<%s?page=%d&per_page=%d>; rel="last"`, baseURL, lastPage, perPage),
+		)
+	}
+
+	return strings.Join(links, ", ")
+}
 
 func main() {
 	ctx := context.Background()
@@ -660,13 +725,14 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+		directoryReadTimeout := 60 * 5 * time.Second
 		directoryUsecase := usecase.NewDirectory(
 			directoryRepository,
 			projectInfoRepository,
 			studioInfoRepository,
 			directoryDeletionInfoRepository,
 			pipelineSettingRepository,
-			readTimeout,
+			directoryReadTimeout,
 			writeTimeout,
 		)
 		directoryDelivery := delivery.NewDirectory(directoryUsecase)
@@ -714,10 +780,20 @@ func main() {
 			"/projects/:project/assets/:asset/relations/:relation/reviewInfos",
 			reviewInfoDelivery.ListAssetReviewInfos,
 		)
-		// ============================================================================
-		// START: UNAUTHENTICATED ENDPOINT BLOCK (ASSET LISTING WITH DYNAMIC SORT)
-		// ===========================================================================
+		// Assets Pivot API - returns latest review info per asset
+		// apiRouter.GET("/projects/:project/reviews/assets/pivot", reviewInfoDelivery.ListAssetsPivot) // Add by PSI
+
+		// Shots ReviewInfo API
+		apiRouter.GET("/projects/:project/shots/reviewInfos", reviewInfoDelivery.ListShotReviewInfos)
+
+		/* ========================================================
+		   Assets Pivot API (Expanded Implementation)
+			router.GET("/api/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
+
+		======================================================= */
 		apiRouter.GET("/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
+			// router.GET("/api/projects/:project/reviews/assets/pivot", func(c *gin.Context) {
+
 			project := strings.TrimSpace(c.Param("project"))
 			if project == "" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "project is required in the path"})
@@ -726,10 +802,8 @@ func main() {
 
 			root := c.DefaultQuery("root", defaultRoot)
 
-			// NO DEFAULT PHASE: read as-is; if empty, we won't echo it back.
-			phaseParam := strings.TrimSpace(c.Query("phase")) // "" if not provided
-
-			// If a phase is supplied, allow only known phases (plus "none")
+			// ---- Phase Validation ----
+			phaseParam := strings.TrimSpace(c.Query("phase"))
 			if phaseParam != "" {
 				lp := strings.ToLower(phaseParam)
 				if lp != "none" {
@@ -743,22 +817,29 @@ func main() {
 				}
 			}
 
-			// Pagination
+			// ---- Pagination ----
 			page := mustAtoi(c.DefaultQuery("page", "1"))
 			page = int(math.Max(float64(page), 1))
 			perPage := clampPerPage(mustAtoi(c.DefaultQuery("per_page", fmt.Sprint(defaultPerPage))))
 			limit := perPage
 			offset := (page - 1) * perPage
 
-			// Sorting
+			// ---- Sorting ----
 			sortParam := c.DefaultQuery("sort", "group_1")
 			dirParam := c.DefaultQuery("dir", "ASC")
 			orderKey := normalizeSortKey(sortParam)
 			dir := normalizeDir(dirParam)
 
-			// Internal preferredPhase we pass to repo:
-			// - If sorting by group/relation buckets, force "none" (no phase bias).
-			// - Else, use the provided phase if any, otherwise "none".
+			// ---- View Mode ----
+			viewParam := strings.ToLower(strings.TrimSpace(c.DefaultQuery("view", "list")))
+			isGroupedView := viewParam == "group" || viewParam == "grouped" || viewParam == "category"
+
+			// ---- Filters ----
+			assetNameKey := strings.TrimSpace(c.Query("name"))
+			approvalStatuses := parseStatusParam(c, "approval_status")
+			workStatuses := parseStatusParam(c, "work_status")
+
+			// ---- Preferred Phase Logic ----
 			preferredPhase := phaseParam
 			if orderKey == "group1_only" || orderKey == "relation_only" || orderKey == "group_rel_submitted" {
 				preferredPhase = "none"
@@ -770,47 +851,169 @@ func main() {
 			ctx, cancel := context.WithTimeout(c.Request.Context(), 7*time.Second)
 			defer cancel()
 
-			assets, total, err := reviewInfoRepository.ListAssetsPivot(
-				ctx, project, root, preferredPhase, orderKey, dir, limit, offset,
+			// ---------------------------------------------------------------
+			// CASE 1: LIST VIEW - keep current DB pagination behavior
+			// ---------------------------------------------------------------
+			if !isGroupedView {
+				assets, total, err := reviewInfoRepository.ListAssetsPivot(
+					ctx,
+					project, root,
+					preferredPhase,
+					orderKey,
+					dir,
+					limit, offset,
+					assetNameKey,
+					approvalStatuses,
+					workStatuses,
+				)
+				if err != nil {
+					log.Printf("[pivot-submissions] query error for project %q: %v", project, err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+					return
+				}
+
+				c.Header("Cache-Control", "public, max-age=15")
+				baseURL := fmt.Sprintf("/api/projects/%s/reviews/assets/pivot", project)
+				if links := paginationLinks(baseURL, page, perPage, int(total)); links != "" {
+					c.Header("Link", links)
+				}
+
+				resp := gin.H{
+					"assets":    assets,
+					"total":     total,
+					"page":      page,
+					"per_page":  perPage,
+					"sort":      sortParam,
+					"dir":       strings.ToLower(dir),
+					"project":   project,
+					"root":      root,
+					"has_next":  offset+limit < int(total),
+					"has_prev":  page > 1,
+					"page_last": (int(total) + perPage - 1) / perPage,
+					"view":      viewParam,
+				}
+				if phaseParam != "" {
+					resp["phase"] = phaseParam
+				}
+				if assetNameKey != "" {
+					resp["name"] = assetNameKey
+				}
+				if len(approvalStatuses) > 0 {
+					resp["approval_status"] = approvalStatuses
+				}
+				if len(workStatuses) > 0 {
+					resp["work_status"] = workStatuses
+				}
+
+				c.IndentedJSON(http.StatusOK, resp)
+				return
+			}
+
+			// ---------------------------------------------------------------
+			// CASE 2: GROUPED VIEW - group first, then paginate
+			// ---------------------------------------------------------------
+
+			// 1) Fetch ALL matching assets (no pagination here).
+			//    We still let the repo compute "total" for us.
+			//    Use a very large limit and offset=0,
+			//    or create a dedicated "ListAllAssetsPivot" if you prefer.
+			allLimit := 1000000
+			assetsAll, total, err := reviewInfoRepository.ListAssetsPivot(
+				ctx,
+				project, root,
+				preferredPhase,
+				"group1_only", // base: stable order by name
+				"ASC",
+				allLimit, 0,
+				assetNameKey,
+				approvalStatuses,
+				workStatuses,
 			)
 			if err != nil {
-				log.Printf("[pivot-submissions] query error for project %q: %v", project, err)
+				log.Printf("[pivot-submissions] query error (group view) for project %q: %v", project, err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
 				return
 			}
 
-			// Response
+			// 2) Group ALL assets by top_group_node
+			dirUpper := strings.ToUpper(dir)
+			if dirUpper != "ASC" && dirUpper != "DESC" {
+				dirUpper = "ASC"
+			}
+			groupedAll := repository.GroupAndSortByTopNode(
+				assetsAll,
+				repository.SortDirection(dirUpper),
+			)
+
+			// 3) Flatten groups in that order → flat slice in group order
+			flat := make([]repository.AssetPivot, 0, len(assetsAll))
+			for _, g := range groupedAll {
+				flat = append(flat, g.Items...)
+			}
+
+			// 4) Apply pagination on the flat, grouped-ordered slice
+			totalAssets := len(flat)
+			start := offset
+			if start > totalAssets {
+				start = totalAssets
+			}
+			end := start + limit
+			if end > totalAssets {
+				end = totalAssets
+			}
+			pageSlice := flat[start:end]
+
+			// 5) Re-group only the current page slice
+			pageGroups := repository.GroupAndSortByTopNode(
+				pageSlice,
+				repository.SortDirection(dirUpper),
+			)
+
+			// ---- Headers ----
 			c.Header("Cache-Control", "public, max-age=15")
-			baseURL := fmt.Sprintf("/api/projects/%s/reviews/pivot", project)
+			baseURL := fmt.Sprintf("/api/projects/%s/reviews/assets/pivot", project)
 			if links := paginationLinks(baseURL, page, perPage, int(total)); links != "" {
 				c.Header("Link", links)
 			}
 
-			// Build payload; only echo "phase" if user supplied it
+			// ---- Response ----
 			resp := gin.H{
-				"assets":    assets,
-				"total":     total,
+				"assets":    pageSlice, // optional: keep flat slice for debugging / UI
+				"groups":    pageGroups,
+				"total":     total, // total number of matching assets
 				"page":      page,
 				"per_page":  perPage,
 				"sort":      sortParam,
 				"dir":       strings.ToLower(dir),
 				"project":   project,
 				"root":      root,
-				"has_next":  offset+limit < int(total),
+				"has_next":  offset+limit < int(totalAssets),
 				"has_prev":  page > 1,
-				"page_last": (int(total) + perPage - 1) / perPage,
+				"page_last": (int(totalAssets) + perPage - 1) / perPage,
+				"view":      viewParam,
 			}
+
 			if phaseParam != "" {
 				resp["phase"] = phaseParam
+			}
+			if assetNameKey != "" {
+				resp["name"] = assetNameKey
+			}
+			if len(approvalStatuses) > 0 {
+				resp["approval_status"] = approvalStatuses
+			}
+			if len(workStatuses) > 0 {
+				resp["work_status"] = workStatuses
 			}
 
 			c.IndentedJSON(http.StatusOK, resp)
 		})
-		// =========================================================================
-		// END: UNAUTHENTICATED ENDPOINT BLOCK
-		// =========================================================================
-		// Review Status Log API
 
+		/* ========================================================
+		   Additional APIs
+		======================================================= */
+
+		// Review Status Log API
 		reviewStatusLogRepository, err := repository.NewReviewStatusLog(gormDB)
 		if err != nil {
 			log.Fatalln(err)
@@ -838,6 +1041,21 @@ func main() {
 		apiRouter.GET("/projects/:project/reviewStatusLogs", reviewStatusLogDelivery.List)
 		apiRouter.GET("/projects/:project/reviewStatusLogs/:id", reviewStatusLogDelivery.Get)
 		apiRouter.POST("/projects/:project/reviewStatusLogs", reviewStatusLogDelivery.Post)
+		apiRouter.POST("/projects/:project/reviewStatusLogs2", reviewStatusLogDelivery.Post2)
+
+		// Review Thumbnail API
+
+		reviewThumbnailRepository := repository.NewReviewThumbnail(cs)
+		reviewThumbnailUsecase := usecase.NewReviewThumbnail(reviewThumbnailRepository)
+		reviewThumbnailDelivery := delivery.NewReviewThumbnail(reviewThumbnailUsecase)
+		apiRouter.GET(
+			"/projects/:project/assets/:asset/relations/:relation/reviewthumbnail",
+			reviewThumbnailDelivery.GetAssetThumbnail,
+		)
+		apiRouter.GET(
+			"/projects/:project/shots/reviewthumbnail",
+			reviewThumbnailDelivery.GetShotThumbnail,
+		)
 
 		// Collection API
 		// - Comment API
@@ -875,6 +1093,17 @@ func main() {
 		)
 		apiRouter.PATCH("/projects/:project/collections/:collection/documents/:id", handler.PatchDocument)
 		apiRouter.DELETE("/projects/:project/collections/:collection/documents/:id", handler.DeleteDocument)
+
+		// PublishOperationInfo
+		publishOperationInfoRepository := repository.NewPublishOperationInfo(mongoDB)
+		publishOperationInfoUsecase := usecase.NewPublishOperationInfo(
+			publishOperationInfoRepository,
+			readTimeout,
+		)
+		publishOperationInfoDelivery := delivery.NewPublishOperationInfo(publishOperationInfoUsecase)
+		apiRouter.GET("/projects/:project/latestAssetsOperationInfos", publishOperationInfoDelivery.ListLatestAssetDocuments)
+		apiRouter.GET("/projects/:project/latestShotsOperationInfos", publishOperationInfoDelivery.ListLatestShotDocuments)
+		apiRouter.GET("/projects/:project/publishOperationInfo/shots", publishOperationInfoDelivery.ListShots)
 
 		// PublishLog API
 
@@ -1019,7 +1248,6 @@ func main() {
 		)
 
 		// OfficialRevision API
-
 		officialRevisionRepository, err := repository.NewOfficialRevision(gormDB)
 		if err != nil {
 			log.Fatal(err)
@@ -1458,6 +1686,20 @@ func main() {
 		if dataDepRepo != nil {
 			registerDataDepHandlers(apiRouter, dataDepUsecase)
 		}
+
+		// Generate CSV API
+		generateCsvTimeout := 60 * 15 * time.Second
+		generateCsvRepository := repository.NewGenerateCsv(gormDB)
+		generateCsvUsecase := usecase.NewGenerateCsv(
+			generateCsvRepository,
+			reviewInfoRepository,
+			groupCategoryRepository,
+			publishOperationInfoRepository,
+			mongoRepo,
+			generateCsvTimeout,
+		)
+		generateCsvDelivery := delivery.NewGenerateCsv(generateCsvUsecase)
+		apiRouter.GET("/projects/:project/assets/generateCsv", generateCsvDelivery.GenerateAssetsCsv)
 	}
 
 	s := &http.Server{
