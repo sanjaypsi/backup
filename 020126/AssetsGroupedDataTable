@@ -20,16 +20,19 @@ import { PivotGroup, SortDir } from "./types";
  *  COLORS (match list view look)
  *  ---------------------------------------------------------------- */
 const COLORS = {
-  PAGE_BG: "#3d3d3dff", // top area background (your “I WANT THIS COLOR” bar)
-  TABLE_BG: "#3d3d3dff", // table background
+  PAGE_BG: "#3d3d3dff",
+  TABLE_BG: "#3d3d3dff",
   HEADER_BG: "#3d3d3dff",
   HEADER_BORDER: "#3d3d3dff",
-  GRID_LINE: "#3d3d3dff",
+  GRID_LINE: "#555555", // subtle grey lines
   ROW_BG: "#3d3d3dff",
-  GROUP_BG: "#3d3d3dff",
+  GROUP_BG: "#3a3838ff",
   GROUP_TEXT: "#00b7ff",
   TEXT: "#e0e0e0",
   MUTED: "#bdbdbd",
+
+  // 🔥 top/bottom line color for NON phase columns
+  COL_EDGE: "#6b6b6b",
 
   PHASE: {
     mdl: "#00b7ff",
@@ -41,27 +44,30 @@ const COLORS = {
 };
 
 /** ----------------------------------------------------------------
- *  UI controls (change here)
+ *  UI controls
  *  ---------------------------------------------------------------- */
 const UI = {
-  // row sizing
   ROW_HEIGHT: 50,
   ROW_PAD_Y: 2,
   ROW_PAD_X: 8,
 
-  // gaps (visual)
   ROW_GAP_PX: 0,
   GROUP_ROW_GAP_PX: 2,
   PHASE_GAP_PX: 1,
 
-  // phase rails
   RAIL_PX: 3,
 
-  // widths (adjust if needed)
   THUMB_WIDTH: 90,
   NAME_WIDTH: 150,
   RELATION_WIDTH: 50,
   PHASE_COL_WIDTH: 97,
+
+  // ✅ the “top & bottom line” thickness you marked
+  COL_EDGE_PX: 2,
+
+  // thumbnail look like your list view squares
+  THUMB_BOX: 28,
+  THUMB_RADIUS: 2,
 };
 
 type ColumnId =
@@ -88,7 +94,7 @@ type Column = {
   id: ColumnId;
   label: string;
   sortable?: boolean;
-  phase?: keyof typeof COLORS.PHASE; // mdl|rig|bld|dsn|ldv
+  phase?: keyof typeof COLORS.PHASE;
   kind?: "work" | "appr" | "submitted";
 };
 
@@ -134,14 +140,13 @@ const COLUMNS: Column[] = [
 const useStyles = makeStyles(() => ({
   scrollWrap: {
     width: "100%",
-    background: COLORS.PAGE_BG, // outer background like list view area
+    background: COLORS.PAGE_BG,
     overflowX: "auto",
     overflowY: "hidden",
 
-    // Hide scrollbar (still scrolls)
-    scrollbarWidth: "none" as any, // Firefox
-    msOverflowStyle: "none", // IE/Edge legacy
-    "&::-webkit-scrollbar": { display: "none" }, // Chrome/Safari
+    scrollbarWidth: "none" as any,
+    msOverflowStyle: "none",
+    "&::-webkit-scrollbar": { display: "none" },
   },
 }));
 
@@ -154,7 +159,6 @@ function hexToRgba(hex: string, a: number) {
   return "rgba(" + r + "," + g + "," + b + "," + a + ")";
 }
 
-/** phase metadata to know start/end */
 function getPhaseMetadata(visibleCols: Column[]) {
   const map: Record<string, { start: string; end: string }> = {};
   visibleCols.forEach((col) => {
@@ -167,7 +171,6 @@ function getPhaseMetadata(visibleCols: Column[]) {
 
 function formatSubmitted(val: any) {
   if (!val || val === "-") return "-";
-  // you can change to dateTimeFormat later if you want
   const s = String(val);
   return s.indexOf("T") >= 0 ? s.split("T")[0] : s;
 }
@@ -183,24 +186,45 @@ function statusColor(status?: string) {
   return COLORS.MUTED;
 }
 
+/** ✅ thumbnail renderer like your list view squares */
+function renderThumbnail(asset: any) {
+  const url = asset.thumbnail_url || asset.thumbnail; // support both keys
+  return (
+    <Box display="flex" alignItems="center" justifyContent="center">
+      <Box
+        style={{
+          width: UI.THUMB_BOX,
+          height: UI.THUMB_BOX,
+          borderRadius: UI.THUMB_RADIUS,
+          backgroundColor: "#2a2a2a",
+          overflow: "hidden",
+        }}
+      >
+        {url ? (
+          <img
+            src={url}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        ) : null}
+      </Box>
+    </Box>
+  );
+}
+
 function renderAssetField(asset: any, col: Column) {
   if (col.id === "thumbnail") {
-    return (
-      <Typography style={{ fontSize: 12, fontWeight: 500 }}>
-        {asset.thumbnail ? "Thumbnail" : "No Thumbnail"}
-      </Typography>
-    );
+    return renderThumbnail(asset);
   }
 
   if (col.id === "group_1_name") {
     return (
-      <Typography
-        noWrap
-        style={{
-          fontSize: 12,
-          fontWeight: 500,
-        }}
-      >
+      <Typography noWrap style={{ fontSize: 12, fontWeight: 500 }}>
         {asset.group_1 || ""}
       </Typography>
     );
@@ -237,11 +261,11 @@ function renderAssetField(asset: any, col: Column) {
 }
 
 /**
- * Cell style:
- * ✅ No inner vertical borders inside a phase block (MDL group becomes one)
- * ✅ Only show separator at phase END (gap)
- * ✅ Phase headers colored like listview
- * ✅ Row height control
+ * ✅ What you asked:
+ * 1) Top LINE for each column (header)
+ * 2) Bottom LINE for each column (header)
+ * 3) Remove middle vertical line between Thumbnail and Name
+ * 4) Keep phase rails + phase gaps
  */
 function buildCellStyle(
   col: Column,
@@ -256,8 +280,11 @@ function buildCellStyle(
   const isPhaseStart = !!(meta && meta.start === col.id);
   const isPhaseEnd = !!(meta && meta.end === col.id);
 
-  // HEADER BG: phase header uses colored background
+  // header background
   const headerBg = col.phase ? hexToRgba(railColor, 0.45) : COLORS.HEADER_BG;
+
+  // ✅ column top/bottom edge line color (phase uses phase color)
+  const edgeColor = col.phase ? railColor : COLORS.COL_EDGE;
 
   const style: React.CSSProperties = {
     backgroundColor: header ? headerBg : COLORS.ROW_BG,
@@ -266,41 +293,54 @@ function buildCellStyle(
     overflow: "hidden",
     textOverflow: "ellipsis",
 
-    // row sizing
-    height: header ? UI.ROW_HEIGHT : UI.ROW_HEIGHT,
+    height: UI.ROW_HEIGHT,
     padding: (header ? 8 : UI.ROW_PAD_Y) + "px " + UI.ROW_PAD_X + "px",
-    fontSize: header ? 12 : 12,
+    fontSize: 12,
     fontWeight: header ? 700 : 500,
 
-    // remove inner grid lines (your red-marked lines)
-    borderRight: "0px",
     borderLeft: "0px",
+    borderRight: "0px",
 
-    // row gap
+    // row gap/border
     borderBottom: header
       ? "1px solid " + COLORS.HEADER_BORDER
       : (isGroupRow ? UI.GROUP_ROW_GAP_PX : UI.ROW_GAP_PX) + "px solid " + COLORS.TABLE_BG,
   };
 
-  // PHASE grouping rails (only at group boundaries)
+  // ✅ draw TOP + BOTTOM line in HEADER for each column (your red line)
+  if (header) {
+    style.boxShadow = [
+      // top line
+      `inset 0 ${UI.COL_EDGE_PX}px 0 0 ${edgeColor}`,
+      // bottom line
+      `inset 0 -${UI.COL_EDGE_PX}px 0 0 ${edgeColor}`,
+    ].join(", ");
+  }
+
+  // PHASE rails (only at group boundaries)
   if (col.phase) {
     const shadows: string[] = [];
 
-    // left rail only on start col
-    if (isPhaseStart) shadows.push("inset " + UI.RAIL_PX + "px 0 0 0 " + railColor);
+    // keep existing shadows from header (top/bottom lines)
+    if (style.boxShadow) shadows.push(String(style.boxShadow));
 
-    // right rail only on end col
-    if (isPhaseEnd) shadows.push("inset -" + UI.RAIL_PX + "px 0 0 0 " + railColor);
+    if (isPhaseStart) shadows.push(`inset ${UI.RAIL_PX}px 0 0 0 ${railColor}`);
+    if (isPhaseEnd) shadows.push(`inset -${UI.RAIL_PX}px 0 0 0 ${railColor}`);
 
     style.boxShadow = shadows.join(", ");
 
-    // create a visible GAP only after phase end
+    // gap after phase end
     if (isPhaseEnd) {
       style.borderRight = UI.PHASE_GAP_PX + "px solid " + COLORS.TABLE_BG;
     }
   } else {
-    // non-phase columns: keep subtle separators between THUMB/NAME and RELATION
-    style.borderRight = "1px solid " + (header ? COLORS.HEADER_BORDER : COLORS.GRID_LINE);
+    // ✅ remove middle line between THUMBNAIL and NAME (your marked line)
+    if (col.id === "thumbnail") {
+      style.borderRight = "0px";
+    } else {
+      // keep subtle separator for other non-phase boundaries (like RELATION end)
+      style.borderRight = "1px solid " + (header ? COLORS.HEADER_BORDER : COLORS.GRID_LINE);
+    }
   }
 
   return style;
@@ -334,8 +374,6 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
         size="small"
         stickyHeader
         style={{
-          // ✅ removes right-side empty space:
-          // table takes full width when small, and expands when many columns
           width: "max-content",
           minWidth: "100%",
           backgroundColor: COLORS.TABLE_BG,
@@ -344,7 +382,6 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
           borderSpacing: 0,
         }}
       >
-        {/* fixed column widths */}
         <colgroup>
           {visibleColumns.map((col) => {
             let w = UI.PHASE_COL_WIDTH;
