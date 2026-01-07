@@ -37,7 +37,6 @@ import {
   FormControlLabel,
   Checkbox,
   ButtonGroup,
-  IconButton,
 } from '@material-ui/core';
 import { styled, useTheme } from '@material-ui/core/styles';
 import { ButtonProps } from '@material-ui/core/Button';
@@ -54,8 +53,7 @@ import {
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ViewListIcon from '@material-ui/icons/ViewList';
-import ViewModuleIcon from '@material-ui/icons/ViewModule';
+import { basename } from 'path';
 
 /* -------------------------------------------------------------- */
 /* STYLES                                                          */
@@ -389,7 +387,23 @@ const FilterStatusSelect: React.FC<StatusSelectProps> = ({
  * @property onSaveColumns - Optional handler to save the current column visibility state.
  */
 type FilterProps = {
+  /** Optional slot rendered in the top bar before COLUMNS/RESET (e.g., view toggle buttons). */
+  headerLeft?: React.ReactNode;
+
+  /** If false, hides the inline filter controls (Asset Name / Approval Status / Work Status). */
+  showInlineFilters?: boolean;
+
+  // filters
+  filterAssetName: string;
+  selectApprovalStatuses: string[];
+  selectWorkStatuses: string[];
+  onAssetNameChange: TextFieldProps['onChange'];
+  onApprovalStatusesChange: SelectProps['onChange'];
+  onWorkStatusesChange: SelectProps['onChange'];
+  onApprovalStatusChipDelete: ChipDeleteFunction;
+  onWorkStatusChipDelete: ChipDeleteFunction;
   onResetClick: ButtonProps['onClick'];
+
   // columns
   hiddenColumns: Set<string>;
   onHiddenColumnsChange: (s: Set<string>) => void; // (kept for symmetry with panel)
@@ -430,7 +444,17 @@ type FilterProps = {
  * - Uses Material-UI components for layout and interactivity.
  */
 const AssetTableFilter: React.FC<FilterProps> = ({
+  headerLeft,
+  showInlineFilters = true,
   // filters
+  filterAssetName,
+  selectApprovalStatuses,
+  selectWorkStatuses,
+  onAssetNameChange,
+  onApprovalStatusesChange,
+  onWorkStatusesChange,
+  onApprovalStatusChipDelete,
+  onWorkStatusChipDelete,
   onResetClick,
 
   // columns
@@ -486,11 +510,88 @@ const AssetTableFilter: React.FC<FilterProps> = ({
     );
   };
 
-
   return (
     <StyledFilterDiv>
       <StyledPaper>
+        {/* new top bar  + toggle button
+        <div style={{ 
+          height: '4px', 
+          width: '100%', 
+          backgroundColor: '#373fa3',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          }}
+          >
+          <ButtonGroup size = "small" variant="contained" color="primary" >
+            <Button
+              onClick={() => setViewMode('list')}
+              style={{ 
+                backgroundColor: viewMode === 'list' ? '#272b6aff' : '#373fa3ff',
+                borderRadius: '4px 0 0 4px',
+                }}
+            >
+              List View
+            </Button>
+            <Button
+              onClick={() => setViewMode('grid')}
+              style={{
+                backgroundColor: viewMode === 'grid' ? '#272b6aff' : '#373fa3ff',
+                borderRadius: '0 4px 4px 0',
+                }}
+            >
+              Grid View
+            </Button>
+          </ButtonGroup>
+        </div> */}
+
         <StyledDiv>
+          {/* LEFT (optional) */}
+          <LeftWrap>
+            {/* Optional slot (e.g. list/grid toggle buttons) */}
+            {headerLeft ? (
+              <div style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                marginRight: 8, 
+                }}>
+                
+                {headerLeft}
+              </div>
+            ) : null}
+
+            {showInlineFilters ? (
+              <>
+                <StyledFilterForm>
+                  <StyledTextField
+                    id="filter-assetname"
+                    type="search"
+                    label="Asset Name"
+                    value={filterAssetName}
+                    onChange={onAssetNameChange}
+                    onKeyPress={handleFilterKeyPress}
+                  />
+                </StyledFilterForm>
+
+                <FilterStatusSelect
+                  statusType="Approval Status"
+                  statuses={approvalStatuses}
+                  selectStatuses={selectApprovalStatuses}
+                  onStatusesChange={onApprovalStatusesChange}
+                  onChipDelete={onApprovalStatusChipDelete}
+                />
+
+                <FilterStatusSelect
+                  statusType="Work Status"
+                  statuses={workStatuses}
+                  selectStatuses={selectWorkStatuses}
+                  onStatusesChange={onWorkStatusesChange}
+                  onChipDelete={onWorkStatusChipDelete}
+                />
+              </>
+            ) : null}
+          </LeftWrap>
+
           {/* RIGHT */}
           <RightWrap>
             <FilterButtonWrap>
@@ -501,7 +602,9 @@ const AssetTableFilter: React.FC<FilterProps> = ({
                 startIcon={<ViewColumnIcon />}
                 endIcon={<ArrowDropDownIcon />}
                 onClick={toggleDrawer(true)}
-                style={{ borderRadius: 4, paddingLeft: 5, paddingRight: 5}}
+                style={{ borderRadius: 4, 
+                  paddingLeft: 5, 
+                  paddingRight: 5}}
               >
                 {`COLUMNS (${visibleCount})`}
               </Button>
