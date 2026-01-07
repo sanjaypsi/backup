@@ -1376,15 +1376,77 @@ const AssetsDataTablePanel: React.FC<RouteComponentProps> = () => {
   return (
     <StyledContainer maxWidth={false}>
       <AssetTableFilter
-        onResetClick={handleFilterResetClick}
-        hiddenColumns={hiddenColumns}
-        onHiddenColumnsChange={setHiddenColumns}
-        onToggleColumn={toggleColumn}
-        onShowAll={showAll}
-        onHideAll={hideAllNonFixed}
-        visibleCount={visibleCount}
-      />
+        showInlineFilters={false}
+        headerLeft={(
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 2,
+              overflow: 'hidden',
+              paddingLeft: 4,
+              paddingRight: 4,
+              paddingTop: 10,
+              height: 50,
+            }}
+          >
+            <IconButton
+              size="small"
+              onClick={() => setBarView('list')}
+              style={{ padding: 6, borderRadius: 0 }}
+              aria-label="List view"
+            >
+              <ViewListIcon
+                style={{
+                  fontSize: 25,
+                  color: barView === 'list' ? '#00b7ff' : '#b0b0b0',
+                }}
+              />
+            </IconButton>
 
+            <IconButton
+              size="small"
+              onClick={() => setBarView('grid')}
+              style={{ padding: 6, borderRadius: 0 }}
+              aria-label="Grouped view"
+            >
+              <ViewModuleIcon
+                style={{
+                  fontSize: 25,
+                  color: barView === 'grid' ? '#00b7ff' : '#b0b0b0',
+                }}
+              />
+            </IconButton>
+          </div>
+        )}
+        filterAssetName={filterProps.assetNameKey}
+        /* Fix possible misspellings in filterProps property names */
+        selectApprovalStatuses={
+          (filterProps as any).approvalStatuses ||
+          filterProps.applovalStatues
+        }
+        selectWorkStatuses={
+          (filterProps as any).workStatuses ||
+          filterProps.workStatues
+        }
+
+        onAssetNameChange={handleFilterAssetNameChange}
+        onApprovalStatusesChange={handleApprovalStatusesChange}
+        onWorkStatusesChange={handleWorkStatusesChange}
+        onApprovalStatusChipDelete={handleApprovalStatusesChipDelete}
+        onWorkStatusChipDelete={handleWorkStatusesChipDelete}
+        onResetClick={handleFilterResetClick}
+
+        /* Drawer-based column visibility */
+        hiddenColumns={hiddenColumns} // Set of hidden column IDs
+        onHiddenColumnsChange={setHiddenColumns} // Setter for hidden columns
+        onToggleColumn={toggleColumn} // Toggle a specific column's visibility
+        onShowAll={showAll} // Show all columns
+        onHideAll={hideAllNonFixed} // Hide all non-fixed columns
+        visibleCount={visibleCount} // Count of currently visible togglable columns
+        onSaveColumns={handleSaveColumns} // Explicit save (invoked from drawer)
+      >
+      </AssetTableFilter>
         {/* new bar */}
         {/* ─────────────────────────────────────────────────────────────
             PIPELINE BAR (below filters, above table)
@@ -1396,7 +1458,7 @@ const AssetsDataTablePanel: React.FC<RouteComponentProps> = () => {
               height: 40,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               boxSizing: 'border-box',
               marginBottom: 6,
               borderRadius: 0,
@@ -1405,50 +1467,6 @@ const AssetsDataTablePanel: React.FC<RouteComponentProps> = () => {
               paddingRight: 8,
             }}
           >
-            {/* LEFT: view icons */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                borderRadius: 2,
-                overflow: 'hidden',
-
-              }}
-            >
-            <IconButton
-                size="small"
-                onClick={() => setBarView('list')}
-                style={{
-                  padding: 6,
-                  borderRadius: 0,
-                  // (you asked to remove the backgroundColor conditional)
-                }}
-              >
-                <ViewListIcon
-                  style={{
-                    fontSize: 18,
-                    color: barView === 'list' ? '#00b7ff' : '#b0b0b0',
-                  }}
-                />
-              </IconButton>
-
-              <IconButton
-                size="small"
-                onClick={() => setBarView('grid')}
-                style={{
-                  padding: 6,
-                  borderRadius: 0,
-                }}
-              >
-                <ViewModuleIcon
-                  style={{
-                    fontSize: 18,
-                    color: barView === 'grid' ? '#00b7ff' : '#b0b0b0',
-                  }}
-                />
-              </IconButton>
-            </div>
-
             {/* RIGHT: search + filter */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <TextField
