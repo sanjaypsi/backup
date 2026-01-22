@@ -13,6 +13,7 @@
 	* - 29-10-2025 - SanjayK PSI - Implemented dynamic filtering and sorting for latest submissions.
 	* - 17-11-2025 - SanjayK PSI - Added phase-aware status filtering and sorting.
 	* - 22-11-2025 - SanjayK PSI - Fixed bugs related to phase-specific filtering and sorting.
+	* - 16-01-2026 - SanjayK PSI - Added asset pivot listing with grouped view  and sorting.
 
 	Functions:
 	* - List: Lists review information based on provided parameters.
@@ -474,10 +475,11 @@ func (r *ReviewInfo) ListShotReviewInfos(
 	return reviewInfos, nil
 }
 
-// ========================================================================
-// ========= Asset Review Pivot Listing ===================================
-// ========================================================================
-
+/* -─────────────────────────────────────────────────────────────────────────
+	Assets and Latest Submission Rows
+───────────────────────────────────────────────────────────────────────────
+*/
+// ---- Latest Submission row ----
 type LatestSubmissionRow struct {
 	Root           string     `json:"root"              gorm:"column:root"`
 	Project        string     `json:"project"           gorm:"column:project"`
@@ -487,8 +489,7 @@ type LatestSubmissionRow struct {
 	SubmittedAtUTC *time.Time `json:"submitted_at_utc"  gorm:"column:submitted_at_utc"`
 }
 
-// ---- Pivot result ----
-// Used by UI for both List View and Group Category View.
+// ---- Asset Pivot row ----
 type AssetPivot struct {
 	Root     string `json:"root"`
 	Project  string `json:"project"`
@@ -521,7 +522,7 @@ type AssetPivot struct {
 	LDVSubmittedAtUTC *time.Time `json:"ldv_submitted_at_utc"`
 }
 
-// ---- phase row for internal pivot fetch ----
+// ---- phaseRow for intermediate query ----
 type phaseRow struct {
 	Project        string     `gorm:"column:project"`
 	Root           string     `gorm:"column:root"`
@@ -537,17 +538,16 @@ type phaseRow struct {
 	TopGroupNode      string `gorm:"column:top_group_node"`
 }
 
-// ========================================================================
-// ===================== GROUP CATEGORY SUPPORT ==========================
-// ========================================================================
-
+// ---- Sort Direction ----
 type SortDirection string
 
+// SortDirection constants
 const (
 	SortASC  SortDirection = "ASC"
 	SortDESC SortDirection = "DESC"
 )
 
+// ---- Grouped Asset Bucket ----
 type GroupedAssetBucket struct {
 	TopGroupNode string       `json:"top_group_node"` // camera / character / prop / ...
 	ItemCount    int          `json:"item_count"`
@@ -556,6 +556,24 @@ type GroupedAssetBucket struct {
 
 }
 
+/*
+──────────────────────────────────────────────────────────────────────────
+
+	GroupAndSortByTopNode groups a slice of AssetPivot items by their TopGroupNode field,
+	sorts the group headers alphabetically (A→Z, case-insensitive), and always places the
+	"Unassigned" group last. Within each group, the items are sorted by their Group1 field
+	in either ascending or descending order, as specified by the dir parameter.
+	Returns a slice of GroupedAssetBucket, each containing a group header and its sorted items.
+
+	Parameters:
+	- rows: Slice of AssetPivot items to be grouped and sorted.
+	- dir: SortDirection specifying ascending or descending order for items within each group.
+
+	Returns:
+	- []GroupedAssetBucket: Slice of grouped and sorted asset buckets.
+
+───────────────────────────────────────────────────────────────────────────
+*/
 func GroupAndSortByTopNode(rows []AssetPivot, dir SortDirection) []GroupedAssetBucket {
 	grouped := make(map[string][]AssetPivot)
 	order := make([]string, 0)
@@ -624,11 +642,18 @@ func GroupAndSortByTopNode(rows []AssetPivot, dir SortDirection) []GroupedAssetB
 	return result
 }
 
-// ========================================================================
-// ========================= FILTER / ORDER HELPERS ======================
-// ========================================================================
+/*
+──────────────────────────────────────────────────────────────────────────
 
-// preferredPhase is ignored in filtering, only used for sort priority elsewhere.
+	buildPhaseAwareStatusWhere constructs a SQL WHERE clause segment that filters rows based on the provided
+	approvalStatuses and workStatuses. It generates case-insensitive "IN" conditions for the columns
+	"approval_status" and "work_status" if their respective status slices are non-empty.
+	The function returns the WHERE clause string (prefixed with " AND ") and a slice of arguments
+	corresponding to the status values, all converted to lowercase and trimmed of whitespace.
+	If both status slices are empty, it returns an empty string and nil arguments.
+
+───────────────────────────────────────────────────────────────────────────
+*/
 func buildPhaseAwareStatusWhere(_ string, approvalStatuses, workStatuses []string) (string, []any) {
 	buildIn := func(col string, vals []string) (string, []any) {
 		if len(vals) == 0 {
@@ -663,7 +688,30 @@ func buildPhaseAwareStatusWhere(_ string, approvalStatuses, workStatuses []strin
 	return " AND " + strings.Join(clauses, " AND "), args
 }
 
-// ORDER BY builder, safe because key is white-listed in switch and dir normalized.
+/*
+──────────────────────────────────────────────────────────────────────────
+
+	buildOrderClause constructs an SQL ORDER BY clause string based on the provided
+	alias, key, and direction. It supports various keys for sorting, including generic
+	columns (e.g., submitted_at_utc, modified_at_utc, phase), name/relation combinations,
+	phase-specific submitted dates, work status, and approval status. The direction
+	(dir) is normalized to "ASC" or "DESC", defaulting to "ASC" if invalid. The alias
+	is prepended to column names if provided. For unrecognized keys, a default ordering
+	by group_1, relation, and submitted_at_utc is used. The function ensures proper
+	handling of NULL values and alphabetical sorting where applicable.
+
+	Parameters:
+
+		alias string - Optional table alias to prefix column names.
+		key   string - The column or logical key to sort by.
+		dir   string - Sort direction ("ASC" or "DESC").
+
+	Returns:
+
+		string - The constructed SQL ORDER BY clause.
+
+──────────────────────────────────────────────────────────────────────────
+*/
 func buildOrderClause(alias, key, dir string) string {
 	dir = strings.ToUpper(strings.TrimSpace(dir))
 	if dir != "ASC" && dir != "DESC" {
@@ -751,11 +799,30 @@ func buildOrderClause(alias, key, dir string) string {
 	}
 }
 
-// ========================================================================
-// ========================= RAW QUERIES (GORM) ==========================
-// ========================================================================
+/*
+	──────────────────────────────────────────────────────────────────────────
+	CountLatestSubmissions returns the count of latest review submissions for a given project and asset root,
+	optionally filtered by asset name prefix, approval statuses, and work statuses.
+	The function ignores the preferredPhase parameter for filtering but keeps it for API compatibility.
+	It queries the database for the latest (by modified_at_utc) review info per asset and relation,
+	applying the specified filters, and returns the total count.
+	Returns an error if the project is not specified or if the database query fails.
 
-// CountLatestSubmissions returns total asset count (for pagination) after filters.
+	Parameters:
+	ctx              - Context for database operations.
+	project          - Project identifier (required).
+	root             - Asset root; defaults to "assets" if empty.
+	assetNameKey     - Optional asset name prefix filter (case-insensitive).
+	preferredPhase   - Phase parameter (ignored in filtering; kept for compatibility).
+	approvalStatuses - List of approval statuses to filter by.
+	workStatuses     - List of work statuses to filter by.
+
+	Returns:
+	int64 - Count of latest submissions matching the filters.
+	error - Error if project is missing or database query fails.
+
+──────────────────────────────────────────────────────────────────────────
+*/
 func (r *ReviewInfo) CountLatestSubmissions(
 	ctx context.Context,
 	project, root, assetNameKey string,
@@ -824,12 +891,29 @@ SELECT COUNT(*) FROM (
 	return total, nil
 }
 
-// ListLatestSubmissionsDynamic returns one "primary" row per asset for a page.
-//
-// For LIST VIEW, call this via ListAssetsPivot with:
-//
-//	orderKey   = "group1_only"
-//	direction  = "ASC"
+/*
+	──────────────────────────────────────────────────────────────────────────
+
+	ListLatestSubmissionsDynamic retrieves a list of the latest review submissions
+	for a specified project and asset root, with dynamic filtering and sorting options.
+	Parameters:
+	- ctx: Context for database operations.
+	- project: Project identifier (required).
+	- root: Asset root; defaults to "assets" if empty.
+	- preferredPhase: Phase to prioritize in sorting; if empty or "none", no bias is applied.
+	- orderKey: Column or logical key to sort by (e.g., "submitted_at_utc", "group1_only").
+	- direction: Sort direction ("ASC" or "DESC").
+	- limit: Maximum number of results to return; defaults to 60 if <= 0.
+	- offset: Number of results to skip; defaults to 0 if < 0.
+	- assetNameKey: Optional asset name prefix filter (case-insensitive).
+	- approvalStatuses: List of approval statuses to filter by.
+	- workStatuses: List of work statuses to filter by.
+	Returns:
+	- []LatestSubmissionRow: Slice of latest submission rows matching the filters.
+	- error: Error if project is missing or database query fails.
+
+───────────────────────────────────────────────────────────────────────────
+*/
 func (r *ReviewInfo) ListLatestSubmissionsDynamic(
 	ctx context.Context,
 	project string,
@@ -1017,24 +1101,30 @@ LIMIT ? OFFSET ?;
 	return rows, nil
 }
 
-// ListAssetsPivot returns the fully pivoted rows + total count.
-//
-// LIST VIEW:
-//
-//	pivots, total, _ := repo.ListAssetsPivot(
-//	    ctx, project, root, preferredPhase,
-//	    "group1_only", "ASC",  // DB orders by group_1
-//	    limit, offset,
-//	    assetNameKey, approvalStatuses, workStatuses)
-//
-// GROUP CATEGORY VIEW (with GroupAndSortByTopNode):
-//
-//	pivots, total, _ := repo.ListAssetsPivot(
-//	    ctx, project, root, preferredPhase,
-//	    "group1_only", "ASC",
-//	    limit, offset,
-//	    assetNameKey, approvalStatuses, workStatuses)
-//	buckets := GroupAndSortByTopNode(pivots, SortASC)
+/*
+──────────────────────────────────────────────────────────────────────────
+
+	ListAssetsPivot retrieves a paginated list of AssetPivot rows for a specified project and asset root,
+	optionally filtered by asset name prefix, preferred phase, approval statuses, and work statuses.
+	Parameters:
+	- ctx: Context for database operations.
+	- project: Project identifier (required).
+	- root: Asset root; defaults to "assets" if empty.
+	- preferredPhase: Phase to prioritize in sorting; if empty or "none", no bias is applied.
+	- orderKey: Column or logical key to sort by (e.g., "submitted_at_utc", "group1_only").
+	- direction: Sort direction ("ASC" or "DESC").
+	- limit: Maximum number of results to return; defaults to 60 if <= 0.
+	- offset: Number of results to skip; defaults to 0 if < 0.
+	- assetNameKey: Optional asset name prefix filter (case-insensitive).
+	- approvalStatuses: List of approval statuses to filter by.
+	- workStatuses: List of work statuses to filter by.
+	Returns:
+	- []AssetPivot: Slice of AssetPivot rows matching the filters.
+	- int64: Total count of assets matching the filters (for pagination).
+	- error: Error if project is missing or database query fails.
+
+───────────────────────────────────────────────────────────────────────────
+*/
 func (r *ReviewInfo) ListAssetsPivot(
 	ctx context.Context,
 	project, root, preferredPhase, orderKey, direction string,
