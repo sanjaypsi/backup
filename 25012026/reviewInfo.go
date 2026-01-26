@@ -479,652 +479,121 @@ func (r *ReviewInfo) ListShotReviewInfos(
 	Assets and Latest Submission Rows
 ───────────────────────────────────────────────────────────────────────────
 */
-// ---- Latest Submission row ----
-type LatestSubmissionRow struct {
-	Root           string     `json:"root"              gorm:"column:root"`
-	Project        string     `json:"project"           gorm:"column:project"`
-	Group1         string     `json:"group_1"           gorm:"column:group_1"`
-	Relation       string     `json:"relation"          gorm:"column:relation"`
-	Phase          string     `json:"phase"             gorm:"column:phase"`
-	SubmittedAtUTC *time.Time `json:"submitted_at_utc"  gorm:"column:submitted_at_utc"`
-}
 
-// ---- Asset Pivot row ----
-type AssetPivot struct {
-	Root     string `json:"root"`
-	Project  string `json:"project"`
-	Group1   string `json:"group_1"`
-	Relation string `json:"relation"`
+// type ReviewInfo struct {
+//     db *gorm.DB
+// }
 
-	// Grouping info
-	LeafGroupName     string `json:"leaf_group_name"`
-	GroupCategoryPath string `json:"group_category_path"`
-	TopGroupNode      string `json:"top_group_node"`
+// func NewReviewInfo(db *gorm.DB) *ReviewInfo {
+//     return &ReviewInfo{db: db}
+// }
 
-	MDLWorkStatus     *string    `json:"mdl_work_status"`
-	MDLApprovalStatus *string    `json:"mdl_approval_status"`
-	MDLSubmittedAtUTC *time.Time `json:"mdl_submitted_at_utc"`
+// func (r *ReviewInfo) WithContext(ctx context.Context) *gorm.DB {
+//     return r.db.WithContext(ctx)
+// }
 
-	RIGWorkStatus     *string    `json:"rig_work_status"`
-	RIGApprovalStatus *string    `json:"rig_approval_status"`
-	RIGSubmittedAtUTC *time.Time `json:"rig_submitted_at_utc"`
+// func (r *ReviewInfo) TransactionWithContext(ctx context.Context, fn func(*gorm.DB) error) error {
+//     return r.db.WithContext(ctx).Transaction(fn)
+// }
 
-	BLDWorkStatus     *string    `json:"bld_work_status"`
-	BLDApprovalStatus *string    `json:"bld_approval_status"`
-	BLDSubmittedAtUTC *time.Time `json:"bld_submitted_at_utc"`
+/* =========================
+   DATA MODELS
+========================= */
 
-	DSNWorkStatus     *string    `json:"dsn_work_status"`
-	DSNApprovalStatus *string    `json:"dsn_approval_status"`
-	DSNSubmittedAtUTC *time.Time `json:"dsn_submitted_at_utc"`
-
-	LDVWorkStatus     *string    `json:"ldv_work_status"`
-	LDVApprovalStatus *string    `json:"ldv_approval_status"`
-	LDVSubmittedAtUTC *time.Time `json:"ldv_submitted_at_utc"`
-}
-
-// ---- phaseRow for intermediate query ----
 type phaseRow struct {
-	Project        string     `gorm:"column:project"`
-	Root           string     `gorm:"column:root"`
-	Group1         string     `gorm:"column:group_1"`
-	Relation       string     `gorm:"column:relation"`
-	Phase          string     `gorm:"column:phase"`
-	WorkStatus     *string    `gorm:"column:work_status"`
-	ApprovalStatus *string    `gorm:"column:approval_status"`
-	SubmittedAtUTC *time.Time `gorm:"column:submitted_at_utc"`
-
-	LeafGroupName     string `gorm:"column:leaf_group_name"`
-	GroupCategoryPath string `gorm:"column:group_category_path"`
-	TopGroupNode      string `gorm:"column:top_group_node"`
+	Project           string
+	Root              string
+	Group1            string
+	Relation          string
+	LeafGroupName     string
+	GroupCategoryPath string
+	TopGroupNode      string
+	Phase             string
+	WorkStatus        string
+	ApprovalStatus    string
+	SubmittedAtUTC    *time.Time
 }
 
-// ---- Sort Direction ----
+type AssetPivot struct {
+	Project           string
+	Root              string
+	Group1            string
+	Relation          string
+	LeafGroupName     string
+	GroupCategoryPath string
+	TopGroupNode      string
+
+	MDLWorkStatus     string
+	MDLApprovalStatus string
+	MDLSubmittedAtUTC *time.Time
+	RIGWorkStatus     string
+	RIGApprovalStatus string
+	RIGSubmittedAtUTC *time.Time
+	BLDWorkStatus     string
+	BLDApprovalStatus string
+	BLDSubmittedAtUTC *time.Time
+	DSNWorkStatus     string
+	DSNApprovalStatus string
+	DSNSubmittedAtUTC *time.Time
+	LDVWorkStatus     string
+	LDVApprovalStatus string
+	LDVSubmittedAtUTC *time.Time
+}
+
+/* =========================
+   GROUPING (GO SIDE)
+========================= */
+
+type GroupedAssetBucket struct {
+	TopGroup string
+	Assets   []AssetPivot
+}
+
 type SortDirection string
 
-// SortDirection constants
 const (
-	SortASC  SortDirection = "ASC"
-	SortDESC SortDirection = "DESC"
+	SortAsc  SortDirection = "ASC"
+	SortDesc SortDirection = "DESC"
 )
 
-// ---- Grouped Asset Bucket ----
-type GroupedAssetBucket struct {
-	TopGroupNode string       `json:"top_group_node"` // camera / character / prop / ...
-	ItemCount    int          `json:"item_count"`
-	Items        []AssetPivot `json:"items"`
-	TotalCount   *int         `json:"total_count"` // optional total count across pages
+func GroupAndSortByTopNode(
+	assets []AssetPivot,
+	dir SortDirection,
+) []GroupedAssetBucket {
 
-}
+	m := make(map[string][]AssetPivot)
 
-/*
-──────────────────────────────────────────────────────────────────────────
-
-	GroupAndSortByTopNode groups a slice of AssetPivot items by their TopGroupNode field,
-	sorts the group headers alphabetically (A→Z, case-insensitive), and always places the
-	"Unassigned" group last. Within each group, the items are sorted by their Group1 field
-	in either ascending or descending order, as specified by the dir parameter.
-	Returns a slice of GroupedAssetBucket, each containing a group header and its sorted items.
-
-	Parameters:
-	- rows: Slice of AssetPivot items to be grouped and sorted.
-	- dir: SortDirection specifying ascending or descending order for items within each group.
-
-	Returns:
-	- []GroupedAssetBucket: Slice of grouped and sorted asset buckets.
-
-───────────────────────────────────────────────────────────────────────────
-*/
-func GroupAndSortByTopNode(rows []AssetPivot, dir SortDirection) []GroupedAssetBucket {
-	grouped := make(map[string][]AssetPivot)
-	order := make([]string, 0)
-
-	// group and collect TopGroupNode keys
-	for _, row := range rows {
-		key := strings.TrimSpace(row.TopGroupNode)
+	for _, a := range assets {
+		key := a.TopGroupNode
 		if key == "" {
-			key = "Unassigned" // represents NULL / no group
+			key = "Ungrouped"
 		}
-		if _, exists := grouped[key]; !exists {
-			grouped[key] = []AssetPivot{}
-			order = append(order, key)
-		}
-		grouped[key] = append(grouped[key], row)
+		m[key] = append(m[key], a)
 	}
 
-	// Group header order:
-	// - ALWAYS alphabetical A→Z
-	// - "Unassigned" ALWAYS last (no more "unassignedFirst")
-	isUnassigned := func(s string) bool {
-		return strings.EqualFold(strings.TrimSpace(s), "unassigned")
-	}
-
-	sort.Slice(order, func(i, j int) bool {
-		ai := strings.TrimSpace(order[i])
-		aj := strings.TrimSpace(order[j])
-
-		aui := isUnassigned(ai)
-		auj := isUnassigned(aj)
-
-		// Unassigned always last
-		if aui && !auj {
-			return false
-		}
-		if !aui && auj {
-			return true
-		}
-
-		// Always A→Z (case-insensitive)
-		return strings.ToLower(ai) < strings.ToLower(aj)
-	})
-
-	// sort children inside each group by Group1 using requested dir
-	for _, key := range order {
-		children := grouped[key]
-		sort.SliceStable(children, func(i, j int) bool {
-			gi := strings.ToLower(children[i].Group1)
-			gj := strings.ToLower(children[j].Group1)
-
-			if dir == SortDESC {
-				return gi > gj
-			}
-			return gi < gj
-		})
-		grouped[key] = children
-	}
-
-	result := make([]GroupedAssetBucket, 0, len(order))
-	for _, key := range order {
+	result := make([]GroupedAssetBucket, 0, len(m))
+	for k, v := range m {
 		result = append(result, GroupedAssetBucket{
-			TopGroupNode: key,
-			Items:        grouped[key],
+			TopGroup: k,
+			Assets:   v,
 		})
 	}
+
+	sortFn := func(i, j int) bool {
+		if dir == SortDesc {
+			return result[i].TopGroup > result[j].TopGroup
+		}
+		return result[i].TopGroup < result[j].TopGroup
+	}
+
+	sort.Slice(result, sortFn)
 	return result
 }
 
-/*
-──────────────────────────────────────────────────────────────────────────
+/* =========================
+   MAIN QUERY (OPTIMIZED - NO DEADLOCKS)
+========================= */
 
-	buildPhaseAwareStatusWhere constructs a SQL WHERE clause segment that filters rows based on the provided
-	approvalStatuses and workStatuses. It generates case-insensitive "IN" conditions for the columns
-	"approval_status" and "work_status" if their respective status slices are non-empty.
-	The function returns the WHERE clause string (prefixed with " AND ") and a slice of arguments
-	corresponding to the status values, all converted to lowercase and trimmed of whitespace.
-	If both status slices are empty, it returns an empty string and nil arguments.
-
-───────────────────────────────────────────────────────────────────────────
-*/
-func buildPhaseAwareStatusWhere(_ string, approvalStatuses, workStatuses []string) (string, []any) {
-	buildIn := func(col string, vals []string) (string, []any) {
-		if len(vals) == 0 {
-			return "", nil
-		}
-		ph := strings.Repeat("?,", len(vals))
-		ph = ph[:len(ph)-1]
-
-		args := make([]any, len(vals))
-		for i, v := range vals {
-			args[i] = strings.ToLower(strings.TrimSpace(v))
-		}
-
-		return fmt.Sprintf("LOWER(%s) IN (%s)", col, ph), args
-	}
-
-	clauses := []string{}
-	args := []any{}
-
-	if c, a := buildIn("approval_status", approvalStatuses); c != "" {
-		clauses = append(clauses, "("+c+")")
-		args = append(args, a...)
-	}
-	if c, a := buildIn("work_status", workStatuses); c != "" {
-		clauses = append(clauses, "("+c+")")
-		args = append(args, a...)
-	}
-
-	if len(clauses) == 0 {
-		return "", nil
-	}
-	return " AND " + strings.Join(clauses, " AND "), args
-}
-
-/*
-──────────────────────────────────────────────────────────────────────────
-
-	buildOrderClause constructs an SQL ORDER BY clause string based on the provided
-	alias, key, and direction. It supports various keys for sorting, including generic
-	columns (e.g., submitted_at_utc, modified_at_utc, phase), name/relation combinations,
-	phase-specific submitted dates, work status, and approval status. The direction
-	(dir) is normalized to "ASC" or "DESC", defaulting to "ASC" if invalid. The alias
-	is prepended to column names if provided. For unrecognized keys, a default ordering
-	by group_1, relation, and submitted_at_utc is used. The function ensures proper
-	handling of NULL values and alphabetical sorting where applicable.
-
-	Parameters:
-
-		alias string - Optional table alias to prefix column names.
-		key   string - The column or logical key to sort by.
-		dir   string - Sort direction ("ASC" or "DESC").
-
-	Returns:
-
-		string - The constructed SQL ORDER BY clause.
-
-──────────────────────────────────────────────────────────────────────────
-*/
-func buildOrderClause(alias, key, dir string) string {
-	dir = strings.ToUpper(strings.TrimSpace(dir))
-	if dir != "ASC" && dir != "DESC" {
-		dir = "ASC"
-	}
-
-	col := func(c string) string {
-		if alias == "" {
-			return c
-		}
-		return alias + "." + c
-	}
-
-	switch key {
-	// generic columns
-	case "submitted_at_utc", "modified_at_utc", "phase":
-		return col(key) + " " + dir
-
-	// name / relation
-	case "group1_only":
-		// PRIMARY for LIST VIEW:
-		// ORDER BY group_1, relation, submitted_at_utc (NULL last)
-		return fmt.Sprintf(
-			"LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("group_1"), dir,
-			col("relation"),
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
-		)
-
-	case "relation_only":
-		return fmt.Sprintf(
-			"LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("relation"), dir,
-			col("group_1"),
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
-		)
-
-	case "group_rel_submitted":
-		return fmt.Sprintf(
-			"LOWER(%s) ASC, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("group_1"),
-			col("relation"),
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
-		)
-
-	// phase-specific submitted date (NULL last)
-	case "mdl_submitted", "rig_submitted", "bld_submitted", "dsn_submitted", "ldv_submitted":
-		return fmt.Sprintf(
-			"(%s IS NULL) ASC, %s %s, LOWER(%s) ASC",
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
-			col("group_1"),
-		)
-
-	// work columns (alphabetical, NULL last)
-	case "mdl_work", "rig_work", "bld_work", "dsn_work", "ldv_work", "work_status":
-		return fmt.Sprintf(
-			"(%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC",
-			col("work_status"),
-			col("work_status"), dir,
-			col("group_1"),
-		)
-
-	// approval columns (alphabetical, NULL last)
-	case "mdl_appr", "rig_appr", "bld_appr", "dsn_appr", "ldv_appr":
-		return fmt.Sprintf(
-			"(%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC",
-			col("approval_status"),
-			col("approval_status"), dir,
-			col("group_1"),
-		)
-
-	// default: group_1 + relation + submitted_at_utc
-	default:
-		return fmt.Sprintf(
-			"LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("group_1"), dir,
-			col("relation"),
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
-		)
-	}
-}
-
-/*
-	──────────────────────────────────────────────────────────────────────────
-	CountLatestSubmissions returns the count of latest review submissions for a given project and asset root,
-	optionally filtered by asset name prefix, approval statuses, and work statuses.
-	The function ignores the preferredPhase parameter for filtering but keeps it for API compatibility.
-	It queries the database for the latest (by modified_at_utc) review info per asset and relation,
-	applying the specified filters, and returns the total count.
-	Returns an error if the project is not specified or if the database query fails.
-
-	Parameters:
-	ctx              - Context for database operations.
-	project          - Project identifier (required).
-	root             - Asset root; defaults to "assets" if empty.
-	assetNameKey     - Optional asset name prefix filter (case-insensitive).
-	preferredPhase   - Phase parameter (ignored in filtering; kept for compatibility).
-	approvalStatuses - List of approval statuses to filter by.
-	workStatuses     - List of work statuses to filter by.
-
-	Returns:
-	int64 - Count of latest submissions matching the filters.
-	error - Error if project is missing or database query fails.
-
-──────────────────────────────────────────────────────────────────────────
-*/
-func (r *ReviewInfo) CountLatestSubmissions(
-	ctx context.Context,
-	project, root, assetNameKey string,
-	preferredPhase string, // kept for API compatibility; ignored in filtering
-	approvalStatuses []string,
-	workStatuses []string,
-) (int64, error) {
-	if project == "" {
-		return 0, fmt.Errorf("project is required")
-	}
-	if root == "" {
-		root = "assets"
-	}
-
-	db := r.db.WithContext(ctx)
-
-	// name prefix filter
-	nameCond := ""
-	var nameArg any
-	if strings.TrimSpace(assetNameKey) != "" {
-		nameCond = " AND LOWER(group_1) LIKE ?"
-		nameArg = strings.ToLower(strings.TrimSpace(assetNameKey)) + "%"
-	}
-
-	// status filter (no phase restriction)
-	statusWhere, statusArgs := buildPhaseAwareStatusWhere(preferredPhase, approvalStatuses, workStatuses)
-
-	sql := `
-WITH latest_phase AS (
-  SELECT
-    project,
-    root,
-    group_1,
-    relation,
-    phase,
-    work_status,
-    approval_status,
-    submitted_at_utc,
-    modified_at_utc,
-    ROW_NUMBER() OVER (
-      PARTITION BY project, root, group_1, relation, phase
-      ORDER BY modified_at_utc DESC
-    ) AS rn
-  FROM t_review_info
-  WHERE project = ? AND root = ? AND deleted = 0` + nameCond + `
-)
-SELECT COUNT(*) FROM (
-  SELECT project, root, group_1, relation
-  FROM latest_phase
-  WHERE rn = 1` + statusWhere + `
-  GROUP BY project, root, group_1, relation
-) AS x;
-`
-
-	args := []any{project, root}
-	if nameArg != nil {
-		args = append(args, nameArg)
-	}
-	args = append(args, statusArgs...)
-
-	var total int64
-	if err := db.Raw(sql, args...).Scan(&total).Error; err != nil {
-		return 0, fmt.Errorf("CountLatestSubmissions: %w", err)
-	}
-
-	return total, nil
-}
-
-/*
-	──────────────────────────────────────────────────────────────────────────
-
-	ListLatestSubmissionsDynamic retrieves a list of the latest review submissions
-	for a specified project and asset root, with dynamic filtering and sorting options.
-	Parameters:
-	- ctx: Context for database operations.
-	- project: Project identifier (required).
-	- root: Asset root; defaults to "assets" if empty.
-	- preferredPhase: Phase to prioritize in sorting; if empty or "none", no bias is applied.
-	- orderKey: Column or logical key to sort by (e.g., "submitted_at_utc", "group1_only").
-	- direction: Sort direction ("ASC" or "DESC").
-	- limit: Maximum number of results to return; defaults to 60 if <= 0.
-	- offset: Number of results to skip; defaults to 0 if < 0.
-	- assetNameKey: Optional asset name prefix filter (case-insensitive).
-	- approvalStatuses: List of approval statuses to filter by.
-	- workStatuses: List of work statuses to filter by.
-	Returns:
-	- []LatestSubmissionRow: Slice of latest submission rows matching the filters.
-	- error: Error if project is missing or database query fails.
-
-───────────────────────────────────────────────────────────────────────────
-*/
-func (r *ReviewInfo) ListLatestSubmissionsDynamic(
-	ctx context.Context,
-	project string,
-	root string,
-	preferredPhase string,
-	orderKey string,
-	direction string,
-	limit, offset int,
-	assetNameKey string,
-	approvalStatuses []string,
-	workStatuses []string,
-) ([]LatestSubmissionRow, error) {
-	if project == "" {
-		return nil, fmt.Errorf("project is required")
-	}
-	if root == "" {
-		root = "assets"
-	}
-	if limit <= 0 {
-		limit = 60
-	}
-	if offset < 0 {
-		offset = 0
-	}
-
-	// phaseGuard: 1 = no phase bias, 0 = prefer preferredPhase
-	phaseGuard := 0
-	if preferredPhase == "" || strings.EqualFold(preferredPhase, "none") {
-		phaseGuard = 1
-	}
-
-	orderClauseWindow := buildOrderClause("", orderKey, direction)
-	orderClauseInner := buildOrderClause("b", orderKey, direction)
-
-	// name prefix filter
-	nameCond := ""
-	var nameArg any
-	if strings.TrimSpace(assetNameKey) != "" {
-		nameCond = " AND LOWER(group_1) LIKE ?"
-		nameArg = strings.ToLower(strings.TrimSpace(assetNameKey)) + "%"
-	}
-
-	// status filter
-	statusWhere, statusArgs := buildPhaseAwareStatusWhere(preferredPhase, approvalStatuses, workStatuses)
-
-	// keys subquery: which assets (root+project+group_1+relation) are in scope
-	keysSQL := `
-WITH latest_phase AS (
-  SELECT
-    project,
-    root,
-    group_1,
-    relation,
-    phase,
-    work_status,
-    approval_status,
-    submitted_at_utc,
-    modified_at_utc,
-    ROW_NUMBER() OVER (
-      PARTITION BY project, root, group_1, relation, phase
-      ORDER BY modified_at_utc DESC
-    ) AS rn
-  FROM t_review_info
-  WHERE project = ? AND root = ? AND deleted = 0` + nameCond + `
-)
-SELECT project, root, group_1, relation
-FROM latest_phase
-WHERE rn = 1` + statusWhere + `
-GROUP BY project, root, group_1, relation
-`
-
-	q := fmt.Sprintf(`
-WITH ordered AS (
-  SELECT
-    *,
-    ROW_NUMBER() OVER (ORDER BY %s) AS _order
-  FROM (
-    SELECT b.*
-    FROM (
-      SELECT
-        project,
-        root,
-        group_1,
-        relation,
-        phase,
-        MAX(modified_at_utc) AS modified_at_utc
-      FROM t_review_info
-      WHERE project = ? AND root = ? AND deleted = 0
-      GROUP BY project, root, group_1, relation, phase
-    ) AS a
-    LEFT JOIN (
-      SELECT
-        root,
-        project,
-        group_1,
-        phase,
-        relation,
-        work_status,
-        approval_status,
-        submitted_at_utc,
-        modified_at_utc
-      FROM t_review_info
-      WHERE project = ? AND root = ? AND deleted = 0
-    ) AS b
-      ON a.project = b.project
-     AND a.root    = b.root
-     AND a.group_1 = b.group_1
-     AND a.relation = b.relation
-     AND a.phase    = b.phase
-     AND a.modified_at_utc = b.modified_at_utc
-
-    INNER JOIN ( %s ) AS fk
-      ON b.project = fk.project
-     AND b.root    = fk.root
-     AND b.group_1 = fk.group_1
-     AND b.relation = fk.relation
-
-    ORDER BY %s
-  ) AS k
-),
-offset_ordered AS (
-  SELECT
-    c.*,
-    CASE
-      WHEN ? = 1 THEN c._order
-      WHEN c.phase = ? THEN c._order
-      ELSE 100000 + c._order
-    END AS __order
-  FROM ordered c
-),
-ranked AS (
-  SELECT
-    b.*,
-    ROW_NUMBER() OVER (
-      PARTITION BY b.root, b.project, b.group_1, b.relation
-      ORDER BY
-        CASE
-          WHEN ? = 1 THEN 0
-          WHEN b.phase = ? THEN 0
-          ELSE 1
-        END,
-        LOWER(b.group_1)   ASC,
-        LOWER(b.relation)  ASC,
-        b.modified_at_utc  DESC
-    ) AS _rank
-  FROM offset_ordered b
-)
-SELECT
-  root,
-  project,
-  group_1,
-  relation,
-  phase,
-  submitted_at_utc
-FROM ranked
-WHERE _rank = 1
-ORDER BY __order ASC
-LIMIT ? OFFSET ?;
-`, orderClauseWindow, keysSQL, orderClauseInner)
-
-	args := []any{
-		// 'a' CTE
-		project, root,
-		// 'b' join
-		project, root,
-		// keys subquery
-		project, root,
-	}
-	if nameArg != nil {
-		args = append(args, nameArg)
-	}
-	args = append(args, statusArgs...)
-	// phase bias + limit/offset
-	args = append(args,
-		phaseGuard, preferredPhase,
-		phaseGuard, preferredPhase,
-		limit, offset,
-	)
-
-	var rows []LatestSubmissionRow
-	if err := r.db.WithContext(ctx).Raw(q, args...).Scan(&rows).Error; err != nil {
-		return nil, fmt.Errorf("ListLatestSubmissionsDynamic: %w", err)
-	}
-
-	return rows, nil
-}
-
-/*
-──────────────────────────────────────────────────────────────────────────
-
-	ListAssetsPivot retrieves a paginated list of AssetPivot rows for a specified project and asset root,
-	optionally filtered by asset name prefix, preferred phase, approval statuses, and work statuses.
-	Parameters:
-	- ctx: Context for database operations.
-	- project: Project identifier (required).
-	- root: Asset root; defaults to "assets" if empty.
-	- preferredPhase: Phase to prioritize in sorting; if empty or "none", no bias is applied.
-	- orderKey: Column or logical key to sort by (e.g., "submitted_at_utc", "group1_only").
-	- direction: Sort direction ("ASC" or "DESC").
-	- limit: Maximum number of results to return; defaults to 60 if <= 0.
-	- offset: Number of results to skip; defaults to 0 if < 0.
-	- assetNameKey: Optional asset name prefix filter (case-insensitive).
-	- approvalStatuses: List of approval statuses to filter by.
-	- workStatuses: List of work statuses to filter by.
-	Returns:
-	- []AssetPivot: Slice of AssetPivot rows matching the filters.
-	- int64: Total count of assets matching the filters (for pagination).
-	- error: Error if project is missing or database query fails.
-
-───────────────────────────────────────────────────────────────────────────
-*/
 func (r *ReviewInfo) ListAssetsPivot(
 	ctx context.Context,
 	project, root, preferredPhase, orderKey, direction string,
@@ -1133,6 +602,8 @@ func (r *ReviewInfo) ListAssetsPivot(
 	approvalStatuses []string,
 	workStatuses []string,
 ) ([]AssetPivot, int64, error) {
+
+	// Validate required parameters
 	if project == "" {
 		return nil, 0, fmt.Errorf("project is required")
 	}
@@ -1140,173 +611,344 @@ func (r *ReviewInfo) ListAssetsPivot(
 		root = "assets"
 	}
 
-	// 1) Get total count for pagination (after filters)
-	total, err := r.CountLatestSubmissions(
-		ctx,
-		project,
-		root,
-		assetNameKey,
-		preferredPhase,
-		approvalStatuses,
-		workStatuses,
-	)
-	if err != nil {
-		return nil, 0, err
+	// Set defaults
+	if orderKey == "" {
+		orderKey = "group_1"
+	}
+	if direction == "" {
+		direction = "asc"
+	}
+	direction = strings.ToUpper(direction)
+	if direction != "ASC" && direction != "DESC" {
+		direction = "ASC"
 	}
 
-	// 2) Get page "keys" (one primary row per asset, correctly ordered)
-	keys, err := r.ListLatestSubmissionsDynamic(
-		ctx,
-		project,
-		root,
+	// Check context before starting
+	select {
+	case <-ctx.Done():
+		return nil, 0, ctx.Err()
+	default:
+		// Continue
+	}
+
+	// ---------- STEP 1: BUILD BASE FILTERS ----------
+	baseQuery := r.db.WithContext(ctx).
+		Table("t_review_info").
+		Where("project = ? AND root = ? AND deleted = 0", project, root)
+
+	if assetNameKey != "" {
+		baseQuery = baseQuery.Where("LOWER(group_1) LIKE ?", strings.ToLower(assetNameKey)+"%")
+	}
+
+	statusWhere, statusArgs := buildPhaseAwareStatusWhere(
 		preferredPhase,
-		orderKey,
-		direction,
-		limit,
-		offset,
-		assetNameKey,
 		approvalStatuses,
 		workStatuses,
 	)
-	if err != nil {
-		return nil, 0, err
+	if statusWhere != "" {
+		baseQuery = baseQuery.Where(statusWhere, statusArgs...)
 	}
-	if len(keys) == 0 {
+
+	// ---------- STEP 2: GET TOTAL COUNT (Optimized) ----------
+	// Use a separate session for count query to prevent state pollution
+	countQuery := baseQuery.Session(&gorm.Session{})
+
+	// Count distinct assets (project+root+group1+relation)
+	var total int64
+	if err := countQuery.
+		Distinct("project, root, group_1, relation").
+		Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count assets: %w", err)
+	}
+
+	// Early return if no results
+	if total == 0 || (limit > 0 && offset >= int(total)) {
 		return []AssetPivot{}, total, nil
 	}
 
-	// 3) Build dynamic WHERE ( ... OR ... ) to restrict phase fetch
-	//    strictly to this page's assets.
-	var sb strings.Builder
-	var params []any
+	// ---------- STEP 3: GET PAGINATED DATA ----------
+	var rows []phaseRow
 
-	sb.WriteString(`
-WITH latest_phase AS (
-  SELECT
-    ri.project,
-    ri.root,
-    ri.group_1,
-    ri.relation,
-    ri.phase,
-    ri.work_status,
-    ri.approval_status,
-    ri.submitted_at_utc,
-    ri.modified_at_utc,
-    JSON_UNQUOTE(JSON_EXTRACT(ri.` + "`groups`" + `, '$[0]')) AS leaf_group_name,
-    gc.path AS group_category_path,
-    SUBSTRING_INDEX(gc.path, '/', 1) AS top_group_node,
-    ROW_NUMBER() OVER (
-      PARTITION BY ri.project, ri.root, ri.group_1, ri.relation, ri.phase
-      ORDER BY ri.modified_at_utc DESC
-    ) AS rn
-  FROM t_review_info AS ri
-  LEFT JOIN t_group_category_group AS gcg
-         ON gcg.project = ri.project
-        AND gcg.deleted = 0
-        AND gcg.path = JSON_UNQUOTE(JSON_EXTRACT(ri.` + "`groups`" + `, '$[0]'))
-  LEFT JOIN t_group_category AS gc
-         ON gc.id = gcg.group_category_id
-        AND gc.deleted = 0
-        AND gc.root = 'assets'
-  WHERE ri.project = ? AND ri.root = ? AND ri.deleted = 0
-    AND (
-`)
+	// Use separate session for data query
+	dataQuery := baseQuery.Session(&gorm.Session{})
 
-	params = append(params, project, root)
+	// Build order clause
+	orderClause := buildOrderClause(preferredPhase, orderKey, direction)
 
-	for i, k := range keys {
-		if i > 0 {
-			sb.WriteString("      OR ")
-		}
-		sb.WriteString("(ri.group_1 = ? AND ri.relation = ?)\n")
-		params = append(params, k.Group1, k.Relation)
+	// Execute paginated query
+	if err := dataQuery.
+		Select(`
+            project, root, group_1 as group1, relation,
+            leaf_group_name,
+            group_category_path,
+            top_group_node,
+            phase,
+            work_status,
+            approval_status,
+            submitted_at_utc
+        `).
+		Order(orderClause).
+		Limit(limit).
+		Offset(offset).
+		Scan(&rows).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to fetch asset data: %w", err)
 	}
 
-	sb.WriteString(`    )
-)
-SELECT
-  project,
-  root,
-  group_1,
-  relation,
-  phase,
-  work_status,
-  approval_status,
-  submitted_at_utc,
-  leaf_group_name,
-  group_category_path,
-  top_group_node
-FROM latest_phase
-WHERE rn = 1;
-`)
+	// ---------- STEP 4: PIVOT RESULTS IN MEMORY ----------
+	pivot := make(map[string]*AssetPivot)
 
-	var phases []phaseRow
-	if err := r.db.WithContext(ctx).Raw(sb.String(), params...).Scan(&phases).Error; err != nil {
-		return nil, 0, fmt.Errorf("ListAssetsPivot.phaseFetch: %w", err)
-	}
+	for _, row := range rows {
+		// Create unique key for each asset
+		key := fmt.Sprintf("%s|%s|%s|%s",
+			row.Project, row.Root, row.Group1, row.Relation)
 
-	// 4) Stitch phases into pivot rows, preserving the page order from `keys`.
-	type keyStruct struct {
-		p, r, g, rel string
-	}
-
-	m := make(map[keyStruct]*AssetPivot, len(keys))
-	orderedPtrs := make([]*AssetPivot, 0, len(keys))
-
-	// create base pivot row per asset in the same order as `keys`
-	for _, k := range keys {
-		id := keyStruct{k.Project, k.Root, k.Group1, k.Relation}
-		ap := &AssetPivot{
-			Root:     k.Root,
-			Project:  k.Project,
-			Group1:   k.Group1,
-			Relation: k.Relation,
-		}
-		m[id] = ap
-		orderedPtrs = append(orderedPtrs, ap)
-	}
-
-	// fill per-phase fields + grouping info
-	for _, pr := range phases {
-		id := keyStruct{pr.Project, pr.Root, pr.Group1, pr.Relation}
-		if ap, ok := m[id]; ok {
-			// grouping info only needs to be set once
-			if ap.LeafGroupName == "" {
-				ap.LeafGroupName = pr.LeafGroupName
-				ap.GroupCategoryPath = pr.GroupCategoryPath
-				ap.TopGroupNode = pr.TopGroupNode
-			}
-
-			switch strings.ToLower(pr.Phase) {
-			case "mdl":
-				ap.MDLWorkStatus = pr.WorkStatus
-				ap.MDLApprovalStatus = pr.ApprovalStatus
-				ap.MDLSubmittedAtUTC = pr.SubmittedAtUTC
-			case "rig":
-				ap.RIGWorkStatus = pr.WorkStatus
-				ap.RIGApprovalStatus = pr.ApprovalStatus
-				ap.RIGSubmittedAtUTC = pr.SubmittedAtUTC
-			case "bld":
-				ap.BLDWorkStatus = pr.WorkStatus
-				ap.BLDApprovalStatus = pr.ApprovalStatus
-				ap.BLDSubmittedAtUTC = pr.SubmittedAtUTC
-			case "dsn":
-				ap.DSNWorkStatus = pr.WorkStatus
-				ap.DSNApprovalStatus = pr.ApprovalStatus
-				ap.DSNSubmittedAtUTC = pr.SubmittedAtUTC
-			case "ldv":
-				ap.LDVWorkStatus = pr.WorkStatus
-				ap.LDVApprovalStatus = pr.ApprovalStatus
-				ap.LDVSubmittedAtUTC = pr.SubmittedAtUTC
+		if _, exists := pivot[key]; !exists {
+			pivot[key] = &AssetPivot{
+				Project:           row.Project,
+				Root:              row.Root,
+				Group1:            row.Group1,
+				Relation:          row.Relation,
+				LeafGroupName:     row.LeafGroupName,
+				GroupCategoryPath: row.GroupCategoryPath,
+				TopGroupNode:      row.TopGroupNode,
 			}
 		}
+
+		// Fill phase-specific fields
+		p := pivot[key]
+		phaseLower := strings.ToLower(row.Phase)
+
+		switch phaseLower {
+		case "mdl":
+			p.MDLWorkStatus = row.WorkStatus
+			p.MDLApprovalStatus = row.ApprovalStatus
+			p.MDLSubmittedAtUTC = row.SubmittedAtUTC
+		case "rig":
+			p.RIGWorkStatus = row.WorkStatus
+			p.RIGApprovalStatus = row.ApprovalStatus
+			p.RIGSubmittedAtUTC = row.SubmittedAtUTC
+		case "bld":
+			p.BLDWorkStatus = row.WorkStatus
+			p.BLDApprovalStatus = row.ApprovalStatus
+			p.BLDSubmittedAtUTC = row.SubmittedAtUTC
+		case "dsn":
+			p.DSNWorkStatus = row.WorkStatus
+			p.DSNApprovalStatus = row.ApprovalStatus
+			p.DSNSubmittedAtUTC = row.SubmittedAtUTC
+		case "ldv":
+			p.LDVWorkStatus = row.WorkStatus
+			p.LDVApprovalStatus = row.ApprovalStatus
+			p.LDVSubmittedAtUTC = row.SubmittedAtUTC
+		}
 	}
 
-	// 5) Convert []*AssetPivot → []AssetPivot in the same order as keys.
-	ordered := make([]AssetPivot, len(orderedPtrs))
-	for i, ap := range orderedPtrs {
-		ordered[i] = *ap
+	// Convert map to slice
+	result := make([]AssetPivot, 0, len(pivot))
+	for _, asset := range pivot {
+		result = append(result, *asset)
 	}
 
-	return ordered, total, nil
+	return result, total, nil
 }
+
+/* =========================
+   HELPER FUNCTIONS
+========================= */
+
+func buildPhaseAwareStatusWhere(
+	preferredPhase string,
+	approvalStatuses []string,
+	workStatuses []string,
+) (string, []interface{}) {
+
+	var conditions []string
+	var args []interface{}
+
+	if preferredPhase != "" {
+		conditions = append(conditions, "phase = ?")
+		args = append(args, strings.ToUpper(preferredPhase))
+	}
+
+	if len(approvalStatuses) > 0 {
+		placeholders := strings.Repeat("?,", len(approvalStatuses)-1) + "?"
+		conditions = append(conditions, "approval_status IN ("+placeholders+")")
+		for _, status := range approvalStatuses {
+			args = append(args, status)
+		}
+	}
+
+	if len(workStatuses) > 0 {
+		placeholders := strings.Repeat("?,", len(workStatuses)-1) + "?"
+		conditions = append(conditions, "work_status IN ("+placeholders+")")
+		for _, status := range workStatuses {
+			args = append(args, status)
+		}
+	}
+
+	if len(conditions) == 0 {
+		return "", nil
+	}
+
+	return strings.Join(conditions, " AND "), args
+}
+
+func buildOrderClause(preferredPhase, orderKey, direction string) string {
+	if orderKey == "" {
+		orderKey = "group_1"
+	}
+
+	if direction == "" {
+		direction = "ASC"
+	}
+
+	direction = strings.ToUpper(direction)
+	if direction != "ASC" && direction != "DESC" {
+		direction = "ASC"
+	}
+
+	// If preferred phase is specified, prioritize assets in that phase
+	if preferredPhase != "" {
+		return fmt.Sprintf(
+			"CASE WHEN LOWER(phase) = LOWER('%s') THEN 0 ELSE 1 END, %s %s",
+			preferredPhase,
+			orderKey,
+			direction,
+		)
+	}
+
+	return fmt.Sprintf("%s %s", orderKey, direction)
+}
+
+/* =========================
+   CRUD METHODS
+========================= */
+
+// func (r *ReviewInfo) List(db *gorm.DB, params *entity.ListReviewInfoParams) ([]*entity.ReviewInfo, int, error) {
+// 	var results []*entity.ReviewInfo
+// 	var total int64
+
+// 	query := db.Table("t_review_info").
+// 		Where("project = ? AND deleted = 0", params.Project)
+
+// 	if params.Studio != nil && *params.Studio != "" {
+// 		query = query.Where("studio = ?", *params.Studio)
+// 	}
+
+// 	// Get total count
+// 	if err := query.Count(&total).Error; err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// Get paginated results
+// 	if err := query.
+// 		Offset(params.Offset).
+// 		Limit(params.Limit).
+// 		Order("created_at DESC").
+// 		Find(&results).Error; err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	return results, int(total), nil
+// }
+
+// func (r *ReviewInfo) Get(db *gorm.DB, params *entity.GetReviewParams) (*entity.ReviewInfo, error) {
+// 	var result entity.ReviewInfo
+
+// 	err := db.Table("t_review_info").
+// 		Where("project = ? AND root = ? AND group_1 = ? AND relation = ? AND phase = ?",
+// 			params.Project, params.Root, params.Group1, params.Relation, params.Phase).
+// 		Where("deleted = 0").
+// 		First(&result).Error
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &result, nil
+// }
+
+// func (r *ReviewInfo) Create(db *gorm.DB, params *entity.CreateReviewInfoParams) (*entity.ReviewInfo, error) {
+// 	now := time.Now().UTC()
+
+// 	review := &entity.ReviewInfo{
+// 		Project:        params.Project,
+// 		Root:           params.Root,
+// 		Group1:         params.Group1,
+// 		Relation:       params.Relation,
+// 		Phase:          params.Phase,
+// 		WorkStatus:     params.WorkStatus,
+// 		ApprovalStatus: params.ApprovalStatus,
+// 		Studio:         params.Studio,
+// 		SubmittedAtUTC: params.SubmittedAtUTC,
+// 		CreatedAt:      &now,
+// 		UpdatedAt:      &now,
+// 	}
+
+// 	err := db.Table("t_review_info").Create(review).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return review, nil
+// }
+
+// func (r *ReviewInfo) Update(db *gorm.DB, params *entity.UpdateReviewInfoParams) (*entity.ReviewInfo, error) {
+// 	var review entity.ReviewInfo
+
+// 	// Find existing record
+// 	err := db.Table("t_review_info").
+// 		Where("project = ? AND root = ? AND group_1 = ? AND relation = ? AND phase = ?",
+// 			params.Project, params.Root, params.Group1, params.Relation, params.Phase).
+// 		Where("deleted = 0").
+// 		First(&review).Error
+
+// 	if err != nil {
+// 		return nil, fmt.Errorf("review not found: %w", err)
+// 	}
+
+// 	// Update fields
+// 	if params.WorkStatus != "" {
+// 		review.WorkStatus = params.WorkStatus
+// 	}
+// 	if params.ApprovalStatus != "" {
+// 		review.ApprovalStatus = params.ApprovalStatus
+// 	}
+// 	if params.SubmittedAtUTC != nil {
+// 		review.SubmittedAtUTC = params.SubmittedAtUTC
+// 	}
+
+// 	now := time.Now().UTC()
+// 	review.UpdatedAt = &now
+
+// 	// Save changes
+// 	err = db.Save(&review).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &review, nil
+// }
+
+// func (r *ReviewInfo) Delete(db *gorm.DB, params *entity.DeleteReviewInfoParams) error {
+// 	// Soft delete - mark as deleted
+// 	now := time.Now().UTC()
+
+// 	result := db.Table("t_review_info").
+// 		Where("project = ? AND root = ? AND group_1 = ? AND relation = ?",
+// 			params.Project, params.Root, params.Group1, params.Relation).
+// 		Where("deleted = 0").
+// 		Updates(map[string]interface{}{
+// 			"deleted":    1,
+// 			"updated_at": now,
+// 		})
+
+// 	if result.Error != nil {
+// 		return result.Error
+// 	}
+
+// 	if result.RowsAffected == 0 {
+// 		return fmt.Errorf("no records found to delete")
+// 	}
+
+// 	return nil
+// }
