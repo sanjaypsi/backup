@@ -79,20 +79,33 @@ func (uc *ReviewInfo) List(
 	ctx context.Context,
 	params *entity.ListReviewInfoParams,
 ) ([]*entity.ReviewInfo, int, error) {
+
 	if err := binding.Validator.ValidateStruct(params); err != nil {
 		return nil, 0, err
 	}
+
 	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
 	defer cancel()
+
+	// Check context before proceeding
+	select {
+	case <-timeoutCtx.Done():
+		return nil, 0, timeoutCtx.Err()
+	default:
+		// Continue
+	}
+
 	db := uc.repo.WithContext(timeoutCtx)
 	if err := uc.checkForProject(db, params.Project); err != nil {
 		return nil, 0, err
 	}
+
 	if params.Studio != nil {
 		if err := uc.checkForStudio(db, *params.Studio); err != nil {
 			return nil, 0, err
 		}
 	}
+
 	return uc.repo.List(db, params)
 }
 
@@ -319,6 +332,189 @@ Fields:
 
 ──────────────────────────────────────────────────────────────────────────
 */
+
+// type ReviewInfo struct {
+// 	repo         *repository.ReviewInfo
+// 	prjRepo      *repository.ProjectInfo
+// 	stuRepo      *repository.StudioInfo
+// 	docRepo      entity.DocumentRepository
+// 	ReadTimeout  time.Duration
+// 	WriteTimeout time.Duration
+// }
+
+// func NewReviewInfo(
+// 	repo *repository.ReviewInfo,
+// 	pr *repository.ProjectInfo,
+// 	sr *repository.StudioInfo,
+// 	dr entity.DocumentRepository,
+// 	readTimeout time.Duration,
+// 	writeTimeout time.Duration,
+// ) *ReviewInfo {
+// 	return &ReviewInfo{
+// 		repo:         repo,
+// 		prjRepo:      pr,
+// 		stuRepo:      sr,
+// 		docRepo:      dr,
+// 		ReadTimeout:  readTimeout,
+// 		WriteTimeout: writeTimeout,
+// 	}
+// }
+
+// func (uc *ReviewInfo) checkForProject(db *gorm.DB, project string) error {
+// 	_, err := uc.prjRepo.Get(db, &entity.GetProjectInfoParams{
+// 		KeyName: project,
+// 	})
+// 	return err
+// }
+
+// func (uc *ReviewInfo) checkForStudio(db *gorm.DB, studio string) error {
+// 	_, err := uc.stuRepo.Get(db, &entity.GetStudioInfoParams{
+// 		KeyName: studio,
+// 	})
+// 	return err
+// }
+
+/* =========================
+   LIST / GET / CRUD
+========================= */
+
+// func (uc *ReviewInfo) Get(
+// 	ctx context.Context,
+// 	params *entity.GetReviewParams,
+// ) (*entity.ReviewInfo, error) {
+
+// 	if err := binding.Validator.ValidateStruct(params); err != nil {
+// 		return nil, err
+// 	}
+
+// 	timeoutCtx, cancel := context.WithTimeout(ctx, uc.ReadTimeout)
+// 	defer cancel()
+
+// 	// Check context before proceeding
+// 	select {
+// 	case <-timeoutCtx.Done():
+// 		return nil, timeoutCtx.Err()
+// 	default:
+// 		// Continue
+// 	}
+
+// 	db := uc.repo.WithContext(timeoutCtx)
+// 	if err := uc.checkForProject(db, params.Project); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return uc.repo.Get(db, params)
+// }
+
+// func (uc *ReviewInfo) Create(
+// 	ctx context.Context,
+// 	params *entity.CreateReviewInfoParams,
+// ) (*entity.ReviewInfo, error) {
+
+// 	if err := binding.Validator.ValidateStruct(params); err != nil {
+// 		return nil, err
+// 	}
+
+// 	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+// 	defer cancel()
+
+// 	// Check context before proceeding
+// 	select {
+// 	case <-timeoutCtx.Done():
+// 		return nil, timeoutCtx.Err()
+// 	default:
+// 		// Continue
+// 	}
+
+// 	db := uc.repo.WithContext(timeoutCtx)
+// 	if err := uc.checkForProject(db, params.Project); err != nil {
+// 		return nil, err
+// 	}
+// 	if err := uc.checkForStudio(db, params.Studio); err != nil {
+// 		return nil, err
+// 	}
+
+// 	var e *entity.ReviewInfo
+// 	if err := uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+// 		var err error
+// 		e, err = uc.repo.Create(tx, params)
+// 		return err
+// 	}); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return e, nil
+// }
+
+// func (uc *ReviewInfo) Update(
+// 	ctx context.Context,
+// 	params *entity.UpdateReviewInfoParams,
+// ) (*entity.ReviewInfo, error) {
+
+// 	if err := binding.Validator.ValidateStruct(params); err != nil {
+// 		return nil, err
+// 	}
+
+// 	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+// 	defer cancel()
+
+// 	// Check context before proceeding
+// 	select {
+// 	case <-timeoutCtx.Done():
+// 		return nil, timeoutCtx.Err()
+// 	default:
+// 		// Continue
+// 	}
+
+// 	db := uc.repo.WithContext(timeoutCtx)
+// 	if err := uc.checkForProject(db, params.Project); err != nil {
+// 		return nil, err
+// 	}
+
+// 	var e *entity.ReviewInfo
+// 	if err := uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+// 		var err error
+// 		e, err = uc.repo.Update(tx, params)
+// 		return err
+// 	}); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return e, nil
+// }
+
+// func (uc *ReviewInfo) Delete(
+// 	ctx context.Context,
+// 	params *entity.DeleteReviewInfoParams,
+// ) error {
+
+// 	if err := binding.Validator.ValidateStruct(params); err != nil {
+// 		return err
+// 	}
+
+// 	timeoutCtx, cancel := context.WithTimeout(ctx, uc.WriteTimeout)
+// 	defer cancel()
+
+// 	// Check context before proceeding
+// 	select {
+// 	case <-timeoutCtx.Done():
+// 		return timeoutCtx.Err()
+// 	default:
+// 		// Continue
+// 	}
+
+// 	return uc.repo.TransactionWithContext(timeoutCtx, func(tx *gorm.DB) error {
+// 		if err := uc.checkForProject(tx, params.Project); err != nil {
+// 			return err
+// 		}
+// 		return uc.repo.Delete(tx, params)
+// 	})
+// }
+
+/* =========================
+   ASSET PIVOT (OPTIMIZED - CONTEXT SAFE)
+========================= */
+
 type ListAssetsPivotParams struct {
 	Project          string
 	Root             string
@@ -330,7 +526,7 @@ type ListAssetsPivotParams struct {
 	AssetNameKey     string
 	ApprovalStatuses []string
 	WorkStatuses     []string
-	View             string // "list" or "grouped"
+	View             string // list | grouped
 }
 
 type ListAssetsPivotResult struct {
@@ -346,33 +542,12 @@ type ListAssetsPivotResult struct {
 	Dir      string
 }
 
-/*
-	──────────────────────────────────────────────────────────────────────────
+func (u *ReviewInfo) ListAssetsPivot(
+	ctx context.Context,
+	p ListAssetsPivotParams,
+) (*ListAssetsPivotResult, error) {
 
-	Add this method on your existing usecase.ReviewInfo
-	ListAssetsPivot retrieves a paginated list of asset pivots for a given project.
-	It supports both flat and grouped views, with sorting and filtering options.
-
-	Parameters:
-	- ctx: Context for request-scoped values and cancellation.
-	- p: ListAssetsPivotParams containing query parameters such as project, root, pagination, sorting, filtering, and view type.
-
-	Returns:
-	- *ListAssetsPivotResult: The result containing assets, groups, pagination info, and sorting details.
-	- error: Non-nil if an error occurred during retrieval.
-
-	Behavior:
-	- Validates required parameters and applies defaults for pagination and sorting.
-	- For flat view, retrieves assets directly from the repository with pagination.
-	- For grouped view, fetches all assets, groups and sorts them, then paginates the grouped result.
-	- Returns pagination metadata including total count, current page, last page, and navigation flags.
-
-	Errors:
-	- Returns an error if the project parameter is missing or if repository access fails.
-
-──────────────────────────────────────────────────────────────────────────
-*/
-func (u *ReviewInfo) ListAssetsPivot(ctx context.Context, p ListAssetsPivotParams) (*ListAssetsPivotResult, error) {
+	// Validate required parameters
 	if p.Project == "" {
 		return nil, fmt.Errorf("project is required")
 	}
@@ -385,25 +560,63 @@ func (u *ReviewInfo) ListAssetsPivot(ctx context.Context, p ListAssetsPivotParam
 	if p.Page <= 0 {
 		p.Page = 1
 	}
+
+	// Process sort parameters
+	actualSortKey := p.OrderKey
+	if actualSortKey == "" {
+		actualSortKey = "group_1" // Default sort by asset name
+	}
+
+	dir := strings.ToUpper(strings.TrimSpace(p.Direction))
+	if dir != "ASC" && dir != "DESC" {
+		dir = "ASC" // Default ascending
+	}
+
+	// Determine view mode
+	isGrouped := strings.ToLower(p.View) == "group" || strings.ToLower(p.View) == "grouped"
+
+	// For grouped view, always sort by group_1 for consistent grouping
+	if isGrouped {
+		actualSortKey = "group_1"
+	}
+
 	limit := p.PerPage
 	offset := (p.Page - 1) * p.PerPage
 
-	// normalize dir
-	dir := strings.ToUpper(strings.TrimSpace(p.Direction))
-	if dir != "ASC" && dir != "DESC" {
-		dir = "ASC"
+	// Create timeout context
+	timeoutCtx, cancel := context.WithTimeout(ctx, u.ReadTimeout)
+	defer cancel()
+
+	// CRITICAL: Check context before any operations
+	select {
+	case <-timeoutCtx.Done():
+		return nil, timeoutCtx.Err()
+	default:
+		// Continue
 	}
 
-	isGroupedView := p.View == "group" || p.View == "grouped" || p.View == "category"
+	// Validate project exists
+	db := u.repo.WithContext(timeoutCtx)
+	if err := u.checkForProject(db, p.Project); err != nil {
+		return nil, fmt.Errorf("project validation failed: %w", err)
+	}
+
+	// Check context again before DB call
+	select {
+	case <-timeoutCtx.Done():
+		return nil, timeoutCtx.Err()
+	default:
+		// Continue
+	}
 
 	// ---------- LIST VIEW ----------
-	if !isGroupedView {
+	if !isGrouped {
 		assets, total, err := u.repo.ListAssetsPivot(
-			ctx,
+			timeoutCtx,
 			p.Project,
 			p.Root,
 			p.PreferredPhase,
-			p.OrderKey,
+			actualSortKey,
 			strings.ToLower(dir),
 			limit,
 			offset,
@@ -412,91 +625,76 @@ func (u *ReviewInfo) ListAssetsPivot(ctx context.Context, p ListAssetsPivotParam
 			p.WorkStatuses,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list asset pivot: %w", err)
 		}
 
-		pageLast := int((total + int64(p.PerPage) - 1) / int64(p.PerPage))
+		// Calculate pagination metadata
+		pageLast := u.calculatePageLast(total, p.PerPage)
 
 		return &ListAssetsPivotResult{
 			Assets:   assets,
-			Groups:   nil,
 			Total:    total,
 			Page:     p.Page,
 			PerPage:  p.PerPage,
 			PageLast: pageLast,
-			HasNext:  offset+limit < int(total),
+			HasNext:  p.Page < pageLast,
 			HasPrev:  p.Page > 1,
-			Sort:     p.OrderKey,
+			Sort:     actualSortKey,
 			Dir:      strings.ToLower(dir),
 		}, nil
 	}
 
-	// ---------- GROUPED VIEW (group-first order, then paginate) ----------
-	const allLimit = 1_000_000
-	assetsAll, total, err := u.repo.ListAssetsPivot(
-		ctx,
+	// ---------- GROUPED VIEW ----------
+	assetsPage, total, err := u.repo.ListAssetsPivot(
+		timeoutCtx,
 		p.Project,
 		p.Root,
 		p.PreferredPhase,
-		"group_1",
-		"asc",
-		allLimit,
-		0,
+		"group_1", // Always group_1 for grouped view
+		strings.ToLower(dir),
+		limit,
+		offset,
 		p.AssetNameKey,
 		p.ApprovalStatuses,
 		p.WorkStatuses,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list asset pivot for grouping: %w", err)
 	}
 
-	groupedAll := repository.GroupAndSortByTopNode(assetsAll, repository.SortDirection(dir))
+	// Group assets by TopGroupNode
+	grouped := repository.GroupAndSortByTopNode(
+		assetsPage,
+		repository.SortDirection(dir),
+	)
 
-	flat := make([]repository.AssetPivot, 0, len(assetsAll))
-	for _, g := range groupedAll {
-		flat = append(flat, g.Items...)
-	}
-
-	totalAssets := len(flat)
-	if totalAssets == 0 {
-		return &ListAssetsPivotResult{
-			Assets:   []repository.AssetPivot{},
-			Groups:   []repository.GroupedAssetBucket{},
-			Total:    0,
-			Page:     p.Page,
-			PerPage:  p.PerPage,
-			PageLast: 0,
-			HasNext:  false,
-			HasPrev:  false,
-			Sort:     "group_1",
-			Dir:      strings.ToLower(dir),
-		}, nil
-	}
-
-	start := offset
-	if start > totalAssets {
-		start = totalAssets
-	}
-	end := start + limit
-	if end > totalAssets {
-		end = totalAssets
-	}
-
-	pageSlice := flat[start:end]
-	pageGroups := repository.GroupAndSortByTopNode(pageSlice, repository.SortDirection(dir))
-
-	pageLast := (totalAssets + p.PerPage - 1) / p.PerPage
+	// Calculate pagination metadata
+	pageLast := u.calculatePageLast(total, p.PerPage)
 
 	return &ListAssetsPivotResult{
-		Assets:   pageSlice,
-		Groups:   pageGroups,
+		Assets:   assetsPage,
+		Groups:   grouped,
 		Total:    total,
 		Page:     p.Page,
 		PerPage:  p.PerPage,
 		PageLast: pageLast,
-		HasNext:  offset+limit < totalAssets,
+		HasNext:  p.Page < pageLast,
 		HasPrev:  p.Page > 1,
-		Sort:     "group_1",
+		Sort:     "group_1", // Always group_1 for grouped view
 		Dir:      strings.ToLower(dir),
 	}, nil
+}
+
+// Helper method to calculate last page number
+func (u *ReviewInfo) calculatePageLast(total int64, perPage int) int {
+	if perPage <= 0 || total == 0 {
+		return 1
+	}
+
+	lastPage := (total + int64(perPage) - 1) / int64(perPage)
+	if lastPage < 1 {
+		return 1
+	}
+
+	return int(lastPage)
 }
