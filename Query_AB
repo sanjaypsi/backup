@@ -1,0 +1,108 @@
+
+WITH ordered AS (
+  SELECT
+    k.*,
+    ROW_NUMBER() OVER (
+      ORDER BY k.group_1 ASC     -- default outer sort field
+    ) AS _order
+  FROM (
+    SELECT b.*
+    FROM (
+      /* --- latest row per phase per asset --- */
+      SELECT
+        project,
+        root,
+        group_1,
+        relation,
+        phase,
+        MAX(modified_at_utc) AS modified_at_utc
+      FROM t_review_info
+      WHERE project = 'rod'
+        AND root    = 'assets'
+        AND deleted = 0                 -- < filters here
+      GROUP BY project, root, group_1, relation, phase
+    ) AS a
+    LEFT JOIN (
+      /* --- bring full row + group info --- */
+      SELECT
+        ri.root,
+        ri.project,
+        ri.group_1,
+        ri.phase,
+        ri.relation,
+        ri.work_status,
+        ri.submitted_at_utc,
+        ri.modified_at_utc,
+        ri.executed_computer,
+
+        -- leaf from JSON ["camAim"], ["camHero"], ...
+        JSON_UNQUOTE(JSON_EXTRACT(ri.`groups`, '$[0]')) AS leaf_group_name,
+
+        -- join to group tables
+        gcg.id   AS group_category_group_id,
+        gcg.path AS group_leaf_path,
+        gc.id    AS group_category_id,
+        gc.path  AS group_category_path,
+        gc.depth AS group_category_depth,
+
+        -- TOP GROUP NODE (camera / character / prop / set / ...)
+        SUBSTRING_INDEX(gc.path, '/', 1) AS top_group_node
+      FROM t_review_info AS ri
+      LEFT JOIN t_group_category_group AS gcg
+             ON gcg.project = ri.project
+            AND gcg.deleted = 0
+            AND gcg.path = JSON_UNQUOTE(JSON_EXTRACT(ri.`groups`, '$[0]'))
+      LEFT JOIN t_group_category AS gc
+             ON gc.id = gcg.group_category_id
+            AND gc.deleted = 0
+            AND gc.root = 'assets'
+      WHERE ri.project = 'rod'
+        AND ri.root    = 'assets'
+        AND ri.deleted = 0              -- < same filters here
+    ) AS b
+      ON a.project         = b.project
+     AND a.root            = b.root
+     AND a.group_1         = b.group_1
+     AND a.relation        = b.relation
+     AND a.phase           = b.phase
+     AND a.modified_at_utc = b.modified_at_utc
+
+    ORDER BY b.submitted_at_utc ASC    -- inner sort field
+  ) AS k
+),
+offset_ordered AS (
+  SELECT
+    c.*,
+    CASE
+      WHEN c.phase = '' THEN c._order
+      ELSE 100000 + c._order
+    END AS __order                     -- phase priority
+  FROM ordered c
+),
+ranked AS (
+  SELECT
+    b.*,
+    ROW_NUMBER() OVER (
+      PARTITION BY b.root, b.project, b.group_1, b.relation
+      ORDER BY CASE WHEN b.phase = '' THEN 0 ELSE 1 END
+    ) AS _rank
+  FROM offset_ordered b
+)
+SELECT
+  root,
+  project,
+  group_1,
+  relation,
+  phase,
+  work_status,
+  submitted_at_utc, 
+  modified_at_utc, 
+
+  -- NEW: grouping columns
+  -- leaf_group_name,
+  -- group_category_path,
+  top_group_node
+FROM ranked
+WHERE _rank = 1
+ORDER BY __order ASC
+LIMIT 1000 OFFSET 0;
