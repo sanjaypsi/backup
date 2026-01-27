@@ -1,0 +1,145 @@
+WITH latest_phase AS (
+  SELECT
+    project,
+    root,
+    group_1,
+    relation,
+    phase,
+    work_status,
+    approval_status,
+    submitted_at_utc,
+    modified_at_utc,
+    ROW_NUMBER() OVER (
+      PARTITION BY project, root, group_1, relation, phase
+      ORDER BY modified_at_utc DESC
+    ) AS rn
+  FROM t_review_info
+  WHERE project = 'MY_PROJECT'
+    AND root = 'assets'
+    AND deleted = 0
+    -- optional name filter:
+    -- AND LOWER(group_1) LIKE 'hero%'
+)
+SELECT COUNT(*) 
+FROM (
+  SELECT project, root, group_1, relation
+  FROM latest_phase
+  WHERE rn = 1
+    -- optional status filters:
+    -- AND LOWER(approval_status) IN ('approved','wip')
+    -- AND LOWER(work_status) IN ('done')
+  GROUP BY project, root, group_1, relation
+) AS x;
+
+
+# ====================================================================
+WITH ordered AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      ORDER BY LOWER(group_1) ASC, LOWER(relation) ASC
+    ) AS _order
+  FROM (
+    SELECT b.*
+    FROM (
+      SELECT
+        project,
+        root,
+        group_1,
+        relation,
+        phase,
+        MAX(modified_at_utc) AS modified_at_utc
+      FROM t_review_info
+      WHERE project = 'MY_PROJECT'
+        AND root = 'assets'
+        AND deleted = 0
+      GROUP BY project, root, group_1, relation, phase
+    ) AS a
+    LEFT JOIN (
+      SELECT
+        root,
+        project,
+        group_1,
+        phase,
+        relation,
+        work_status,
+        approval_status,
+        submitted_at_utc,
+        modified_at_utc
+      FROM t_review_info
+      WHERE project = 'MY_PROJECT'
+        AND root = 'assets'
+        AND deleted = 0
+    ) AS b
+      ON a.project = b.project
+     AND a.root    = b.root
+     AND a.group_1 = b.group_1
+     AND a.relation = b.relation
+     AND a.phase    = b.phase
+     AND a.modified_at_utc = b.modified_at_utc
+)
+SELECT
+  root,
+  project,
+  group_1,
+  relation,
+  phase,
+  submitted_at_utc
+FROM ordered
+WHERE 1=1
+ORDER BY _order ASC
+LIMIT 50 OFFSET 0;
+
+
+
+# ===================================================================
+WITH latest_phase AS (
+  SELECT
+    ri.project,
+    ri.root,
+    ri.group_1,
+    ri.relation,
+    ri.phase,
+    ri.work_status,
+    ri.approval_status,
+    ri.submitted_at_utc,
+    ri.modified_at_utc,
+    JSON_UNQUOTE(JSON_EXTRACT(ri.groups, '$[0]')) AS leaf_group_name,
+    gc.path AS group_category_path,
+    SUBSTRING_INDEX(gc.path, '/', 1) AS top_group_node,
+    ROW_NUMBER() OVER (
+      PARTITION BY ri.project, ri.root, ri.group_1, ri.relation, ri.phase
+      ORDER BY ri.modified_at_utc DESC
+    ) AS rn
+  FROM t_review_info AS ri
+  LEFT JOIN t_group_category_group AS gcg
+         ON gcg.project = ri.project
+        AND gcg.deleted = 0
+        AND gcg.path = JSON_UNQUOTE(JSON_EXTRACT(ri.groups, '$[0]'))
+  LEFT JOIN t_group_category AS gc
+         ON gc.id = gcg.group_category_id
+        AND gc.deleted = 0
+        AND gc.root = 'assets'
+  WHERE ri.project = 'MY_PROJECT'
+    AND ri.root = 'assets'
+    AND ri.deleted = 0
+    AND (
+      (ri.group_1 = 'heroA' AND ri.relation = 'main')
+      OR (ri.group_1 = 'heroB' AND ri.relation = 'main')
+      OR (ri.group_1 = 'tree01' AND ri.relation = 'bg')
+    )
+)
+SELECT
+  project,
+  root,
+  group_1,
+  relation,
+  phase,
+  work_status,
+  approval_status,
+  submitted_at_utc,
+  leaf_group_name,
+  group_category_path,
+  top_group_node
+FROM latest_phase
+WHERE rn = 1;
