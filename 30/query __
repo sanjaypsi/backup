@@ -1,0 +1,45 @@
+WITH latest_reviews AS (
+  SELECT 
+    ri.*,
+    JSON_UNQUOTE(JSON_EXTRACT(ri.`groups`, '$[0]')) AS leaf_group_name,
+    gcg.path AS group_leaf_path,
+    gc.path AS group_category_path,
+    SUBSTRING_INDEX(gc.path, '/', 1) AS top_group_node,
+    
+    -- Priority: empty phase first, then by recency
+    ROW_NUMBER() OVER (
+      PARTITION BY ri.root, ri.project, ri.group_1, ri.relation
+      ORDER BY 
+        CASE WHEN ri.phase = '' THEN 0 ELSE 1 END,
+        ri.modified_at_utc DESC
+    ) AS rn
+  FROM t_review_info ri
+  LEFT JOIN t_group_category_group gcg
+    ON gcg.project = ri.project
+    AND gcg.deleted = 0
+    AND gcg.path = JSON_UNQUOTE(JSON_EXTRACT(ri.`groups`, '$[0]'))
+  LEFT JOIN t_group_category gc
+    ON gc.id = gcg.group_category_id
+    AND gc.deleted = 0
+    AND gc.root = 'assets'
+  WHERE ri.project = 'hm'
+    AND ri.root = 'assets'
+    AND ri.deleted = 0
+)
+SELECT 
+  root,
+  project,
+  group_1,
+  relation,
+  phase,
+  work_status,
+  submitted_at_utc,
+  modified_at_utc,
+  top_group_node
+FROM latest_reviews
+WHERE rn = 1
+ORDER BY 
+  CASE WHEN phase = '' THEN 0 ELSE 1 END,
+  -- Add your desired ordering here
+  group_1 ASC
+LIMIT 1000 OFFSET 0;
