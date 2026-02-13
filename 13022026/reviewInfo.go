@@ -663,6 +663,56 @@ func GroupAndSortByTopNode(rows []AssetPivot, dir SortDirection) []GroupedAssetB
 	return result
 }
 
+// compareTake compares two take strings (possibly nil) according to the sort direction.
+// It extracts the last 4 digits (if possible) and compares numerically, falling back to string comparison.
+func compareTake(a, b *string, dir SortDirection) bool {
+	// nil/empty handling: nil/empty is always last
+	getTakeNum := func(s *string) (int, string) {
+		if s == nil || *s == "" {
+			return -1, ""
+		}
+		str := *s
+		if len(str) >= 4 {
+			last4 := str[len(str)-4:]
+			var n int
+			_, err := fmt.Sscanf(last4, "%d", &n)
+			if err == nil {
+				return n, str
+			}
+		}
+		return -1, str
+	}
+	an, astr := getTakeNum(a)
+	bn, bstr := getTakeNum(b)
+
+	// nil/empty always last
+	if an == -1 && bn != -1 {
+		return false
+	}
+	if an != -1 && bn == -1 {
+		return true
+	}
+	if an == -1 && bn == -1 {
+		if dir == SortDESC {
+			return astr > bstr
+		}
+		return astr < bstr
+	}
+
+	// both have numbers
+	if an != bn {
+		if dir == SortDESC {
+			return an > bn
+		}
+		return an < bn
+	}
+	// fallback to string compare
+	if dir == SortDESC {
+		return astr > bstr
+	}
+	return astr < bstr
+}
+
 /*
 ──────────────────────────────────────────────────────────────────────────
 
@@ -829,20 +879,28 @@ func buildOrderClause(alias, key, dir string) string {
 			col("group_1"),
 		)
 
-	// take columns (alphabetical, NULL last)
+	// ============================================
+	// ALTERNATIVE: Using RIGHT() function (MySQL/PostgreSQL)
+	// ============================================
 	case "mdl_take", "rig_take", "bld_take", "dsn_take", "ldv_take":
 		phase := strings.ToUpper(strings.Split(key, "_")[0])
 		return fmt.Sprintf(
-			"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, (%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC",
+			"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, "+
+				"CASE WHEN %s IS NULL OR %s = '' THEN 1 ELSE 0 END ASC, "+
+				"CAST(RIGHT(%s, 4) AS UNSIGNED) %s, "+
+				"LOWER(%s) ASC",
 			col("phase"), phase,
-			col("take"),
+			col("take"), col("take"),
 			col("take"), dir,
 			col("group_1"),
 		)
+
 	case "take":
 		return fmt.Sprintf(
-			"(%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC",
-			col("take"),
+			"CASE WHEN %s IS NULL OR %s = '' THEN 1 ELSE 0 END ASC, "+
+				"CAST(RIGHT(%s, 4) AS UNSIGNED) %s, "+
+				"LOWER(%s) ASC",
+			col("take"), col("take"),
 			col("take"), dir,
 			col("group_1"),
 		)
@@ -1257,7 +1315,7 @@ WITH latest_phase AS (
     ri.approval_status,
     ri.submitted_at_utc,
     ri.modified_at_utc,
-	ri.take AS take,
+	RIGHT(ri.take, 4) AS take,
     JSON_UNQUOTE(JSON_EXTRACT(ri.` + "`groups`" + `, '$[0]')) AS leaf_group_name,
     gc.path AS group_category_path,
     SUBSTRING_INDEX(gc.path, '/', 1) AS top_group_node,
@@ -1360,21 +1418,25 @@ WHERE rn = 1;
 			ap.MDLApprovalStatus = pr.ApprovalStatus
 			ap.MDLSubmittedAtUTC = pr.SubmittedAtUTC
 			ap.MDLTake = pr.Take // Added take for MDL
+
 		case "rig":
 			ap.RIGWorkStatus = pr.WorkStatus
 			ap.RIGApprovalStatus = pr.ApprovalStatus
 			ap.RIGSubmittedAtUTC = pr.SubmittedAtUTC
 			ap.RIGTake = pr.Take // Added take for RIG
+
 		case "bld":
 			ap.BLDWorkStatus = pr.WorkStatus
 			ap.BLDApprovalStatus = pr.ApprovalStatus
 			ap.BLDSubmittedAtUTC = pr.SubmittedAtUTC
 			ap.BLDTake = pr.Take // Added take for BLD
+
 		case "dsn":
 			ap.DSNWorkStatus = pr.WorkStatus
 			ap.DSNApprovalStatus = pr.ApprovalStatus
 			ap.DSNSubmittedAtUTC = pr.SubmittedAtUTC
 			ap.DSNTake = pr.Take // Added take for DSN
+
 		case "ldv":
 			ap.LDVWorkStatus = pr.WorkStatus
 			ap.LDVApprovalStatus = pr.ApprovalStatus
