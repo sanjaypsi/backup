@@ -1,0 +1,165 @@
+  const filteredAssets = useMemo(() => {
+    if (!assets) return [];
+
+    const nameFilter      = (filterProps.assetNameKey || '').trim().toLowerCase();
+    const approvalFilters = approvalArray.map((s) => s.toLowerCase());
+    const workFilters     = workArray.map((s) => s.toLowerCase());
+
+    const phases = ['mdl', 'rig', 'bld', 'dsn', 'ldv'] as const;
+
+    // ============================================
+    // 5. UPDATE CLIENT-SIDE SORTING FOR TAKE
+    // ============================================
+    // In the filteredAssets useMemo, update the comparator
+    const comparator = (a: any, b: any): number => {
+      if (!uiSortKey || uiSortDir === 'none') return 0;
+
+      if (uiSortKey === 'group_1') {
+        return enhancedCompareStrings(a.group_1, b.group_1, uiSortDir);
+      }
+      if (uiSortKey === 'relation') {
+        return enhancedCompareStrings(a.relation, b.relation, uiSortDir);
+      }
+
+      const m = uiSortKey.match(/^(mdl|rig|bld|dsn|ldv)_(work|appr|submitted|take)$/i);
+      if (m) {
+        const phase = m[1].toLowerCase();
+        const field = m[2].toLowerCase();
+
+        if (field === 'submitted') {
+          const key = `${phase}_submitted_at_utc`;
+          return enhancedCompareDates(a[key], b[key], uiSortDir);
+        }
+        
+        if (field === 'take') {  // Special handling for TAKE columns
+          const key = `${phase}_take`;
+          return enhancedCompareTake(a[key], b[key], uiSortDir);  // Use numeric comparison
+        }
+
+        const key =
+          field === 'appr'
+            ? `${phase}_approval_status`
+            : `${phase}_work_status`;
+
+        return enhancedCompareStrings(a[key], b[key], uiSortDir);
+      }
+
+      return 0;
+    };
+
+    // ============================================
+    // 6. ADD THE ENHANCED TAKE COMPARATOR TO PANEL
+    // ============================================
+    // Add this function to the panel component
+    const enhancedCompareTake = (a: any, b: any, dir: SortDir): number => {
+      const isAsc = dir === 'asc';
+      
+      const aEmpty = isEmptyValue(a);
+      const bEmpty = isEmptyValue(b);
+      
+      // Empty values always go to the END
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty && !bEmpty) return 1;
+      if (!aEmpty && bEmpty) return -1;
+      
+      // Parse as integers for numeric comparison
+      const aNum = parseInt(String(a).trim(), 10);
+      const bNum = parseInt(String(b).trim(), 10);
+      
+      // If both are valid numbers, compare numerically
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        if (aNum === bNum) return 0;
+        
+        if (isAsc) {
+          return aNum < bNum ? -1 : 1;
+        } else {
+          return aNum > bNum ? -1 : 1;
+        }
+      }
+      
+      // Fallback to string comparison
+      const compA = String(a).trim().toLowerCase();
+      const compB = String(b).trim().toLowerCase();
+      
+      if (compA === compB) return 0;
+      
+      if (isAsc) {
+        return compA < compB ? -1 : 1;
+      } else {
+        return compA > compB ? -1 : 1;
+      }
+    };
+
+    const base = assets.filter((asset: any) => {
+      // 0) Top-group filter
+      if (selectedTopGroups.length > 0) {
+        const normalizeTopGroup = (v: any) => {
+          const s = (v || '').toString().trim();
+          if (!s) return 'unassigned';
+          const ls = s.toLowerCase();
+          if (ls === 'unassigned' || ls === 'unassigned/' || ls === 'none' || ls === 'null' || ls === 'undefined') {
+            return 'unassigned';
+          }
+          return ls;
+        };
+
+        const allowed = new Set(selectedTopGroups.map(normalizeTopGroup));
+        const tg = normalizeTopGroup(asset.top_group_node);
+        if (!allowed.has(tg)) return false;
+      }
+
+      // 1) Asset Name filter
+      if (nameFilter) {
+        const name = (asset.group_1 || '').toString().toLowerCase();
+        if (!name.includes(nameFilter)) return false;
+      }
+
+      // 2) Phase-locked matching
+      const phase =
+        effectivePhase && effectivePhase !== 'none'
+          ? effectivePhase.toLowerCase()
+          : null;
+
+      const matchesPhase = (p: string) => {
+        if (approvalFilters.length > 0) {
+          const rawAppr = (asset[`${p}_approval_status`] || '')
+            .toString()
+            .toLowerCase();
+          if (!approvalFilters.includes(rawAppr)) return false;
+        }
+        if (workFilters.length > 0) {
+          const rawWork = (asset[`${p}_work_status`] || '')
+            .toString()
+            .toLowerCase();
+          if (!workFilters.includes(rawWork)) return false;
+        }
+        return true;
+      };
+
+      // No filters at all → keep row
+      if (!nameFilter && approvalFilters.length === 0 && workFilters.length === 0) {
+        return true;
+      }
+
+      // If a specific phase is active (e.g. "rig"), only that phase decides.
+      if (phase) {
+        return matchesPhase(phase);
+      }
+
+      // Otherwise, keep the row if ANY phase matches.
+      return phases.some((p) => matchesPhase(p));
+    });
+
+    // --- then sort according to current UI sort key/dir ---
+    base.sort(comparator);
+    return base;
+  }, [
+    assets,
+    effectivePhase,
+    uiSortKey,
+    uiSortDir,
+    filterProps.assetNameKey,
+    approvalArray,
+    workArray,
+    selectedTopGroups,
+  ]);
