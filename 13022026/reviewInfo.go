@@ -796,6 +796,16 @@ func buildOrderClause(alias, key, dir string) string {
 		return alias + "." + c
 	}
 
+	sortComponent := func() string {
+		return fmt.Sprintf(
+			"CASE WHEN %s IS NULL OR %s = '' THEN 1 ELSE 0 END ASC, LOWER(TRIM(%s)) %s",
+			col("component"),
+			col("component"),
+			col("component"),
+			dir,
+		)
+	}
+
 	switch key {
 	// generic columns
 	case "submitted_at_utc", "modified_at_utc", "phase":
@@ -822,13 +832,11 @@ func buildOrderClause(alias, key, dir string) string {
 			col("submitted_at_utc"), dir,
 		)
 
-	case "component_only":
+	case "component", "component_only":
 		return fmt.Sprintf(
-			"LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
-			col("component"), dir,
+			"%s, LOWER(%s) ASC",
+			sortComponent(),
 			col("group_1"),
-			col("submitted_at_utc"),
-			col("submitted_at_utc"), dir,
 		)
 
 	case "group_rel_submitted":
@@ -860,6 +868,7 @@ func buildOrderClause(alias, key, dir string) string {
 			col("work_status"), dir,
 			col("group_1"),
 		)
+
 	case "work_status":
 		return fmt.Sprintf(
 			"(%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC",
@@ -908,9 +917,10 @@ func buildOrderClause(alias, key, dir string) string {
 	// default: group_1 + relation + submitted_at_utc
 	default:
 		return fmt.Sprintf(
-			"LOWER(%s) %s, LOWER(%s) ASC, (%s IS NULL) ASC, %s %s",
+			"LOWER(%s) %s, LOWER(%s) ASC, LOWER(TRIM(LEADING '_' FROM %s)) ASC, (%s IS NULL) ASC, %s %s",
 			col("group_1"), dir,
 			col("relation"),
+			col("component"),
 			col("submitted_at_utc"),
 			col("submitted_at_utc"), dir,
 		)
@@ -1098,10 +1108,10 @@ WITH latest_phase AS (
   FROM t_review_info
   WHERE project = ? AND root = ? AND deleted = 0` + nameCond + `
 )
-SELECT project, root, group_1, relation
+SELECT project, root, group_1, relation, component
 FROM latest_phase
 WHERE rn = 1` + statusWhere + `
-GROUP BY project, root, group_1, relation
+GROUP BY project, root, group_1, relation, component
 `
 
 	q := fmt.Sprintf(`
@@ -1135,7 +1145,8 @@ WITH ordered AS (
         work_status,
         approval_status,
         submitted_at_utc,
-        modified_at_utc
+        modified_at_utc,
+		take
       FROM t_review_info
       WHERE project = ? AND root = ? AND deleted = 0
     ) AS b
@@ -1151,7 +1162,7 @@ WITH ordered AS (
      AND b.root    = fk.root
      AND b.group_1 = fk.group_1
      AND b.relation = fk.relation
-
+     AND b.component = fk.component
     ORDER BY %s
   ) AS k
 ),
@@ -1309,7 +1320,7 @@ WITH latest_phase AS (
     ri.root,
     ri.group_1,
     ri.relation,
-	ri.component AS component,
+	COALESCE(ri.component, '') AS component,
     ri.phase,
     ri.work_status,
     ri.approval_status,
@@ -1342,8 +1353,8 @@ WITH latest_phase AS (
 		if i > 0 {
 			sb.WriteString("      OR ")
 		}
-		sb.WriteString("(ri.group_1 = ? AND ri.relation = ?)\n")
-		params = append(params, k.Group1, k.Relation)
+		sb.WriteString("(ri.group_1 = ? AND ri.relation = ? AND ri.component = ?)\n")
+		params = append(params, k.Group1, k.Relation, k.Component)
 	}
 
 	sb.WriteString(`    )
@@ -1373,7 +1384,15 @@ WHERE rn = 1;
 
 	// 4) Stitch phases into pivot rows, preserving the page order from `keys`.
 	type keyStruct struct {
-		p, r, g, rel string
+		p, r, g, rel, comp string
+	}
+
+	// helper to safely dereference *string
+	ptrToString := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
 	}
 
 	m := make(map[keyStruct]*AssetPivot, len(keys))
@@ -1381,12 +1400,13 @@ WHERE rn = 1;
 
 	// create base pivot row per asset in the same order as `keys`
 	for _, k := range keys {
-		id := keyStruct{k.Project, k.Root, k.Group1, k.Relation}
+		id := keyStruct{k.Project, k.Root, k.Group1, k.Relation, k.Component}
 		ap := &AssetPivot{
-			Root:     k.Root,
-			Project:  k.Project,
-			Group1:   k.Group1,
-			Relation: k.Relation,
+			Root:      k.Root,
+			Project:   k.Project,
+			Group1:    k.Group1,
+			Relation:  k.Relation,
+			Component: k.Component,
 		}
 		m[id] = ap
 		orderedPtrs = append(orderedPtrs, ap)
@@ -1394,15 +1414,15 @@ WHERE rn = 1;
 
 	// fill per-phase fields + grouping info
 	for _, pr := range phases {
-		id := keyStruct{pr.Project, pr.Root, pr.Group1, pr.Relation}
+		id := keyStruct{pr.Project, pr.Root, pr.Group1, pr.Relation, ptrToString(pr.Component)}
 		ap, ok := m[id]
 		if !ok {
 			continue
 		}
 
-		// Set component if present
+		//  -- Add your code here----
 		if pr.Component != nil && *pr.Component != "" {
-			ap.Component = *pr.Component
+			ap.Component = strings.TrimPrefix(*pr.Component, "_")
 		}
 
 		// Grouping info (set once)
