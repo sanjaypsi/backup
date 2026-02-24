@@ -196,8 +196,6 @@ const columns: Column[] = [
   { id: "mdl_submitted_at", label: "MDL Submitted At", colors: ASSET_PHASES.mdl, sortable: true, sortKey: "mdl_submitted" },
   { id: "mdl_take", label: "MDL TAKE", colors: ASSET_PHASES.mdl, sortable: true, sortKey: "mdl_take" },  // Already sortable
 
-  { id: "mdlRend", label: "MDLREND Submitted At", colors: ASSET_PHASES.mdl, sortable: true, sortKey: "mdlRend" },
-
   // RIG Phase
   { id: "rig_work_status", label: "RIG WORK", colors: ASSET_PHASES.rig, sortable: true, sortKey: "rig_work" },
   { id: "rig_approval_status", label: "RIG APPR", colors: ASSET_PHASES.rig, sortable: true, sortKey: "rig_appr" },
@@ -210,9 +208,6 @@ const columns: Column[] = [
   { id: "bld_submitted_at", label: "BLD Submitted At", colors: ASSET_PHASES.bld, sortable: true, sortKey: "bld_submitted" },
   { id: "bld_take", label: "BLD TAKE", colors: ASSET_PHASES.bld, sortable: true, sortKey: "bld_take" },
 
-  { id: "bldAnm", label: "BLDANM Submitted At", colors: ASSET_PHASES.bld, sortable: true, sortKey: "bldAnm" }, // bldAnm
-  { id: "bldRend", label: "BLDREND Submitted At", colors: ASSET_PHASES.bld, sortable: true, sortKey: "bldRend" }, // bldRend
- 
   // DSN Phase
   { id: "dsn_work_status", label: "DSN WORK", colors: ASSET_PHASES.dsn, sortable: true, sortKey: "dsn_work" },
   { id: "dsn_approval_status", label: "DSN APPR", colors: ASSET_PHASES.dsn, sortable: true, sortKey: "dsn_appr" },
@@ -225,8 +220,11 @@ const columns: Column[] = [
   { id: "ldv_submitted_at", label: "LDV Submitted At", colors: ASSET_PHASES.ldv, sortable: true, sortKey: "ldv_submitted" },
   { id: "ldv_take", label: "LDV TAKE", colors: ASSET_PHASES.ldv, sortable: true, sortKey: "ldv_take" },
 
-  { id: "ldvMdl", label: "LDVMDL Submitted At", colors: ASSET_PHASES.ldv, sortable: true, sortKey: "ldvMdl" }, // ldvMdl
-
+  // Additional columns
+  { id: "mdlRend", label: "MDLREND Submitted "},
+  { id: "bldAnm", label: "BLDANM Submitted "},
+  { id: "bldRend", label: "BLDREND Submitted "},
+  { id: "ldvRend", label: "LDVREND Submitted "},
 
   { id: "relation", label: "Relation", sortable: true, sortKey: "relation" },
   { id: "component", label: "Component", sortable: true, sortKey: "component" },
@@ -294,86 +292,13 @@ const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = ({
 // ============================================
 // 3. UPDATE THE RECORDTABLEHEAD COMPONENT
 // ============================================
-// const RecordTableHead: React.FC<RecordTableHeadProps & {
-//   onSortChange: (sortKey: string) => void;
-//   currentSortKey: string;
-//   currentSortDir: SortDir;
-//   headerCellStylesById?: Record<string, React.CSSProperties>;
-// }> = ({
-//   columns, onSortChange, currentSortKey, currentSortDir, headerCellStylesById = {},
-// }) => {
-//   const getSortDir = (id: string, activeKey: string, activeDir: SortDir): SortDir =>
-//     activeKey === id ? activeDir : "none";
-
-//   const createSortHandler = (id: string) => () => onSortChange(id);
-
-//   return (
-//     <TableHead>
-//       <TableRow>
-//         {columns.map((column) => {
-//           // Determine "first/last visible" within a phase to draw borders
-//           const phase = ["mdl", "rig", "bld", "dsn", "ldv"].find(p => column.id.startsWith(p));
-//           const inPhaseIds = phase
-//             ? [`${phase}_work_status`, `${phase}_approval_status`, `${phase}_submitted_at`,  `${phase}_take`]
-//                 .filter(id => columns.some(c => c.id === id))
-//             : [];
-//           const firstId = inPhaseIds[0];
-//           const lastId  = inPhaseIds[inPhaseIds.length - 1];
-
-//           const hasPhase = Boolean(phase && column.colors);
-//           const rail = hasPhase ? `solid 3px ${column.colors!.lineColor}` : "none";
-
-//           const sortKey = column.sortKey || column.id;
-//           const sortDir = getSortDir(sortKey, currentSortKey, currentSortDir);
-
-//           return (
-//             <TableCell
-//               key={column.id}
-//               style={{
-//                 backgroundColor: column.colors ? column.colors.backgroundColor : "none",
-//                 borderTop: hasPhase ? rail : "none",
-//                 borderLeft: hasPhase && firstId === column.id ? rail : "none",
-//                 borderRight: hasPhase && lastId  === column.id ? rail : "none",
-//                 ...(headerCellStylesById[column.id] || {}),
-//                 cursor: column.sortable ? "pointer" : "default",
-//               }}
-//               onClick={column.sortable ? createSortHandler(sortKey) : undefined}
-//             >
-//               {column.sortable ? (
-//                 <Box display="flex" alignItems="center" justifyContent="center">
-//                   <span style={{ fontSize: 12, fontWeight: 500 }}>
-//                     {column.label}
-//                   </span>
-//                   <Box ml={0.5} display="inline-flex" alignItems="center">
-//                     {sortDir !== "none" && (
-//                       <span style={{ 
-//                         fontSize: 12,
-//                         color: '#fcfeffff',
-//                         lineHeight: '12px',
-//                         marginLeft: 2,
-//                         fontWeight: 'bold'
-//                       }}>
-//                         {sortDir === "asc" ? "▲" : "▼"}
-//                       </span>
-//                     )}
-//                   </Box>
-//                 </Box>
-//               ) : (
-//                 column.label
-//               )}
-//             </TableCell>
-//           );
-//         })}
-//       </TableRow>
-//     </TableHead>
-//   );
-// };
-const RecordTableHead: React.FC<RecordTableHeadProps> = ({
-  columns,
-  phaseComponents,
-  currentSortKey,
-  currentSortDir,
-  onSortChange,
+const RecordTableHead: React.FC<RecordTableHeadProps & {
+  onSortChange: (sortKey: string) => void;
+  currentSortKey: string;
+  currentSortDir: SortDir;
+  headerCellStylesById?: Record<string, React.CSSProperties>;
+}> = ({
+  columns, onSortChange, currentSortKey, currentSortDir, headerCellStylesById = {},
 }) => {
   const getSortDir = (id: string, activeKey: string, activeDir: SortDir): SortDir =>
     activeKey === id ? activeDir : "none";
@@ -384,60 +309,18 @@ const RecordTableHead: React.FC<RecordTableHeadProps> = ({
     <TableHead>
       <TableRow>
         {columns.map((column) => {
-          const borderLineStyle = column.colors ? `solid 3px ${column.colors.lineColor}` : 'none';
-          const borderTopStyle = column.colors ? borderLineStyle : 'none';
-          const borderLeftStyle = column.id.includes('work_status') ? borderLineStyle : 'none';
-          const borderRightStyle = column.id.includes('approval_status') ? borderLineStyle : 'none';
+          // Determine "first/last visible" within a phase to draw borders
+          const phase = ["mdl", "rig", "bld", "dsn", "ldv"].find(p => column.id.startsWith(p));
+          const inPhaseIds = phase
+            ? [`${phase}_work_status`, `${phase}_approval_status`, `${phase}_submitted_at`, `${phase}_take`]
+                .filter(id => columns.some(c => c.id === id))
+            : [];
+          const firstId = inPhaseIds[0];
+          const lastId  = inPhaseIds[inPhaseIds.length - 1];
 
-          // Check if this is a submitted_at column that needs to be expanded
-          if (column.id.includes('submitted_at') && !column.id.includes('_component_')) {
-            // Extract phase from column id (e.g., "mdl_submitted_at" -> "mdl")
-            const phase = column.id.replace('_submitted_at', '');
-            const components = phaseComponents[phase] || [];
-            
-            // If there are components for this phase, render multiple columns
-            if (components.length > 0) {
-              return components.map((component) => {
-                const componentId = `${phase}_${component.toLowerCase()}_submitted_at`;
-                const componentLabel = `${phase.toUpperCase()} ${component} SUBMITTED AT`;
-                const sortKey = `${phase}_${component.toLowerCase()}_submitted`;
-                
-                return (
-                  <TableCell
-                    key={componentId}
-                    style={{
-                      backgroundColor: column.colors && column.colors.backgroundColor || 'none',
-                      borderTop: borderTopStyle,
-                      borderLeft: borderLeftStyle,
-                      borderRight: borderRightStyle,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => onSortChange(sortKey)}
-                  >
-                    <Box display="flex" alignItems="center" justifyContent="center">
-                      <span style={{ fontSize: 12, fontWeight: 500 }}>
-                        {componentLabel}
-                      </span>
-                      {currentSortKey === sortKey && (
-                        <Box ml={0.5}>
-                          <span style={{ 
-                            fontSize: 12,
-                            color: '#fcfeffff',
-                            lineHeight: '12px',
-                            fontWeight: 'bold'
-                          }}>
-                            {currentSortDir === "asc" ? "▲" : "▼"}
-                          </span>
-                        </Box>
-                      )}
-                    </Box>
-                  </TableCell>
-                );
-              });
-            }
-          }
+          const hasPhase = Boolean(phase && column.colors);
+          const rail = hasPhase ? `solid 3px ${column.colors!.lineColor}` : "none";
 
-          // Regular column (non-submitted_at or no components)
           const sortKey = column.sortKey || column.id;
           const sortDir = getSortDir(sortKey, currentSortKey, currentSortDir);
 
@@ -445,31 +328,37 @@ const RecordTableHead: React.FC<RecordTableHeadProps> = ({
             <TableCell
               key={column.id}
               style={{
-                backgroundColor: column.colors && column.colors.backgroundColor || 'none',
-                borderTop: borderTopStyle,
-                borderLeft: borderLeftStyle,
-                borderRight: borderRightStyle,
-                cursor: column.sortable ? 'pointer' : 'default',
+                backgroundColor: column.colors ? column.colors.backgroundColor : "none",
+                borderTop: hasPhase ? rail : "none",
+                borderLeft: hasPhase && firstId === column.id ? rail : "none",
+                borderRight: hasPhase && lastId  === column.id ? rail : "none",
+                ...(headerCellStylesById[column.id] || {}),
+                cursor: column.sortable ? "pointer" : "default",
               }}
               onClick={column.sortable ? createSortHandler(sortKey) : undefined}
             >
-              <Box display="flex" alignItems="center" justifyContent="center">
-                <span style={{ fontSize: 12, fontWeight: 500 }}>
-                  {column.label}
-                </span>
-                {sortDir !== "none" && (
-                  <Box ml={0.5}>
-                    <span style={{ 
-                      fontSize: 12,
-                      color: '#fcfeffff',
-                      lineHeight: '12px',
-                      fontWeight: 'bold'
-                    }}>
-                      {sortDir === "asc" ? "▲" : "▼"}
-                    </span>
+              {column.sortable ? (
+                <Box display="flex" alignItems="center" justifyContent="center">
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>
+                    {column.label}
+                  </span>
+                  <Box ml={0.5} display="inline-flex" alignItems="center">
+                    {sortDir !== "none" && (
+                      <span style={{ 
+                        fontSize: 12,
+                        color: '#fcfeffff',
+                        lineHeight: '12px',
+                        marginLeft: 2,
+                        fontWeight: 'bold'
+                      }}>
+                        {sortDir === "asc" ? "▲" : "▼"}
+                      </span>
+                    )}
                   </Box>
-                )}
-              </Box>
+                </Box>
+              ) : (
+                column.label
+              )}
             </TableCell>
           );
         })}
@@ -483,6 +372,64 @@ const AssetRow: React.FC<AssetRowProps & { hiddenColumns: Set<string>; compact: 
   asset, thumbnails, dateTimeFormat, isLastRow, hiddenColumns, compact, phaseComponents, latestComponents,
 }) => {
   const isHidden = (id: string) => hiddenColumns.has(id);
+
+  // ================= COMPONENT HELPERS =================
+  const getComponentCellData = (
+    asset: any,
+    componentName: string
+  ) => {
+    const assetKey = `${asset.group_1}-${asset.relation}`;
+    const componentList = latestComponents && latestComponents[assetKey] || [];
+
+    const item = componentList.find(
+      (x: any) => x.component === componentName
+    );
+
+    if (!item || !item.latest_document) {
+      return null;
+    }
+
+    const doc = item.latest_document;
+
+    return {
+      component: doc.component || componentName,
+      phase: doc.phase || "—",
+      submittedAt: doc.submitted_at_utc || null,
+    };
+  };
+
+  // Generate tooltip text for component cells
+  const getComponentTooltip = (
+    asset: any,
+    componentName: string
+  ): string => {
+    const data = getComponentCellData(asset, componentName);
+
+    if (!data) {
+      return "No submission available";
+    }
+
+    const submittedText = data.submittedAt
+      ? dateTimeFormat.format(new Date(data.submittedAt))
+      : "—";
+
+    return [
+      `Component: ${data.component}`,
+      `Phase: ${data.phase}`,
+      `Submitted: ${submittedText}`,
+    ].join("\n");
+  };
+
+  const getComponentDisplayText = (
+    asset: any,
+    componentName: string
+  ): string => {
+    const data = getComponentCellData(asset, componentName);
+
+    if (!data || !data.submittedAt) return "—";
+
+    return dateTimeFormat.format(new Date(data.submittedAt));
+  };
 
   const getPhaseData = (phase: string) => {
     const workStatusKey     = `${phase}_work_status` as keyof Asset;
@@ -535,7 +482,6 @@ const AssetRow: React.FC<AssetRowProps & { hiddenColumns: Set<string>; compact: 
   };
 
 
-
   return (
     <TableRow>
       {!isHidden("thumbnail") && (
@@ -562,19 +508,32 @@ const AssetRow: React.FC<AssetRowProps & { hiddenColumns: Set<string>; compact: 
       {/* PHASES */}
       {(Object.entries(ASSET_PHASES) as Array<[string, { lineColor: string }]>).map(
           ([phase, { lineColor }]) => {
+            console.log('AssetRow - phase', { phase });
+
             const ids = {
               work: `${phase}_work_status`,
               appr: `${phase}_approval_status`,
               subm: `${phase}_submitted_at`,
               take: `${phase}_take`,
-            };
 
+              ...(phase === "mdl" ? { mdlRend: "mdlRend" } : {}), // Include MDL REND column for tooltip access
+              ...(phase === "bld" ? { bldAnm: "bldAnm", bldRend: "bldRend" } : {}), // Include BLD ANM and REND columns for tooltip access
+              ...(phase === "ldv" ? { ldvRend: "ldvRend" } : {}), // Include LDV REND column for tooltip access
+            };
+            
             const visibleIds = [
-              !isHidden(ids.work) ? ids.work : null,
-              !isHidden(ids.appr) ? ids.appr : null,
-              !isHidden(ids.subm) ? ids.subm : null,
-              !isHidden(ids.take) ? ids.take : null,
-            ].filter(Boolean) as string[];
+              ids.work,
+              ids.appr,
+              ids.subm,
+              ids.take,
+              ids.mdlRend,
+              ids.bldAnm,
+              ids.bldRend,
+              ids.ldvRend,
+            ]
+              .filter((id): id is string => typeof id === "string" && !!id)
+              .filter((id) => !isHidden(id));
+
 
             if (visibleIds.length === 0) return null;
 
@@ -608,19 +567,6 @@ const AssetRow: React.FC<AssetRowProps & { hiddenColumns: Set<string>; compact: 
                   />
                 )}
 
-                {/* SUBMITTED */}
-                {!isHidden(ids.subm) && (
-                  <TableCell
-                    style={{
-                      borderLeft: firstId === ids.subm ? rail : "none",
-                      borderRight: lastId === ids.subm ? rail : "none",
-                      borderBottom: isLastRow ? rail : "none",
-                    }}
-                  >
-                    {localTimeText}
-                  </TableCell>
-                )}
-
                 {/* TAKE */}
                 {!isHidden(ids.take) && (
                   <TableCell
@@ -633,10 +579,85 @@ const AssetRow: React.FC<AssetRowProps & { hiddenColumns: Set<string>; compact: 
                     {takeText}
                   </TableCell>
                 )}
+
+                {/* ================= MANUAL COMPONENTS ================= */}
+                {/* MDLREND */}
+                {phase === "mdl" && ids.mdlRend && !isHidden(ids.mdlRend) && (
+                  <MultiLineTooltipTableCell
+                    tooltipText={getComponentTooltip(asset, "mdlRend")}
+                    status={undefined}
+                    leftBorderStyle={firstId === ids.mdlRend ? rail : "none"}
+                    rightBorderStyle={lastId === ids.mdlRend ? rail : "none"}
+                    bottomBorderStyle={isLastRow ? rail : "none"}
+                  >
+                    {getComponentDisplayText(asset, "mdlRend")}
+                  </MultiLineTooltipTableCell>
+                )}
+                {/* BLDANM */}
+                {phase === "bld" && ids.bldAnm && !isHidden(ids.bldAnm) && (
+                  <MultiLineTooltipTableCell
+                    tooltipText={getComponentTooltip(asset, "bldAnm")}
+                    status={undefined}
+                    leftBorderStyle={firstId === ids.bldAnm ? rail : "none"}
+                    rightBorderStyle={lastId === ids.bldAnm ? rail : "none"}
+                    bottomBorderStyle={isLastRow ? rail : "none"}
+                  >
+                    {getComponentDisplayText(asset, "bldAnm")}
+                  </MultiLineTooltipTableCell>
+                )}
+                {/* BLDREND */}
+                {phase === "bld" && ids.bldRend && !isHidden(ids.bldRend) && (
+                  <MultiLineTooltipTableCell
+                    tooltipText={getComponentTooltip(asset, "bldRend")}
+                    status={undefined}
+                    leftBorderStyle={firstId === ids.bldRend ? rail : "none"}
+                    rightBorderStyle={lastId === ids.bldRend ? rail : "none"}
+                    bottomBorderStyle={isLastRow ? rail : "none"}
+                  >
+                    {getComponentDisplayText(asset, "bldRend")}
+                  </MultiLineTooltipTableCell>
+                )}
+                {/* LDVREND */}
+                {phase === "ldv" && ids.ldvRend && !isHidden(ids.ldvRend) && (
+                  <MultiLineTooltipTableCell
+                    tooltipText={getComponentTooltip(asset, "ldvRend")}
+                    status={undefined}
+                    leftBorderStyle={firstId === ids.ldvRend ? rail : "none"}
+                    rightBorderStyle={lastId === ids.ldvRend ? rail : "none"}
+                    bottomBorderStyle={isLastRow ? rail : "none"}
+                  >
+                    {getComponentDisplayText(asset, "ldvRend")}
+                  </MultiLineTooltipTableCell>
+                )}
+
+                
               </React.Fragment>
             );
           }
         )}
+
+      {/* ===== MANUAL COMPONENT SUBMITTED COLUMNS ===== */}
+      {["mdlRend", "bldRend", "bldAnm", "ldvMdl"].map((componentName) => {
+        const assetKey = `${asset.group_1}-${asset.relation}`;
+
+        const componentList = latestComponents[assetKey] || [];
+
+        const componentData = componentList.find(
+          (item) => item.component === componentName
+        );
+
+        const submittedText = componentData && componentData.latest_document && componentData.latest_document.submitted_at_utc
+          ? dateTimeFormat.format(
+              new Date(componentData.latest_document.submitted_at_utc)
+            )
+          : "—";
+
+        return (
+          <TableCell key={`${assetKey}-${componentName}`}>
+            {submittedText}
+          </TableCell>
+        );
+      })}
 
       {/* RELATION */}
       {!isHidden("relation") && !compact && (
@@ -699,8 +720,7 @@ const AssetsDataTable: React.FC<AssetsDataTableProps> = ({
         onSortChange={onSortChange}
         currentSortKey={currentSortKey}
         currentSortDir={currentSortDir}
-        phaseComponents={phaseComponents}
-        latestComponents={latestComponents}
+        headerCellStylesById={headerCellStylesById}
       />
 
       <TableBody>
