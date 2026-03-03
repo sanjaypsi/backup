@@ -1,0 +1,450 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/PolygonPictures/central30-web/front/entity"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+type PublishOperationInfo struct {
+	db *mongo.Database
+}
+
+func NewPublishOperationInfo(db *mongo.Database) *PublishOperationInfo {
+	return &PublishOperationInfo{
+		db: db,
+	}
+}
+
+// func (poi *PublishOperationInfo) ListLatestAssetDocuments(
+// 	ctx context.Context,
+// 	param *entity.LatestAssetComponentParams,
+// ) (documents []*entity.LatestComponentDocuments, err error) {
+
+// 	// Add debug log to check the input parameters
+// 	log.Printf("ListLatestAssetDocuments called with parameters:")
+// 	log.Printf("Project: %s", param.Project)
+// 	log.Printf("Asset: %s", param.Asset)
+// 	log.Printf("Relation: %s", param.Relation)
+// 	log.Printf("Component: %v", param.Component)
+// 	col := poi.db.Collection("pc_publishOperationInfo")
+
+// 	// Project, Asset, Relation, Componentでフィルタリング
+// 	matchStage := bson.D{
+// 		{"$match", bson.D{
+// 			{"_central.project", param.Project},
+// 			{"root", "assets"},
+// 			{"groups.0", param.Asset},
+// 			{"relation", param.Relation},
+// 			{"component", bson.D{{"$in", param.Component}}},
+// 		}},
+// 	}
+
+// 	// id, groups, submitted_at_utc, phase, component フィールドのみ取得
+// 	projectStage := bson.D{
+// 		{"$project", bson.D{
+// 			{"id", 1},
+// 			{"groups", 1},
+// 			{"submitted_at_utc", 1},
+// 			{"phase", 1},
+// 			{"component", 1},
+// 			{"_id", 0},
+// 		}},
+// 	}
+
+// 	// submitted_at_utcで降順にソート
+// 	sortStage := bson.D{
+// 		{"$sort", bson.D{
+// 			// -1 は降順を意味
+// 			{"submitted_at_utc", -1},
+// 		}},
+// 	}
+
+// 	// component ごとに最新のドキュメントを取得
+// 	groupStage := bson.D{
+// 		{"$group", bson.D{
+// 			{"_id", "$component"},
+// 			{"latest_document", bson.D{{"$first", "$$ROOT"}}},
+// 		}},
+// 	}
+
+// 	pipeline := mongo.Pipeline{matchStage, projectStage, sortStage, groupStage}
+// 	cursor, err := col.Aggregate(ctx, pipeline)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer cursor.Close(ctx)
+
+//		if err = cursor.All(ctx, &documents); err != nil {
+//			return
+//		}
+//		if documents == nil {
+//			documents = []*entity.LatestComponentDocuments{}
+//		}
+//		return
+//	}
+
+func (poi *PublishOperationInfo) ListLatestAssetDocuments(
+	ctx context.Context,
+	param *entity.LatestAssetComponentParams,
+	sortBy string,
+	sortDir int, // 1 for asc, -1 for desc
+) (documents []*entity.LatestComponentDocuments, err error) {
+
+	col := poi.db.Collection("pc_publishOperationInfo")
+
+	// 1️⃣ Base match
+	matchStage := bson.D{
+		{"$match", bson.D{
+			{"_central.project", param.Project},
+			{"root", "assets"},
+			{"groups.0", param.Asset},
+			{"relation", param.Relation},
+			{"component", bson.D{{"$in", param.Component}}},
+		}},
+	}
+
+	// 2️⃣ Project only required fields
+	projectStage := bson.D{
+		{"$project", bson.D{
+			{"id", 1},
+			{"groups", 1},
+			{"submitted_at_utc", 1},
+			{"phase", 1},
+			{"component", 1},
+			{"relation", 1},
+			{"_central", 1},
+			{"_id", 0},
+		}},
+	}
+
+	// 3️⃣ Initial sort (latest first per component)
+	initialSortStage := bson.D{
+		{"$sort", bson.D{
+			{"submitted_at_utc", -1},
+		}},
+	}
+
+	// 4️⃣ Group → latest per component
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$component"},
+			{"latest_document", bson.D{{"$first", "$$ROOT"}}},
+		}},
+	}
+
+	// 5️⃣ Lookup latest MDLREND
+	lookupMDLRendStage := bson.D{
+		{"$lookup", bson.D{
+			{"from", "pc_publishOperationInfo"},
+			{"let", bson.D{
+				{"project", "$latest_document._central.project"},
+				{"asset", "$latest_document.groups.0"},
+				{"relation", "$latest_document.relation"},
+			}},
+			{"pipeline", bson.A{
+				bson.D{{"$match", bson.D{
+					{"$expr", bson.D{
+						{"$and", bson.A{
+							bson.D{{"$eq", bson.A{"$_central.project", "$$project"}}},
+							bson.D{{"$eq", bson.A{"$root", "assets"}}},
+							bson.D{{"$eq", bson.A{"$groups.0", "$$asset"}}},
+							bson.D{{"$eq", bson.A{"$relation", "$$relation"}}},
+							bson.D{{"$eq", bson.A{"$component", "mdlRend"}}},
+						}},
+					}},
+				}}},
+				bson.D{{"$sort", bson.D{{"submitted_at_utc", -1}}}},
+				bson.D{{"$limit", 1}},
+				bson.D{{"$project", bson.D{
+					{"submitted_at_utc", 1},
+					{"_id", 0},
+				}}},
+			}},
+			{"as", "mdlRendDoc"},
+		}},
+	}
+
+	// 6️⃣ Flatten MDLREND date
+	addFieldsStage := bson.D{
+		{"$addFields", bson.D{
+			{"mdlRendSubmittedAt", bson.D{
+				{"$arrayElemAt", bson.A{"$mdlRendDoc.submitted_at_utc", 0}},
+			}},
+			{"componentName", "$_id"},
+		}},
+	}
+
+	// 7️⃣ Dynamic sort stages
+	var finalSortStages mongo.Pipeline
+
+	if sortBy == "mdlRend" {
+
+		finalSortStages = mongo.Pipeline{
+			{
+				{"$addFields", bson.D{
+					{"mdlRendSortWeight", bson.D{
+						{"$cond", bson.A{
+							bson.D{{"$ifNull", bson.A{"$mdlRendSubmittedAt", false}}},
+							0, // has date
+							1, // no date
+						}},
+					}},
+				}},
+			},
+			{
+				{"$sort", bson.D{
+					{"mdlRendSortWeight", 1},        // NULLS LAST
+					{"mdlRendSubmittedAt", sortDir}, // user direction
+				}},
+			},
+		}
+
+	} else if sortBy == "component" {
+
+		finalSortStages = mongo.Pipeline{
+			{
+				{"$sort", bson.D{
+					{"componentName", sortDir},
+				}},
+			},
+		}
+
+	} else {
+
+		finalSortStages = mongo.Pipeline{
+			{
+				{"$sort", bson.D{
+					{"latest_document.submitted_at_utc", sortDir},
+				}},
+			},
+		}
+	}
+
+	// 8️⃣ Cleanup helper fields
+	cleanupStage := bson.D{
+		{"$project", bson.D{
+			{"component", "$_id"},
+			{"latest_document", 1},
+			{"_id", 0},
+		}},
+	}
+
+	// 🔥 Build final pipeline properly
+	pipeline := mongo.Pipeline{
+		matchStage,
+		projectStage,
+		initialSortStage,
+		groupStage,
+		lookupMDLRendStage,
+		addFieldsStage,
+	}
+
+	pipeline = append(pipeline, finalSortStages...)
+	pipeline = append(pipeline, cleanupStage)
+
+	cursor, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, &documents); err != nil {
+		return
+	}
+
+	if documents == nil {
+		documents = []*entity.LatestComponentDocuments{}
+	}
+
+	return
+}
+
+func (poi *PublishOperationInfo) ListShots(
+	ctx context.Context,
+	params *entity.ShotListParams,
+) (documents []*entity.ShotDocument, total int64, err error) {
+	documents = []*entity.ShotDocument{}
+	col := poi.db.Collection("pc_publishOperationInfo")
+
+	filter := bson.D{
+		{"_central.project", params.Project},
+		{"root", "shots"},
+	}
+
+	offset := (params.GetPage() - 1) * params.GetPerPage()
+	if offset < 0 {
+		offset = 0
+	}
+
+	groupsStringStage := bson.D{
+		{"$addFields", bson.D{
+			{"groupsString", bson.D{
+				{"$reduce", bson.D{
+					{"input", "$groups"},
+					{"initialValue", ""},
+					{"in", bson.D{
+						{"$cond", bson.A{
+							bson.D{{"$eq", bson.A{"$$value", ""}}},
+							"$$this",
+							bson.D{{"$concat", bson.A{"$$value", "/", "$$this"}}},
+						}},
+					}},
+				}},
+			}},
+		}},
+	}
+
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", bson.D{
+				{"groups", "$groups"},
+				{"relation", "$relation"},
+			}},
+			{"sortKey", bson.D{
+				{"$first", "$groupsString"},
+			}},
+		}},
+	}
+
+	pipeline := mongo.Pipeline{
+		{
+			{"$match", filter},
+		},
+		groupsStringStage,
+		groupStage,
+		{
+			// $facetを使用して総数とデータを同時に取得
+			{"$facet", bson.D{
+				{"total", bson.A{
+					bson.D{{"$count", "totalCount"}},
+				}},
+				{"documents", bson.A{
+					bson.D{
+						{"$sort", bson.D{
+							{"sortKey", 1},
+						}},
+					},
+					bson.D{
+						{"$skip", offset},
+					},
+					bson.D{
+						{"$limit", params.PerPage},
+					},
+					bson.D{
+						{"$project", bson.D{
+							{"_id", 0},
+							{"groups", "$_id.groups"},
+							{"relation", "$_id.relation"},
+						}},
+					},
+				}},
+			}},
+		},
+	}
+
+	// 大文字小文字を区別しない
+	collation := options.Collation{
+		Locale:   "en",
+		Strength: 2,
+	}
+	aggregateOptions := options.Aggregate().SetCollation(&collation)
+
+	cursor, err := col.Aggregate(ctx, pipeline, aggregateOptions)
+	if err != nil {
+		return
+	}
+	defer cursor.Close(ctx)
+
+	// $facet結果をデコードするための構造体
+	var result struct {
+		Total []struct {
+			TotalCount int64 `bson:"totalCount"`
+		} `bson:"total"`
+		Documents []*entity.ShotDocument `bson:"documents"`
+	}
+
+	if cursor.Next(ctx) {
+		if err = cursor.Decode(&result); err != nil {
+			return
+		}
+	} else if err = cursor.Err(); err != nil {
+		return
+	}
+
+	if len(result.Total) > 0 {
+		total = result.Total[0].TotalCount
+	} else {
+		total = 0
+	}
+
+	documents = result.Documents
+
+	return
+}
+
+func (poi *PublishOperationInfo) ListLatestShotDocuments(
+	ctx context.Context,
+	param *entity.LatestShotComponentParams,
+) (documents []*entity.LatestComponentDocuments, err error) {
+	col := poi.db.Collection("pc_publishOperationInfo")
+
+	// Project, Asset, Relation, Componentでフィルタリング
+	matchStage := bson.D{
+		{"$match", bson.D{
+			{"_central.project", param.Project},
+			{"root", "shots"},
+			{"groups.0", param.Group1},
+			{"groups.1", param.Group2},
+			{"groups.2", param.Group3},
+			{"relation", param.Relation},
+			{"component", bson.D{{"$in", param.Component}}},
+		}},
+	}
+
+	// id, groups, submitted_at_utc, phase, component フィールドのみ取得
+	projectStage := bson.D{
+		{"$project", bson.D{
+			{"id", 1},
+			{"groups", 1},
+			{"submitted_at_utc", 1},
+			{"phase", 1},
+			{"component", 1},
+			{"_id", 0},
+		}},
+	}
+
+	// submitted_at_utcで降順にソート
+	sortStage := bson.D{
+		{"$sort", bson.D{
+			// -1 は降順を意味
+			{"submitted_at_utc", -1},
+		}},
+	}
+
+	// component ごとに最新のドキュメントを取得
+	groupStage := bson.D{
+		{"$group", bson.D{
+			{"_id", "$component"},
+			{"latest_document", bson.D{{"$first", "$$ROOT"}}},
+		}},
+	}
+
+	pipeline := mongo.Pipeline{matchStage, projectStage, sortStage, groupStage}
+	cursor, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, &documents); err != nil {
+		return
+	}
+	if documents == nil {
+		documents = []*entity.LatestComponentDocuments{}
+	}
+	return
+}
