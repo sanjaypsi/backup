@@ -13,6 +13,7 @@ import {
     Popover,
     Checkbox,
     Button,
+    Drawer,
 } from "@material-ui/core";
 import { styled } from "@material-ui/core/styles";
 import ViewListIcon from "@material-ui/icons/ViewList";
@@ -21,9 +22,7 @@ import FilterListIcon from "@material-ui/icons/FilterList";
 import ExpandLessIcon from "@material-ui/icons/ExpandLess";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ViewColumnIcon from "@material-ui/icons/ViewColumn";
-
-import { group } from "console";
-
+import RestoreIcon from "@material-ui/icons/Restore";
 
 /* ------------------------------
    Styled Components
@@ -35,405 +34,572 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingTop: theme.spacing(2),
-  paddingBottom: theme.spacing(2),
-  marginTop: theme.spacing(1),
-  height: 20,
+  padding: theme.spacing(1, 2),
+  minHeight: 56,
 }));
 
 const LeftSection = styled("div")({
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
 });
 
 const RightSection = styled("div")({
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    justifyContent: "flex-end",
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
 });
 
-/* Toggle Container */
+/* Toggle */
 const ToggleContainer = styled(Box)({
-    display: "flex",
-    backgroundColor: "transparent",
-    borderRadius: 4,
-    padding: 4,
+  display: "flex",
+  borderRadius: 4,
 });
 
-/* Search Container */
-const SearchContainer = styled(Box)({
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: "transparent",
-    borderRadius: 4,
-    padding: "4px 8px",
-    gap: 8,
-    border: "1px solid #ccc",
-});
+/* Search */
+const SearchContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  backgroundColor: theme.palette.background.default,
+  borderRadius: 6,
+  padding: "4px 12px",
+  border: `1px solid ${theme.palette.divider}`,
+  height: 36,
+}));
 
 const StyledInput = styled("input")({
-    color: "inherit",
-    backgroundColor: "transparent",
-    border: "none",
-    outline: "none",
-    width: 120,
-    fontSize: 14,
+  color: "inherit",
+  backgroundColor: "transparent",
+  border: "none",
+  outline: "none",
+  width: 200,
+  fontSize: 14,
+  "&::placeholder": {
+    color: "#999",
+    opacity: 1,
+  },
 });
 
-/* Filter Menu Types and Styled Components */
-type Filters = {
-    assetGroups: string[];
-    approvalStatus: string[];
-    workStatus: string[];
-};
+/* Control Buttons */
+const ControlButton = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  padding: theme.spacing(0.5, 1),
+  borderRadius: 4,
+  cursor: "pointer",
+  height: 36,
+  border: `1px solid transparent`,
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: theme.palette.divider,
+  },
+}));
 
-interface FilterMenuProps {
-    filters: Filters;
-    onChange: (newFilters: Filters) => void;
-}
-
-// Add missing styled components for FilterPanel and FilterOption
-const FilterPanel = styled(Box)({
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-});
+/* Reset Button */
+const ResetButton = styled(Button)(({ theme }) => ({
+  height: 36,
+  padding: theme.spacing(0.5, 1.5),
+  marginLeft: theme.spacing(1),
+  color: theme.palette.text.secondary,
+  borderColor: theme.palette.divider,
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: theme.palette.text.secondary,
+  },
+}));
 
 /* ------------------------------
-   Filter Menu Component
+   Types
 -------------------------------- */
-const FilterMenu: React.FC<FilterMenuProps> = ({
-  filters,
-  onChange,
-}) => {
+
+type Filters = {
+  assetGroups: string[];
+  approvalStatus: string[];
+  workStatus: string[];
+};
+
+export type ViewMode = "list" | "group";
+
+type ColumnItem = {
+  id: string;
+  label: string;
+  group: string;
+};
+
+type ColumnState = {
+  [key: string]: boolean;
+};
+
+type Props = {
+  viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  filters: Filters;
+  onFilterChange: (newFilters: Filters) => void;
+  columnsState: ColumnState;
+  onColumnsChange: (newColumns: ColumnState) => void;
+  onReset?: () => void; // Optional reset handler
+};
+
+/* ------------------------------
+   Filter Menu
+-------------------------------- */
+
+const FilterPanel = styled(Box)({
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+});
+
+const FilterMenu: React.FC<{
+  filters: Filters;
+  onChange: (newFilters: Filters) => void;
+}> = ({ filters, onChange }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [openSection, setOpenSection] = React.useState<string | null>(null);
 
-  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const filterOptions = {
+    assetGroups: ["Buildings", "Vehicles", "Characters", "Environment"],
+    approvalStatus: [
+      "Check", 
+      "Client Review", 
+      "Dir Review",
+      "EPD Review",
+
+      "Client On Hold", 
+      "Dir On Hold",
+      "EPD On Hold",
+
+      "Exec Retake",
+      "Client Retake",
+      "Dir Retake",
+      "EPD Retake",
+
+      "Client Approved",
+      "Dir Approved",
+      "EPD Approved",
+
+      "Other",
+      "Omit",
+    ],
+    workStatus: [
+      "Check", 
+      "CGSV On Hold", 
+      "SV On Hold", 
+      "Lead On Hold",
+      "CGSV Retake",
+      "SV Retake",
+      "Lead Retake",
+      "CGSV Approved", 
+      "SV Approved", 
+      "Lead Approved",
+      "SV Other",
+      "Lead Other",
+    ],
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const toggleSection = (section: string) => {
-    setOpenSection(openSection === section ? null : section);
-  };
-
-  const clearFilters = () => {
+  const handleFilterChange = (section: string, value: string) => {
+    const currentValues = filters[section as keyof Filters] as string[];
+    const newValues = currentValues.includes(value)
+      ? currentValues.filter(v => v !== value)
+      : [...currentValues, value];
+    
     onChange({
-      assetGroups: [],
-      approvalStatus: [],
-      workStatus: [],
+      ...filters,
+      [section]: newValues,
     });
   };
 
-  const open = Boolean(anchorEl);
+  const activeFilterCount = Object.values(filters).flat().length;
 
   return (
     <>
-      <Box
-        display="flex"
-        alignItems="center"
-        style={{ cursor: "pointer", color: "#ffffff" }}
-        onClick={handleOpen}
-      >
-        <FilterListIcon fontSize="small" style={{ marginRight: 6 }} />
+      <ControlButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+        <FilterListIcon fontSize="small" />
         <Typography variant="body2">Filter</Typography>
-      </Box>
+        {activeFilterCount > 0 && (
+          <Box
+            component="span"
+            style={{
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              borderRadius: "50%",
+              width: 18,
+              height: 18,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              marginLeft: 4,
+            }}
+          >
+            {activeFilterCount}
+          </Box>
+        )}
+      </ControlButton>
 
       <Menu
-        open={open}
+        open={Boolean(anchorEl)}
         anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{ style: { width: 250, maxHeight: 400 } }}
       >
         <FilterPanel>
           <List dense>
-            <ListItem button onClick={clearFilters}>
+            <ListItem 
+              button 
+              onClick={() => {
+                onChange({
+                  assetGroups: [],
+                  approvalStatus: [],
+                  workStatus: [],
+                });
+                setAnchorEl(null);
+              }}
+            >
               <ListItemText primary="Clear all filters" />
             </ListItem>
 
-            <Divider style={{ backgroundColor: "#444" }} />
+            <Divider />
 
-            {/* Asset Groups */}
-            <ListItem button onClick={() => toggleSection("assetGroups")}>
-              <ListItemText primary="Asset Groups" />
-              {openSection === "assetGroups" ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItem>
-            <Collapse in={openSection === "assetGroups"}>
-              <Box pl={2} pb={1}>
-                <Typography variant="body2">Group A</Typography>
-                <Typography variant="body2">Group B</Typography>
-              </Box>
-            </Collapse>
+            {Object.entries(filterOptions).map(([section, options]) => (
+              <React.Fragment key={section}>
+                <ListItem 
+                  button 
+                  onClick={() => setOpenSection(openSection === section ? null : section)}
+                >
+                  <ListItemText 
+                    primary={section.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} 
+                  />
+                  <Box display="flex" alignItems="center" style={{ gap: 8 }}>
+                    {filters[section as keyof Filters].length > 0 && (
+                      <Typography variant="caption" color="primary">
+                        ({filters[section as keyof Filters].length})
+                      </Typography>
+                    )}
+                    {openSection === section ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </Box>
+                </ListItem>
 
-            {/* Approval Status */}
-            <ListItem button onClick={() => toggleSection("approvalStatus")}>
-              <ListItemText primary="Approval Status" />
-              {openSection === "approvalStatus" ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItem>
-            <Collapse in={openSection === "approvalStatus"}>
-              <Box pl={2} pb={1}>
-                <Typography variant="body2">Approved</Typography>
-                <Typography variant="body2">Pending</Typography>
-              </Box>
-            </Collapse>
-
-            {/* Work Status */}
-            <ListItem button onClick={() => toggleSection("workStatus")}>
-              <ListItemText primary="Work Status" />
-              {openSection === "workStatus" ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItem>
-            <Collapse in={openSection === "workStatus"}>
-              <Box pl={2} pb={1}>
-                <Typography variant="body2">In Progress</Typography>
-                <Typography variant="body2">Completed</Typography>
-              </Box>
-            </Collapse>
+                <Collapse in={openSection === section} timeout="auto" unmountOnExit>
+                  <Box pl={2} pr={1} pb={1} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {options.map(option => (
+                      <ListItem 
+                        key={option} 
+                        button 
+                        onClick={() => handleFilterChange(section, option)}
+                        dense
+                      >
+                        <Checkbox
+                          edge="start"
+                          checked={filters[section as keyof Filters].includes(option)}
+                          size="small"
+                          disableRipple
+                        />
+                        <ListItemText primary={option} />
+                      </ListItem>
+                    ))}
+                  </Box>
+                </Collapse>
+              </React.Fragment>
+            ))}
           </List>
         </FilterPanel>
       </Menu>
     </>
   );
 };
-/* End Filter Menu */
 
 /* ------------------------------
-  Column  Component
+   Column Selector
 -------------------------------- */
-type ColumnItem = {
-    id: string;
-    label: string;
-    group: string; // Optional group name for grouping columns
-};
-
-type ColumnState = {
-    [key: string]: boolean; // key is column id, value is visibility
-};
 
 const ALL_COLUMNS: ColumnItem[] = [
-    { id: "shotName", label: "Shot Name", group: "Basic Info" },
-    { id: "assetGroup", label: "Asset Group", group: "Basic Info" },
-    { id: "approvalStatus", label: "Approval Status", group: "Status" },
-    { id: "workStatus", label: "Work Status", group: "Status" },
-    // Add more columns as needed
+  { id: "thumbnail", label: "Thumbnail", group: "Main Columns" },
+  { id: "group_1_name", label: "Name 1", group: "Main Columns" },
+  { id: "group_2_name", label: "Name 2", group: "Main Columns" },
+  { id: "group_3_name", label: "Name 3", group: "Main Columns" },
+
+  { id: "lay_work_status", label: "LAY WORK", group: "Layout" },
+  { id: "lay_approval_status", label: "LAY APPR", group: "Layout" },
+  { id: "lay_submitted_at", label: "LAY Submitted At", group: "Layout" },
+
+  { id: "anm_work_status", label: "ANM WORK", group: "Animation" },
+  { id: "anm_approval_status", label: "ANM APPR", group: "Animation" },
+  { id: "anm_submitted_at", label: "ANM Submitted At", group: "Animation" },
+
+  { id: "gnz_work_status", label: "GNZ WORK", group: "Rigging" },
+  { id: "gnz_approval_status", label: "GNZ APPR", group: "Rigging" },
+  { id: "gnz_submitted_at", label: "GNZ Submitted At", group: "Rigging" },
+
+  { id: "mat_work_status", label: "MAT WORK", group: "Materials" },
+  { id: "mat_approval_status", label: "MAT APPR", group: "Materials" },
+  { id: "mat_submitted_at", label: "MAT Submitted At", group: "Materials" },
+
+  { id: "fx_work_status", label: "FX WORK", group: "Effects" },
+  { id: "fx_approval_status", label: "FX APPR", group: "Effects" },
+  { id: "fx_submitted_at", label: "FX Submitted At", group: "Effects" },
+
+  { id: "cmp_work_status", label: "CMP WORK", group: "Composite" },
+  { id: "cmp_approval_status", label: "CMP APPR", group: "Composite" },
+  { id: "cmp_submitted_at", label: "CMP Submitted At", group: "Composite" },
+
+  { id: "relation", label: "Relation", group: "Other" },
 ];
 
-const ColumnsPanel = styled(Box)(({ theme }) => ({
-    display: "flex",
-    flexDirection: "column",
-    padding: theme.spacing(2),
+/* -----------------------------
+Default Column State
+----------------------------- */
+
+const DEFAULT_COLUMN_STATE: ColumnState = ALL_COLUMNS.reduce((acc, col) => {
+  acc[col.id] = true;
+  return acc;
+}, {} as ColumnState);
+
+/* -----------------------------
+Styles for Column Selector Drawer
+----------------------------- */
+
+const DrawerContainer = styled(Box)(({ theme }) => ({
+  width: 320,
+  height: "auto",
+  display: "flex",
+  flexDirection: "column",
 }));
 
-interface ColumnSelectorProps {
-    columnState: ColumnState;
-    onChange: (columnState: ColumnState) => void;
-}
+const Header = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  borderBottom: `1px solid ${theme.palette.divider}`,
+}));
 
-/* ------------------------------
-   Styled Components for Main Panel
--------------------------------- */
-const ColumnSelector: React.FC<ColumnSelectorProps> = ({
-  columnState,
-  onChange,
-}) => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+const Footer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderTop: `1px solid ${theme.palette.divider}`,
+  display: "flex",
+  justifyContent: "space-between",
+}));
+
+const ScrollArea = styled(Box)(({ theme }) => ({
+  flex: 1,
+  overflowY: "auto",
+  "&::-webkit-scrollbar": {
+    width: 6,
+  },
+  "&::-webkit-scrollbar-thumb": {
+    background: "#999",
+    borderRadius: 4,
+  },
+}));
+
+/* -----------------------------
+Column Selector Component
+----------------------------- */
+
+const ColumnSelector: React.FC<{
+  columnState: ColumnState;
+  onChange: (state: ColumnState) => void;
+}> = ({ columnState, onChange }) => {
+  const [open, setOpen] = React.useState(false);
   const [openGroups, setOpenGroups] = React.useState<string[]>([]);
 
-  const open = Boolean(anchorEl);
+  const grouped = React.useMemo(() => {
+    return ALL_COLUMNS.reduce((acc, col) => {
+      if (!acc[col.group]) acc[col.group] = [];
+      acc[col.group].push(col);
+      return acc;
+    }, {} as Record<string, ColumnItem[]>);
+  }, []);
 
-  const handleToggleGroup = (group: string) => {
-    setOpenGroups((prev) =>
-      prev.includes(group)
-        ? prev.filter((g) => g !== group)
-        : [...prev, group]
-    );
+  const handleReset = () => {
+    onChange(DEFAULT_COLUMN_STATE);
   };
 
-  const handleToggleColumn = (id: string) => {
-    onChange({
-      ...columnState,
-      [id]: !columnState[id],
-    });
-  };
+  const activeColumnCount = Object.values(columnState).filter(Boolean).length;
 
-  const handleHideAll = () => {
-    const updated: ColumnState = {};
-    Object.keys(columnState).forEach((key) => (updated[key] = false));
-    onChange(updated);
-  };
-
-  const visibleCount = Object.values(columnState).filter(Boolean).length;
-
-  const groupedColumns = ALL_COLUMNS.reduce((acc, col) => {
-    if (!acc[col.group]) acc[col.group] = [];
-    acc[col.group].push(col);
-    return acc;
-  }, {} as Record<string, ColumnItem[]>);
+  // Auto-expand groups that have visible columns
+  React.useEffect(() => {
+    if (open) {
+      const groupsWithVisibleColumns = ALL_COLUMNS
+        .filter(col => columnState[col.id])
+        .map(col => col.group)
+        .filter((value, index, self) => self.indexOf(value) === index);
+      
+      setOpenGroups(groupsWithVisibleColumns);
+    }
+  }, [open, columnState]);
 
   return (
     <>
-      <Box
-        display="flex"
-        alignItems="center"
-        style={{
-          cursor: "pointer",
-          backgroundColor: "#3a3a3a",
-          padding: "6px 10px",
-          borderRadius: 4,
-        }}
-        onClick={(e) => setAnchorEl(e.currentTarget)}
-      >
-        <ViewColumnIcon fontSize="small" style={{ marginRight: 6 }} />
-        <Typography variant="body2" style={{ color: "#00bcd4" }}>
-          COLUMNS ({visibleCount})
-        </Typography>
-      </Box>
+      <ControlButton onClick={() => setOpen(true)}>
+        <ViewColumnIcon fontSize="small" />
+        <Typography 
+          variant="body2"
+          style={{color: "#1976d2", fontWeight: 1000}}
+        
+        >
+          Columns ({activeColumnCount}/{ALL_COLUMNS.length})
+          </Typography>
 
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={() => setAnchorEl(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <ColumnsPanel>
-          {Object.keys(groupedColumns).map((group) => (
-            <Box key={group}>
-              <ListItem button onClick={() => handleToggleGroup(group)}>
-                <ListItemText primary={group} />
-                {openGroups.includes(group) ? (
-                  <ExpandLessIcon />
-                ) : (
-                  <ExpandMoreIcon />
-                )}
-              </ListItem>
-
-              <Collapse in={openGroups.includes(group)}>
-                {groupedColumns[group].map((col) => (
-                  <ListItem
-                    key={col.id}
-                    dense
-                    button
-                    onClick={() => handleToggleColumn(col.id)}
-                  >
-                    <Checkbox
-                      checked={columnState[col.id]}
-                      size="small"
-                      style={{ color: "#00bcd4" }}
-                    />
-                    <ListItemText primary={col.label} />
-                  </ListItem>
-                ))}
-              </Collapse>
-
-              <Divider style={{ backgroundColor: "#444" }} />
-            </Box>
-          ))}
-
+        {activeColumnCount > 0 && activeColumnCount < ALL_COLUMNS.length && (
           <Box
-            display="flex"
-            justifyContent="space-between"
-            mt={1}
+            component="span"
+            style={{
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              borderRadius: "50%",
+              width: 18,
+              height: 18,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              marginLeft: 4,
+            }}
           >
-            <Button size="small" onClick={handleHideAll}>
-              HIDE ALL
-            </Button>
-            <Button size="small" color="primary">
-              SAVE
-            </Button>
+            {activeColumnCount}
           </Box>
-        </ColumnsPanel>
-      </Popover>
+        )}
+      </ControlButton>
+
+      <Drawer 
+      anchor="right" 
+      open={open} onClose={() => setOpen(false)}
+      PaperProps={{ 
+        style: { 
+          width: 320, 
+          top: 150,
+          right: 150,
+          height: "calc(100% - 150px)",
+          maxHeight: "80vh" 
+        } }}
+      >
+        <DrawerContainer>
+          {/* <Header>
+            <Typography variant="h6">Show Columns</Typography>
+            <Button 
+              size="small" 
+              onClick={handleReset}
+              disabled={activeColumnCount === ALL_COLUMNS.length}
+            >
+              RESET
+            </Button>
+          </Header> */}
+
+          <ScrollArea>
+            {Object.entries(grouped).map(([group, cols], index) => (
+              <React.Fragment key={group}>
+                {index !== 0 && <Divider />}
+                <ListItem
+                  button
+                  onClick={() =>
+                    setOpenGroups(prev =>
+                      prev.includes(group)
+                        ? prev.filter(g => g !== group)
+                        : [...prev, group]
+                    )
+                  }
+                >
+                  <ListItemText 
+                    primary={group}
+                    // secondary={`${cols.filter(col => columnState[col.id]).length}/${cols.length}`}
+                  />
+                  {openGroups.includes(group) ? (
+                    <ExpandLessIcon />
+                  ) : (
+                    <ExpandMoreIcon />
+                  )}
+                </ListItem>
+
+                <Collapse in={openGroups.includes(group)} timeout="auto">
+                  <Box pl={2}>
+                    {cols.map(col => (
+                      <ListItem
+                        key={col.id}
+                        button
+                        dense
+                        style={{paddingTop:2, paddingBottom:2}}
+                        onClick={() =>
+                          onChange({
+                            ...columnState,
+                            [col.id]: !columnState[col.id],
+                          })
+                        }
+                        
+                      >
+                        <Checkbox
+                          checked={!!columnState[col.id]}
+                          size="small"
+                          edge="start"
+                          disableRipple
+                          style={{padding:4}}
+                        />
+                        <ListItemText primary={col.label} />
+                      </ListItem>
+                    ))}
+                  </Box>
+                </Collapse>
+              </React.Fragment>
+            ))}
+
+            <Footer>
+              <Button size="small">HideAll</Button>
+              <Button size="small" onClick={handleReset}
+                disabled={activeColumnCount === ALL_COLUMNS.length}
+              >
+                SAVE
+              </Button>
+            </Footer>
+
+          </ScrollArea>
+        </DrawerContainer>
+      </Drawer>
     </>
   );
 };
 
-const initialColumns: ColumnState = {};
-    ALL_COLUMNS.forEach((col) => {
-        initialColumns[col.id] = true;
-});
-
-const [columnsState, setColumnsState] = React.useState<ColumnState>(initialColumns);
-const visibleColumns = ALL_COLUMNS.filter(col => columnsState[col.id]); 
 /* ------------------------------
-   Types
+   View Toggle
 -------------------------------- */
 
-export type ViewMode = "list" | "group";
-type Props = {
-    viewMode: ViewMode;
-    onViewChange: (mode: ViewMode) => void;
-    searchValue: string;
-    onSearchChange: (value: string) => void;  
-    filters: Filters;
-    onFilterChange: (newFilters: Filters) => void;
-    columnsState: ColumnState;
-    onColumnsChange: (newColumns: ColumnState) => void;
-};
+const ViewToggle: React.FC<{
+  viewMode: ViewMode;
+  onChange: (mode: ViewMode) => void;
+}> = ({ viewMode, onChange }) => (
+  <ToggleContainer>
+    <IconButton
+      onClick={() => onChange("list")}
+      size="small"
+      style={{ padding: 8 }}
+      title="List View"
+    >
+      <ViewListIcon color={viewMode === "list" ? "primary" : "action"} />
+    </IconButton>
+    <IconButton
+      onClick={() => onChange("group")}
+      size="small"
+      style={{ padding: 8 }}
+      title="Group View"
+    >
+      <ViewModuleIcon color={viewMode === "group" ? "primary" : "action"} />
+    </IconButton>
+  </ToggleContainer>
+);
 
 /* ------------------------------
-   View Toggle Component
--------------------------------- */
-interface ViewToggleProps {
-    viewMode: ViewMode;
-    onChange: (mode: ViewMode) => void;
-
-}
-
-/* ViewToggle Component */
-const ViewToggle: React.FC<ViewToggleProps> = ({
-    viewMode,
-    onChange,
-
-}) => {
-  const getIconColor = (mode: ViewMode) =>
-    viewMode === mode ? "#00bcd4" : "#9e9e9e";
-
-  return (
-    <ToggleContainer>
-      <IconButton
-        onClick={() => onChange("list")}
-        disableRipple
-        style={{ color: getIconColor("list") }}
-        aria-label="list view"
-      >
-        <ViewListIcon style={{ fontSize: 24 }} />
-      </IconButton>
-    
-    {/* Group View Button */}
-      <IconButton
-        onClick={() => onChange("group")}
-        disableRipple
-        style={{ color: getIconColor("group") }}
-        aria-label="group view"
-      >
-        <ViewModuleIcon style={{ fontSize: 24 }} />
-      </IconButton>
-    </ToggleContainer>
-  );
-};
-
-
-/* ------------------------------
-   Main Toolbar Component
+   Main Toolbar
 -------------------------------- */
 
 const ShotDataTableToolbar: React.FC<Props> = ({
@@ -445,37 +611,70 @@ const ShotDataTableToolbar: React.FC<Props> = ({
   onFilterChange,
   columnsState,
   onColumnsChange,
+  onReset,
 }) => {
+
+  const DEFAULT_FILTERS: Filters = {
+    assetGroups: [],
+    approvalStatus: [],
+    workStatus: [],
+  };
+
+  const handleReset = () => {
+    // Reset to defaults
+    onSearchChange("");
+    onFilterChange(DEFAULT_FILTERS);
+    onColumnsChange(DEFAULT_COLUMN_STATE);
+    
+    // Call custom reset handler if provided
+    if (onReset) {
+      onReset();
+    }
+  };
+
+  // Check if any customizations are active
+  const hasChanges = 
+    searchValue !== "" ||
+    Object.values(filters).flat().length > 0 ||
+    Object.values(columnsState).filter(Boolean).length !== ALL_COLUMNS.length;
+
   return (
     <StyledToolbar>
-      <RightSection>
-        <ViewToggle
-          viewMode={viewMode}
-          onChange={onViewChange}
-        />
-      </RightSection>
 
+      {/* LEFT SECTION - View Toggle */}
       <LeftSection>
-        {/* Search Input */}
+        <ViewToggle viewMode={viewMode} onChange={onViewChange} />
+      </LeftSection>
+
+      {/* RIGHT SECTION - Controls */}
+      <RightSection>
         <SearchContainer>
           <StyledInput
-            type="text"
-            placeholder="Search shots..."
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search shots..."
           />
         </SearchContainer>
-        {/* Filter Menu */}
-        <FilterMenu 
-            filters={filters} 
-            onChange={onFilterChange} 
+
+        <FilterMenu filters={filters} onChange={onFilterChange} />
+
+        <ColumnSelector
+          columnState={columnsState}
+          onChange={onColumnsChange}
         />
-        {/* Column Selector */}
-        <ColumnSelector 
-            columnState={columnsState} 
-            onChange={onColumnsChange} 
-        />
-      </LeftSection>
+
+        {hasChanges && (
+          <ResetButton
+            variant="outlined"
+            size="small"
+            startIcon={<RestoreIcon />}
+            onClick={handleReset}
+          >
+            Reset
+          </ResetButton>
+        )}
+      </RightSection>
+
     </StyledToolbar>
   );
 };
