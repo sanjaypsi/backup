@@ -13,6 +13,7 @@ import {
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import { PivotGroup, SortDir } from "./types";
+import { components } from "react-select";
 
 /** ----------------------------------------------------------------
  *  COLORS (match list view look)
@@ -63,8 +64,7 @@ const UI = {
   THUMB_WIDTH: 50, // Reduced from 90
   NAME_WIDTH: 90, // Reduced from 150
   RELATION_WIDTH: 50, // Reduced from 70
-  PHASE_COL_WIDTH: 90, // Reduced from 97 - KEY REDUCTION
-  // COMPONENT_WIDTH: 72, // Added for component column
+  PHASE_COL_WIDTH: 85, // Reduced from 97 - KEY REDUCTION
 
   // ✅ "top & bottom line" thickness in header
   COL_EDGE_PX: 3, // Reduced from 2
@@ -120,26 +120,66 @@ type Column = {
   headerMode?: "phaseKind" | "label"; // Allow headerMode property
 };
 
-const getSortValue = (asset: any, key: string) => {
-  // TAKE columns → numeric
+const getSortValue = (
+  asset: any,
+  key: string,
+  latestComponents?: Record<string, any>
+) => {
+  // TAKE → numeric
   const takeMatch = key.match(/^(mdl|rig|bld|dsn|ldv)_take$/i);
   if (takeMatch) {
     const val = asset[key];
-    return val ? parseInt(val, 10) : 0;
+    return val ? parseInt(String(val).replace(/\D/g, ""), 10) : 0;
   }
 
-  // Submitted → date
-  if (key.includes("submitted")) {
-    const date = new Date(asset[key]);
+  // Phase Submitted
+  if (key.includes("_submitted")) {
+    const date = new Date(asset[key + "_at_utc"] || asset[key]);
     return isNaN(date.getTime()) ? 0 : date.getTime();
   }
 
-  // Default
+  // 🔥 Component Submitted Columns
+  if (["mdlRend","bldAnm","bldRend","ldvMdl"].includes(key)) {
+    const cleanRelation = (asset.relation || "")
+      .toString()
+      .trim()
+      .replace(/^_+|_+$/g, "");
+
+    const assetKey = `${asset.group_1}-${cleanRelation}`;
+    const componentList = latestComponents && latestComponents[assetKey] || [];
+
+    const PHASE_COMPONENT_MAP: Record<string, string> = {
+      mdlRend: "mdl",
+      bldAnm: "bld",
+      bldRend: "bld",
+      ldvMdl: "ldv",
+    };
+
+    const expectedPhase = PHASE_COMPONENT_MAP[key];
+
+    const componentData = componentList.find(
+      (item: any) =>
+        item && item.latest_document && item.latest_document.phase && 
+        item.latest_document.phase.toLowerCase() === expectedPhase
+    );
+
+    const date = new Date(
+      componentData && componentData.latest_document 
+      ? componentData.latest_document.submitted_at_utc : null
+    );
+
+    return isNaN(date.getTime()) ? 0 : date.getTime();
+  }
+
+  // Default string sort
   return asset[key] || "";
 };
 
 type Props = {
   groups?: PivotGroup[];
+
+  // New: pipeline component per phase 
+  phaseComponents?: { [phase: string]: string[] }; // e.g. { mdl: ['mdlRend', 'mdlAnm'], bld: ['bldAnm'] }
 
   // sorting
   sortKey: string;
@@ -147,7 +187,7 @@ type Props = {
   onSortChange: (key: string) => void;
 
   // group name sorting
-  groupSortDir?: SortDir;
+  groupSortDir: SortDir;
   onGroupSortToggle?: () => void;
 
   dateTimeFormat: Intl.DateTimeFormat;
@@ -159,44 +199,81 @@ type Props = {
   latestComponents?: any; // Pass latestComponents for component column rendering
 };
 
-// SHORTENED COLUMN LABELS FOR COMPACTNESS
-const COLUMNS: Column[] = [
-  { id: "thumbnail", label: "THUMB" }, // Changed from "THUMBNAIL"
-  { id: "group_1_name", label: "NAME", sortable: true },
+// ============================================
+// 2. BUILD COLUMN DEFINITIONS DYNAMICALLY FROM phaseComponents
+// ============================================
 
-  { id: "mdl_work", label: "MDL Work", sortable: true, phase: "mdl", kind: "work" },
-  { id: "mdl_appr", label: "MDL Appr", sortable: true, phase: "mdl", kind: "appr" },
-  // { id: "mdl_submitted", label: "MDL Submitted", sortable: true, phase: "mdl", kind: "submitted" }, // Shortened remove "at" ui for compactness
-  { id: "mdl_take", label: "MDL TAKE", sortable: true, phase: "mdl", kind: "take" },
-  { id: "mdlRend", label: "MDLREND Submitted ", phase: "mdl", headerMode: "label" },
+/**
+ * Builds the full column list for the table header based on the project's
+ * pipeline phase component configuration. Only component columns that actually
+ * exist in the project are included — nothing is hardcoded.
+ *
+ * @param phaseComponents - Map of phase → component ID array, e.g. { mdl: ['mdlRend', 'mdlAnm'], bld: ['bldAnm'] }
+ */
+/**
+ * Returns the dynamic component columns for a given phase, based on the
+ * project's pipeline configuration. Spread this into the columns array
+ * after the fixed phase columns (WORK / APPR / TAKE).
+ *
+ * @param phase           - Phase key, e.g. "mdl"
+ * @param colors          - Phase colour config (lineColor + backgroundColor)
+ * @param phaseComponents - Map of phase → component ID array from pipeline settings
+ */
+function buildComponentColumns(
+  phase: string,
+  phaseComponents?: { [phase: string]: string[] }
+): Column[] {
+  const componentIds = phaseComponents && phaseComponents[phase] ? phaseComponents[phase] : [];
 
-  { id: "rig_work", label: "RIG Work", sortable: true, phase: "rig", kind: "work" },
-  { id: "rig_appr", label: "RIG Appr", sortable: true, phase: "rig", kind: "appr" },
-  // { id: "rig_submitted", label: "RIG Submitted", sortable: true, phase: "rig", kind: "submitted" }, // Shortened remove "at" ui for compactness
-  { id: "rig_take", label: "RIG TAKE", sortable: true, phase: "rig", kind: "take" },
-  
-  { id: "bld_work", label: "BLD Work", sortable: true, phase: "bld", kind: "work" },
-  { id: "bld_appr", label: "BLD Appr", sortable: true, phase: "bld", kind: "appr" },
-  // { id: "bld_submitted", label: "BLD Submitted", sortable: true, phase: "bld", kind: "submitted" }, // Shortened remove "at" ui for compactness
-  { id: "bld_take", label: "BLD TAKE", sortable: true, phase: "bld", kind: "take" },
-  
-  { id: "bldAnm", label: "BLDANM Submitted ", phase: "bld", headerMode: "label" },
-  { id: "bldRend", label: "BLDREND Submitted ", phase: "bld", headerMode: "label" },
+  return componentIds.map((id) => ({
+    id: id as ColumnId,
+    label: `${id.toUpperCase()} Submitted`,
+    sortable: true,
+    phase: phase as keyof typeof COLORS.PHASE,
+    headerMode: "label",
+  }));
+}
 
-  { id: "dsn_work", label: "DSN Work", sortable: true, phase: "dsn", kind: "work" },
-  { id: "dsn_appr", label: "DSN Appr", sortable: true, phase: "dsn", kind: "appr" },
-  // { id: "dsn_submitted", label: "DSN Submitted", sortable: true, phase: "dsn", kind: "submitted" }, // Shortened remove "at" ui for compactness
-  { id: "dsn_take", label: "DSN TAKE", sortable: true, phase: "dsn", kind: "take" },
+function buildColumns(
+  phaseComponents?: { [phase: string]: string[] }
+): Column[] {
+  return [
+    { id: "thumbnail", label: "THUMB" },
+    { id: "group_1_name", label: "NAME", sortable: true },
 
-  { id: "ldv_work", label: "LDV Work", sortable: true, phase: "ldv", kind: "work" },
-  { id: "ldv_appr", label: "LDV Appr", sortable: true, phase: "ldv", kind: "appr" },
-  // { id: "ldv_submitted", label: "LDV Submitted", sortable: true, phase: "ldv", kind: "submitted" }, // Shortened remove "at" ui for compactness
-  { id: "ldv_take", label: "LDV TAKE", sortable: true, phase: "ldv", kind: "take" },
-  { id: "ldvMdl", label: "LDVMDL Submitted ", phase: "ldv", headerMode: "label" },
+    // MDL
+    { id: "mdl_work", label: "MDL Work", sortable: true, phase: "mdl", kind: "work" },
+    { id: "mdl_appr", label: "MDL Appr", sortable: true, phase: "mdl", kind: "appr" },
+    { id: "mdl_take", label: "MDL TAKE", sortable: true, phase: "mdl", kind: "take" },
+    ...buildComponentColumns("mdl", phaseComponents),
 
-  { id: "relation", label: "Relation", sortable: true }, // Changed from "RELATION"
-  // { id: "component", label: "Component", sortable: true }, // Changed from "COMPONENT"
-];
+    // RIG
+    { id: "rig_work", label: "RIG Work", sortable: true, phase: "rig", kind: "work" },
+    { id: "rig_appr", label: "RIG Appr", sortable: true, phase: "rig", kind: "appr" },
+    { id: "rig_take", label: "RIG TAKE", sortable: true, phase: "rig", kind: "take" },
+    ...buildComponentColumns("rig", phaseComponents),
+
+    // BLD
+    { id: "bld_work", label: "BLD Work", sortable: true, phase: "bld", kind: "work" },
+    { id: "bld_appr", label: "BLD Appr", sortable: true, phase: "bld", kind: "appr" },
+    { id: "bld_take", label: "BLD TAKE", sortable: true, phase: "bld", kind: "take" },
+    ...buildComponentColumns("bld", phaseComponents),
+
+    // DSN
+    { id: "dsn_work", label: "DSN Work", sortable: true, phase: "dsn", kind: "work" },
+    { id: "dsn_appr", label: "DSN Appr", sortable: true, phase: "dsn", kind: "appr" },
+    { id: "dsn_take", label: "DSN TAKE", sortable: true, phase: "dsn", kind: "take" },
+    ...buildComponentColumns("dsn", phaseComponents),
+
+    // LDV
+    { id: "ldv_work", label: "LDV Work", sortable: true, phase: "ldv", kind: "work" },
+    { id: "ldv_appr", label: "LDV Appr", sortable: true, phase: "ldv", kind: "appr" },
+    { id: "ldv_take", label: "LDV TAKE", sortable: true, phase: "ldv", kind: "take" },
+    ...buildComponentColumns("ldv", phaseComponents),
+
+    { id: "relation", label: "Relation", sortable: true },
+  ];
+}
 
 
 const useStyles = makeStyles(() => ({
@@ -322,6 +399,8 @@ function renderThumbnail(asset: any) {
   );
 }
 
+// In AssetsGroupedDataTable.tsx, update the renderAssetField function
+
 function renderAssetField(
   asset: any,
   col: Column,
@@ -355,47 +434,96 @@ function renderAssetField(
     );
   }
 
-  {/* ✅ COMPONENT COLUMN WITH UNDERSCORE REMOVAL */}
-  if (col.id === "component") {
-    // Handle component display with underscore removal
-    const componentValue = asset.component;
-    let displayValue = '—';
+  {/* ✅ FIXED: Component columns (MDLREND/BLDANM/BLDREND/LDVMDL) */}
+  if (["mdlRend", "bldAnm", "bldRend", "ldvMdl"].includes(col.id)) {
     
-    if (!isEmptyValue(componentValue)) {
-      const componentStr = String(componentValue).trim();
-      // Remove leading/trailing underscores
-      displayValue = componentStr.replace(/^_+|_+$/g, '');
-    }
+    // Create asset key - this must match how it's stored in latestComponents
+    const cleanRelation = (asset.relation || "").toString().trim();
+    const assetKey = `${asset.group_1}-${cleanRelation}`;
+
+    // Get component list for this asset
+    const componentList = latestComponents && latestComponents[assetKey] 
+      ? latestComponents[assetKey] 
+      : [];
+
+    // Map component column → expected phase
+    const PHASE_COMPONENT_MAP: Record<string, string> = {
+      mdlRend: "mdl",
+      bldAnm: "bld",
+      bldRend: "bld",
+      ldvMdl: "ldv",
+    };
+
+    // console.log("Table Key", assetKey);
+    // console.log("Available Keys", Object.keys(latestComponents || {}));
+
+    const expectedPhase = PHASE_COMPONENT_MAP[col.id];
+
+    // Try multiple strategies to find the component data
+    let componentData = null;
     
-    return (
-      <Typography style={{ 
-        fontSize: UI.FONT_SIZE_CONTENT, 
-        fontWeight: 500 
-      }}>
-        {displayValue}
-      </Typography>
-    );
-  }
+    if (col.headerMode === "label") {
 
-  {/* Component columns (MDLREND/BLDANM/BLDREND/LDVMDL) */}
-  if (["mdlRend","bldAnm","bldRend","ldvMdl"].includes(col.id)) {
+      const cleanRelation = (asset.relation || "").toString().trim();
+      const assetKey = `${asset.group_1}-${cleanRelation}`;
 
-    const assetKey = `${asset.group_1}-${(asset.relation || '').replace(/^_+|_+$/g, '')}`;
-    const componentList = latestComponents && latestComponents[assetKey] || [];
+      const componentList = latestComponents && latestComponents[assetKey] ? latestComponents[assetKey] : [];
 
-    const componentData = componentList.find(
-      (item: any) => item.component === col.id
-    );
+      const componentData = componentList.find(
+        (item: any) =>
+          item && item.component && item.component.toLowerCase() === col.id.toLowerCase() ||
+          item && item.latest_document && item.latest_document.component && item.latest_document.component.toLowerCase() === col.id.toLowerCase()
+      );
 
-    const submittedText =
-      componentData && componentData.latest_document && componentData.latest_document.submitted_at_utc
-        ? formatSubmitted(
-            componentData.latest_document.submitted_at_utc,
-            dateTimeFormat
-          )
+      const submittedAt = componentData && componentData.latest_document ? componentData.latest_document.submitted_at_utc : null;
+
+      const submittedText = submittedAt
+        ? formatSubmitted(submittedAt, dateTimeFormat)
         : "—";
 
-    console.log("asset.group_1:", asset.group_1, "asset.relation:", asset.relation, "latestComponents:", latestComponents);
+      return (
+        <Typography
+          style={{
+            fontSize: UI.FONT_SIZE_CONTENT,
+            whiteSpace: "normal",
+            lineHeight: 1.2,
+          }}
+        >
+          {submittedText}
+        </Typography>
+      );
+    }
+    
+    // Strategy 2: If not found, try matching by component name
+    if (!componentData) {
+      componentData = componentList.find((item: any) =>
+        item && item.component && item.component.toLowerCase().includes(expectedPhase)
+      );
+    }
+    
+    // Strategy 3: Use index-based fallback (0 for mdlRend, etc.)
+    if (!componentData && componentList.length > 0) {
+      const indexMap: Record<string, number> = {
+        mdlRend: 0,
+        bldAnm: 1,
+        bldRend: 2,
+        ldvMdl: 3
+      };
+      const index = indexMap[col.id];
+      if (index !== undefined && componentList[index]) {
+        componentData = componentList[index];
+      }
+    }
+
+    // Get the submitted date
+    const submittedAt = componentData && componentData.latest_document 
+      ? componentData.latest_document.submitted_at_utc 
+      : null;
+    
+    const submittedText = submittedAt 
+      ? formatSubmitted(submittedAt, dateTimeFormat)
+      : "—";
+
     return (
       <Typography
         style={{
@@ -410,29 +538,9 @@ function renderAssetField(
   }
 
   {/* Phase columns (WORK/APPR/SUBMITTED/TAKE) */}
-  const phase = col.phase;
-  if (!phase) return <span>—</span>;
-
-  if (col.kind === "submitted") {
-    const submittedAt = asset[phase + "_submitted_at_utc"];
-    const formatted = formatSubmitted(submittedAt, dateTimeFormat);
-
-    return (
-      <Typography style={{ 
-        fontSize: UI.FONT_SIZE_CONTENT, 
-        fontWeight: 500,
-        whiteSpace: "normal",
-        lineHeight: 1.2,
-      }}>
-        {formatted}
-      </Typography>
-    );
-  }
-
-  {/* Phase columns (WORK/APPR/SUBMITTED/TAKE) */}
   if (col.kind === "appr" || col.kind === "work") {
     const field = col.kind === "work" ? "work_status" : "approval_status";
-    const raw = asset[phase + "_" + field];
+    const raw = col.phase ? asset[col.phase + "_" + field] : undefined;
 
     if (isEmptyValue(raw)) {
       return <Typography style={{ fontSize: UI.FONT_SIZE_CONTENT }}>—</Typography>;
@@ -485,7 +593,7 @@ function renderAssetField(
 
   {/* Phase columns (WORK/APPR/SUBMITTED/TAKE) */}
   if (col.kind === "take") {
-    const takeValue = asset[phase + "_take"];
+    const takeValue = col.phase ? asset[col.phase + "_take"] : undefined;
     let takeText = '—';
     
     if (!isEmptyValue(takeValue)) {
@@ -505,12 +613,14 @@ function renderAssetField(
 
 }
 
-/**
- * ✅ Header top line + bottom line (per column)
- * ✅ Remove middle line between THUMB and NAME
- * ✅ Phase rails + phase gap
- * ✅ REDUCED PADDING FOR COMPACTNESS
- */
+/*
+======================================================================================
+  CELL STYLING LOGIC ==
+  - Handles header vs content styling
+  - Handles phase column styling with rails and background colors
+  - Handles edge cases for first/last columns and phase start/end
+======================================================================================
+*/
 function buildCellStyle(
   col: Column,
   phaseMeta: Record<string, { start: string; end: string }>,
@@ -586,6 +696,7 @@ function buildCellStyle(
 
 const AssetsGroupedDataTable: React.FC<Props> = ({
   groups = [],
+  phaseComponents,
   sortKey,
   sortDir,
   onSortChange,
@@ -617,10 +728,9 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
       // fixed columns
       if (groupColId === "thumbnail" || groupColId === "group_1_name") return false;
       if (groupColId === "relation") return hiddenColumns.has("relation");
-      if (groupColId === "component") return hiddenColumns.has("component");
 
       // phase columns
-      const m = groupColId.match(/^(mdl|rig|bld|dsn|ldv)_(work|appr|submitted|take)$/i);
+      const m = groupColId.match(/^(mdl|rig|bld|dsn|ldv)_(work|appr|take)$/i);
       if (!m) return hiddenColumns.has(groupColId);
 
       const phase = m[1].toLowerCase();
@@ -634,9 +744,15 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
     [hiddenColumns],
   );
 
+  // Build columns once (you can add phaseComponents as needed)
+  const COLUMNS = useMemo(
+    () => buildColumns(phaseComponents), 
+    [phaseComponents]
+  );
+  
   const visibleColumns = useMemo(() => {
     return COLUMNS.filter((c) => !isGroupedColHidden(c.id));
-  }, [isGroupedColHidden]);
+  }, [COLUMNS, isGroupedColHidden]);
 
   const phaseMeta = useMemo(() => getPhaseMetadata(visibleColumns), [visibleColumns]);
 
@@ -709,9 +825,10 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
                       lineHeight: 1,
                       textAlign: "center", 
                     }}>
-                    {["mdlRend","bldAnm","bldRend","ldvMdl"].includes(col.id) ? (
+
+                    {col.headerMode === "label" ? (
                       <>
-                        {col.label.split(" ")[0]}
+                        {col.label.replace(" Submitted", "")}
                         <br />
                         Submitted
                       </>
@@ -724,6 +841,7 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
                     ) : (
                       col.label
                     )}
+
                     </Typography>
 
                     {renderSortIndicator(col.id)}
@@ -739,6 +857,28 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
               const isCollapsed = !!collapsed[groupName];
               const visibleCount = (group.items || []).length;
               const totalCount = (group as any).totalCount || visibleCount;
+
+              const sortedItems = [...(group.items || [])];
+              if (sortKey && sortDir !== "none") {
+                sortedItems.sort((a: any, b: any) => {
+                  const aVal = getSortValue(a, sortKey, latestComponents);
+                  const bVal = getSortValue(b, sortKey, latestComponents);
+
+                  const aEmpty = aVal === null || aVal === undefined || aVal === 0 || aVal === "";
+                  const bEmpty = bVal === null || bVal === undefined || bVal === 0 || bVal === "";
+
+                  // push empty values to bottom
+                  if (aEmpty && bEmpty) return 0;
+                  if (aEmpty) return 1;
+                  if (bEmpty) return -1;
+
+                  if (aVal === bVal) return 0;
+
+                  return sortDir === "asc"
+                    ? aVal > bVal ? 1 : -1
+                    : aVal < bVal ? 1 : -1;
+                });
+              }
 
               return (
                 <React.Fragment key={groupName}>
@@ -803,8 +943,9 @@ const AssetsGroupedDataTable: React.FC<Props> = ({
                   </TableRow>
 
                   {/* Data rows */}
+                  {/* Data rows */}
                   {!isCollapsed &&
-                    (group.items || []).map((asset: any, idx: number) => (
+                    sortedItems.map((asset: any, idx: number) => (
                       <TableRow key={groupName + "-" + idx} hover>
                         {visibleColumns.map((col) => (
                           <TableCell
