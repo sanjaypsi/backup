@@ -1,0 +1,1002 @@
+import React from "react";
+import {
+    Toolbar,
+    Typography,
+    IconButton,
+    Box,
+    List,
+    ListItem,
+    ListItemText,
+    Divider,
+    Collapse,
+    Checkbox,
+    Button,
+    Drawer,
+} from "@material-ui/core";
+import { styled } from "@material-ui/core/styles";
+import ViewListIcon from "@material-ui/icons/ViewList";
+import ViewModuleIcon from "@material-ui/icons/ViewModule";
+import FilterListIcon from "@material-ui/icons/FilterList";
+import ExpandLessIcon from "@material-ui/icons/ExpandLess";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import ViewColumnIcon from "@material-ui/icons/ViewColumn";
+import RestoreIcon from "@material-ui/icons/Restore";
+
+/* ------------------------------
+   Styled Components
+-------------------------------- */
+
+const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: theme.spacing(1, 2),
+  minHeight: 34,
+}));
+
+const LeftSection = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+});
+
+const RightSection = styled("div")({
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+});
+
+/* Toggle */
+const ToggleContainer = styled(Box)({
+  display: "flex",
+  borderRadius: 4,
+});
+
+/* Search */
+const SearchContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  backgroundColor: theme.palette.background.default,
+  borderRadius: 6,
+  padding: "4px 12px",
+  border: `1px solid ${theme.palette.divider}`,
+  height: 30,
+  width: 200,
+}));
+
+const StyledInput = styled("input")({
+  color: "inherit",
+  backgroundColor: "transparent",
+  border: "none",
+  outline: "none",
+  width: 200,
+  fontSize: 14,
+  "&::placeholder": {
+    color: "#999",
+    opacity: 1,
+  },
+});
+
+/* Control Buttons */
+const ControlButton = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  padding: theme.spacing(0.5, 1),
+  borderRadius: 4,
+  cursor: "pointer",
+  height: 36,
+  border: `1px solid transparent`,
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: theme.palette.divider,
+  },
+}));
+
+/* Reset Button */
+const ResetButton = styled(Button)(({ theme }) => ({
+  height: 36,
+  marginRight:'100px',
+  padding: theme.spacing(0.5, 1.5),
+  color: theme.palette.text.secondary,
+  borderColor: theme.palette.divider,
+  "&:hover": {
+    backgroundColor: theme.palette.action.hover,
+    borderColor: theme.palette.text.secondary,
+  },
+}));
+
+/* ------------------------------
+   Types
+-------------------------------- */
+
+type Filters = {
+  shotGroups: string[];
+  approvalStatus: string[];
+  workStatus: string[];
+};
+
+export type ViewMode = "list" | "group";
+
+type ColumnItem = {
+  id: string;
+  label: string;
+  group: string;
+};
+
+export type ColumnState = {
+  [key: string]: boolean;
+};
+
+type Props = {
+  viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  filters: Filters;
+  onFilterChange: (newFilters: Filters) => void;
+  columnsState: ColumnState;
+  onColumnsChange: (newColumns: ColumnState) => void;
+  onReset?: () => void;
+};
+
+/* ------------------------------
+   Filter Menu (Drawer Version)
+-------------------------------- */
+
+const FilterContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  backgroundColor: theme.palette.background.paper,
+}));
+
+const FilterHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1.5, 2),
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  flexShrink: 0,
+  backgroundColor: 'transparent',
+}));
+
+const FilterScrollArea = styled(Box)(({ theme }) => ({
+  flex: 1,
+  overflowY: 'auto',
+  minHeight: 0,
+  padding: theme.spacing(1, 0),
+  backgroundColor: 'transparent',
+  
+  '&::-webkit-scrollbar': {
+    width: 6,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: '#f1f1f1',
+    borderRadius: 3,
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: '#999',
+    borderRadius: 3,
+    '&:hover': {
+      background: '#666',
+    },
+  },
+}));
+
+const FilterFooter = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1.5, 2),
+  borderTop: `1px solid ${theme.palette.divider}`,
+  backgroundColor: 'transparent',
+  flexShrink: 0,
+  display: 'flex',
+  justifyContent: 'flex-end',
+  alignItems: 'center',
+}));
+
+const FilterSection = styled(Box)({
+  width: '100%',
+});
+
+const FilterSectionHeader = styled(ListItem)(({ theme }) => ({
+  backgroundColor: theme.palette.action.hover,
+  '&:hover': {
+    backgroundColor: theme.palette.action.selected,
+  },
+}));
+
+const ParentItem = styled(ListItem)(({ theme }) => ({
+  paddingLeft: 16,
+  paddingTop: 4,
+  paddingBottom: 4,
+  backgroundColor: theme.palette.background.paper,
+  borderLeft: `3px solid ${theme.palette.primary.main}`,
+  marginBottom: 2,
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
+const PhaseDivider = styled(Divider)(({ theme }) => ({
+  margin: theme.spacing(1, 0),
+  backgroundColor: theme.palette.divider,
+}));
+
+// Define hierarchical filter options with phases
+interface FilterOption {
+  id: string;
+  label: string;
+  phase?: string;
+  children?: FilterOption[];
+}
+
+const filterOptions = {
+  shotGroups: [
+    { id: "buildings", label: "Buildings", phase: "Asset" },
+    { id: "vehicles", label: "Vehicles", phase: "Asset" },
+    { id: "characters", label: "Characters", phase: "Asset" },
+    { id: "environment", label: "Environment", phase: "Asset" },
+  ],
+  approvalStatus: [
+    { 
+      id: "check", 
+      label: "Check",
+      phase: "Review",
+      children: [
+        { id: "client_review", label: "Client Review", phase: "Review" },
+        { id: "dir_review", label: "Dir Review", phase: "Review" },
+        { id: "epd_review", label: "EPD Review", phase: "Review" },
+      ]
+    },
+    { 
+      id: "on_hold", 
+      label: "On Hold",
+      phase: "Hold",
+      children: [
+        { id: "client_on_hold", label: "Client On Hold", phase: "Hold" },
+        { id: "dir_on_hold", label: "Dir On Hold", phase: "Hold" },
+        { id: "epd_on_hold", label: "EPD On Hold", phase: "Hold" },
+      ]
+    },
+    { 
+      id: "retake", 
+      label: "Retake",
+      phase: "Retake",
+      children: [
+        { id: "exec_retake", label: "Exec Retake", phase: "Retake" },
+        { id: "client_retake", label: "Client Retake", phase: "Retake" },
+        { id: "dir_retake", label: "Dir Retake", phase: "Retake" },
+        { id: "epd_retake", label: "EPD Retake", phase: "Retake" },
+      ]
+    },
+    { 
+      id: "approved", 
+      label: "Approved",
+      phase: "Approved",
+      children: [
+        { id: "client_approved", label: "Client Approved", phase: "Approved" },
+        { id: "dir_approved", label: "Dir Approved", phase: "Approved" },
+        { id: "epd_approved", label: "EPD Approved", phase: "Approved" },
+      ]
+    },
+    { id: "other", label: "Other", phase: "Other" },
+    { id: "omit", label: "Omit", phase: "Other" },
+  ],
+  workStatus: [
+    { id: "check", label: "Check", phase: "Review" },
+    { id: "cgsv_on_hold", label: "CGSV On Hold", phase: "Hold" },
+    { id: "sv_on_hold", label: "SV On Hold", phase: "Hold" },
+    { id: "lead_on_hold", label: "Lead On Hold", phase: "Hold" },
+    { id: "cgsv_retake", label: "CGSV Retake", phase: "Retake" },
+    { id: "sv_retake", label: "SV Retake", phase: "Retake" },
+    { id: "lead_retake", label: "Lead Retake", phase: "Retake" },
+    { id: "cgsv_approved", label: "CGSV Approved", phase: "Approved" },
+    { id: "sv_approved", label: "SV Approved", phase: "Approved" },
+    { id: "lead_approved", label: "Lead Approved", phase: "Approved" },
+    { id: "sv_other", label: "SV Other", phase: "Other" },
+    { id: "lead_other", label: "Lead Other", phase: "Other" },
+  ],
+};
+
+const FilterMenu: React.FC<{
+  filters: Filters;
+  onChange: (newFilters: Filters) => void;
+}> = ({ filters, onChange }) => {
+  const [open, setOpen] = React.useState(false);
+  const [openSections, setOpenSections] = React.useState<string[]>([]);
+  const [expandedParents, setExpandedParents] = React.useState<string[]>(['check', 'on_hold', 'retake', 'approved']);
+
+  const handleFilterChange = (section: string, optionId: string) => {
+    const currentValues = filters[section as keyof Filters] as string[] || [];
+    const newValues = currentValues.includes(optionId)
+      ? currentValues.filter(v => v !== optionId)
+      : [...currentValues, optionId];
+    
+    onChange({
+      ...filters,
+      [section]: newValues,
+    });
+  };
+
+  const handleParentChange = (section: string, parentId: string, children: FilterOption[]) => {
+    const currentValues = filters[section as keyof Filters] as string[] || [];
+    const childIds = children.map(child => child.id);
+    
+    const allChildrenSelected = childIds.every(id => currentValues.includes(id));
+    
+    let newValues: string[];
+    if (allChildrenSelected) {
+      newValues = currentValues.filter(v => !childIds.includes(v));
+    } else {
+      newValues = [...currentValues, ...childIds.filter(id => !currentValues.includes(id))];
+    }
+    
+    onChange({
+      ...filters,
+      [section]: newValues,
+    });
+  };
+
+  const handleClearAll = () => {
+    onChange({
+      shotGroups: [],
+      approvalStatus: [],
+      workStatus: [],
+    });
+  };
+
+  const handleHideAll = () => {
+    onChange({
+      shotGroups: [],
+      approvalStatus: [],
+      workStatus: [],
+    });
+  };
+
+  const activeFilterCount = Object.values(filters).flat().length;
+
+  React.useEffect(() => {
+    if (open) {
+      setOpenSections(Object.keys(filterOptions));
+    }
+  }, [open]);
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
+
+  const toggleParent = (parentId: string) => {
+    setExpandedParents(prev =>
+      prev.includes(parentId)
+        ? prev.filter(id => id !== parentId)
+        : [...prev, parentId]
+    );
+  };
+
+  const getSectionDisplayName = (section: string) => {
+    if (section === 'shotGroups') return 'Shot Groups';
+    if (section === 'approvalStatus') return 'Approval Status';
+    if (section === 'workStatus') return 'Work Status';
+    return section.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  };
+
+  const isChildSelected = (section: string, childId: string) => {
+    return (filters[section as keyof Filters] as string[] || []).includes(childId);
+  };
+
+  const areAllChildrenSelected = (section: string, children: FilterOption[]) => {
+    const currentValues = filters[section as keyof Filters] as string[] || [];
+    return children.every(child => currentValues.includes(child.id));
+  };
+
+  const isSomeChildrenSelected = (section: string, children: FilterOption[]) => {
+    const currentValues = filters[section as keyof Filters] as string[] || [];
+    return children.some(child => currentValues.includes(child.id)) && !areAllChildrenSelected(section, children);
+  };
+
+  // Group options by phase for approvalStatus section
+  const getOptionsByPhase = (options: FilterOption[]) => {
+    const phases: { [key: string]: FilterOption[] } = {};
+    
+    options.forEach(option => {
+      const phase = option.phase || 'Other';
+      if (!phases[phase]) {
+        phases[phase] = [];
+      }
+      phases[phase].push(option);
+    });
+    
+    return phases;
+  };
+
+  // Render options with phase dividers
+  const renderOptionsWithPhaseDividers = (section: string, options: FilterOption[]) => {
+    if (section !== 'approvalStatus' && section !== 'workStatus') {
+      return options.map(option => renderFilterItem(section, option));
+    }
+
+    const optionsByPhase = getOptionsByPhase(options);
+    const phaseOrder = ['Review', 'Hold', 'Retake', 'Approved', 'Other'];
+    
+    return phaseOrder.map((phase, index) => {
+      const phaseOptions = optionsByPhase[phase] || [];
+      if (phaseOptions.length === 0) return null;
+      
+      return (
+        <React.Fragment key={phase}>
+          <Box>
+            {phaseOptions.map(option => renderFilterItem(section, option))}
+          </Box>
+        </React.Fragment>
+      );
+    });
+  };
+
+  // Render individual filter item (parent or regular)
+  const renderFilterItem = (section: string, option: FilterOption) => {
+    if (option.children) {
+      return (
+        <React.Fragment key={option.id}>
+          {option.children.map(child => (
+            <ListItem
+              key={child.id}
+              button
+              dense
+              onClick={() => handleFilterChange(section, child.id)}
+              style={{
+                paddingTop: 2,
+                paddingBottom: 2,
+                paddingLeft: 16,
+              }}
+            >
+              <Checkbox
+                edge="start"
+                checked={isChildSelected(section, child.id)}
+                size="small"
+                disableRipple
+                style={{ padding: 4 }}
+              />
+              <ListItemText
+                primary={child.label}
+                primaryTypographyProps={{ variant: 'body2' }}
+              />
+            </ListItem>
+          ))}
+        </React.Fragment>
+      );
+    } else {
+      return (
+        <ListItem 
+          key={option.id}
+          button 
+          dense
+          onClick={() => handleFilterChange(section, option.id)}
+          style={{ 
+            paddingTop: 2, 
+            paddingBottom: 2,
+            paddingLeft: 16 
+          }}
+        >
+          <Checkbox
+            edge="start"
+            checked={isChildSelected(section, option.id)}
+            size="small"
+            disableRipple
+            style={{ padding: 4, color: '#dbe1e7' }}
+          />
+          <ListItemText 
+            primary={option.label} 
+            primaryTypographyProps={{ variant: 'body2', style: { color: '#dbe1e7' } }}
+          />
+        </ListItem>
+      );
+    }
+  };
+
+  return (
+    <>
+      <ControlButton onClick={() => setOpen(true)}>
+        <FilterListIcon fontSize="small" />
+        <Typography variant="body2">Filter</Typography>
+        {activeFilterCount > 0 && (
+          <Box
+            component="span"
+            style={{
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              borderRadius: "50%",
+              width: 18,
+              height: 18,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              marginLeft: 4,
+            }}
+          >
+            {activeFilterCount}
+          </Box>
+        )}
+      </ControlButton>
+
+      <Drawer 
+        anchor="right" 
+        open={open} 
+        onClose={() => setOpen(false)}
+        PaperProps={{ 
+          style: { 
+            width: 320,
+            maxHeight: '80vh',
+            marginTop: '150px',
+            marginRight: '200px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            backgroundColor: 'transparent',
+          } 
+        }}
+      >
+        <FilterContainer>
+          <FilterHeader>
+            <Typography variant="h6">Filters</Typography>
+            <Button 
+              size="small" 
+              onClick={handleClearAll}
+              disabled={activeFilterCount === 0}
+              style={{ minWidth: 'auto' }}
+            >
+              CLEAR ALL
+            </Button>
+          </FilterHeader>
+
+          <FilterScrollArea>
+            {Object.entries(filterOptions).map(([section, options], index) => (
+              <FilterSection key={section}>
+                {index > 0 && <Divider />}
+
+                <FilterSectionHeader
+                  button
+                  onClick={() => toggleSection(section)}
+                >
+                  <ListItemText 
+                    primary={getSectionDisplayName(section)}
+                    secondary={`${(filters[section as keyof Filters] 
+                      && filters[section as keyof Filters]!.length || 0)}/${getTotalOptionsCount(options)}`}
+                    secondaryTypographyProps={{ variant: 'caption' }}
+                  />
+                  <Box display="flex" alignItems="center" style={{ gap: 8 }}>
+                    {openSections.includes(section) ? (
+                      <ExpandLessIcon fontSize="small" />
+                    ) : (
+                      <ExpandMoreIcon fontSize="small" />
+                    )}
+                  </Box>
+                </FilterSectionHeader>
+
+                <Collapse in={openSections.includes(section)} timeout="auto">
+                  <Box style={{ 
+                    backgroundColor: '#070707d7' }}>
+                    {section === 'approvalStatus' || section === 'workStatus'
+                      ? renderOptionsWithPhaseDividers(section, options)
+                      : options.map(option => renderFilterItem(section, option))
+                    }
+                  </Box>
+                </Collapse>
+              </FilterSection>
+            ))}
+          </FilterScrollArea>
+
+          <FilterFooter>
+            <Button 
+              size="small" 
+              onClick={handleHideAll}
+              variant="outlined"
+              style={{ 
+                borderColor: '#ddd', 
+                color: '#666' 
+              }}
+            >
+              HIDE ALL
+            </Button>
+
+            <Button 
+              size="small" 
+              onClick={() => setOpen(false)}
+              variant="contained"
+              style={{ 
+                backgroundColor: '#1976d2', 
+                color: '#fff',
+                marginLeft: 8
+              }}
+            >
+              SAVE
+            </Button>
+          </FilterFooter>
+        </FilterContainer>
+      </Drawer>
+    </>
+  );
+};
+
+// Helper function to count total options including children
+const getTotalOptionsCount = (options: FilterOption[]): number => {
+  return options.reduce((count, option) => {
+    if (option.children) {
+      return count + 1 + option.children.length;
+    }
+    return count + 1;
+  }, 0);
+};
+
+/* ------------------------------
+   Column Selector
+-------------------------------- */
+
+const ALL_COLUMNS: ColumnItem[] = [
+
+  { id: "lay_work_status", label: "LAY WORK", group: "Layout" },
+  { id: "lay_approval_status", label: "LAY APPR", group: "Layout" },
+  { id: "lay_submitted_at", label: "LAY Submitted At", group: "Layout" },
+
+  { id: "anm_work_status", label: "ANM WORK", group: "Animation" },
+  { id: "anm_approval_status", label: "ANM APPR", group: "Animation" },
+  { id: "anm_submitted_at", label: "ANM Submitted At", group: "Animation" },
+
+  { id: "gnz_work_status", label: "GNZ WORK", group: "Rigging" },
+  { id: "gnz_approval_status", label: "GNZ APPR", group: "Rigging" },
+  { id: "gnz_submitted_at", label: "GNZ Submitted At", group: "Rigging" },
+
+  { id: "mat_work_status", label: "MAT WORK", group: "Materials" },
+  { id: "mat_approval_status", label: "MAT APPR", group: "Materials" },
+  { id: "mat_submitted_at", label: "MAT Submitted At", group: "Materials" },
+
+  { id: "fx_work_status", label: "FX WORK", group: "Effects" },
+  { id: "fx_approval_status", label: "FX APPR", group: "Effects" },
+  { id: "fx_submitted_at", label: "FX Submitted At", group: "Effects" },
+
+  { id: "cmp_work_status", label: "CMP WORK", group: "Composite" },
+  { id: "cmp_approval_status", label: "CMP APPR", group: "Composite" },
+  { id: "cmp_submitted_at", label: "CMP Submitted At", group: "Composite" },
+
+  { id: "relation", label: "Relation", group: "Other" },
+];
+
+/* -----------------------------
+Default Column State
+----------------------------- */
+
+export const DEFAULT_COLUMN_STATE: ColumnState = ALL_COLUMNS.reduce((acc, col) => {
+  acc[col.id] = true;
+  return acc;
+}, {} as ColumnState);
+
+/* -----------------------------
+Styles for Column Selector Drawer
+----------------------------- */
+
+const DrawerContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  backgroundColor: theme.palette.background.paper,
+}));
+
+const ScrollArea = styled(Box)(({ theme }) => ({
+  flex: 1,
+  overflowY: 'auto',
+  minHeight: 0,
+  padding: theme.spacing(1, 0),
+  backgroundColor: 'transparent',
+  
+  '&::-webkit-scrollbar': {
+    width: 6,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: '#f1f1f1',
+    borderRadius: 3,
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: '#999',
+    borderRadius: 3,
+    '&:hover': {
+      background: '#666',
+    },
+  },
+}));
+
+const Footer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1.5, 2),
+  borderTop: `1px solid ${theme.palette.divider}`,
+  backgroundColor: 'transparent',
+  flexShrink: 0,
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}));
+
+/* -----------------------------
+Column Selector Component
+----------------------------- */
+
+const ColumnSelector: React.FC<{
+  columnState: ColumnState;
+  onChange: (state: ColumnState) => void;
+}> = ({ columnState, onChange }) => {
+  const [open, setOpen] = React.useState(false);
+  const [openGroups, setOpenGroups] = React.useState<string[]>([]);
+
+  const grouped = React.useMemo(() => {
+    return ALL_COLUMNS.reduce((acc, col) => {
+      if (!acc[col.group]) acc[col.group] = [];
+      acc[col.group].push(col);
+      return acc;
+    }, {} as Record<string, ColumnItem[]>);
+  }, []);
+
+  const handleReset = () => {
+    onChange(DEFAULT_COLUMN_STATE);
+  };
+
+
+
+  const activeColumnCount = Object.values(columnState).filter(Boolean).length;
+  const allHidden = Object.values(columnState).every(value => value === false);
+
+  const handleHideAll = () => {
+    if (activeColumnCount === 0) {
+      // If all are hidden, show all
+      onChange(DEFAULT_COLUMN_STATE);
+    } else {
+      // If not all are hidden, hide all
+      const newState = { ...columnState };
+      ALL_COLUMNS.forEach(col => {
+        newState[col.id] = false;
+      });
+      onChange(newState);
+    }
+  };
+
+  React.useEffect(() => {
+    if (open) {
+      setOpenGroups(Object.keys(grouped));
+    }
+  }, [open, grouped]);
+
+  return (
+    <>
+      <ControlButton onClick={() => setOpen(true)}>
+        <ViewColumnIcon fontSize="small" />
+        <Typography 
+          variant="body2"
+          style={{color: "#1976d2", fontWeight: 600}}
+        >
+          Columns ({activeColumnCount}/{ALL_COLUMNS.length})
+        </Typography>
+      </ControlButton>
+
+      <Drawer 
+        anchor="right" 
+        open={open} 
+        onClose={() => setOpen(false)}
+        PaperProps={{ 
+          style: { 
+            width: 320,
+            maxHeight: '80vh',
+            marginTop: '150px',
+            marginRight: '150px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            backgroundColor: '#444242af',
+          } 
+        }}
+      >
+        <DrawerContainer>
+          <ScrollArea>
+            {Object.entries(grouped).map(([group, cols], index) => (
+              <React.Fragment key={group}>
+                {index !== 0 && <Divider />}
+                <ListItem
+                  button
+                  onClick={() =>
+                    setOpenGroups(prev =>
+                      prev.includes(group)
+                        ? prev.filter(g => g !== group)
+                        : [...prev, group]
+                    )
+                  }
+                  style={{ backgroundColor: '#444242af' }}
+                >
+                  <ListItemText 
+                    primary={group.substring(0, 3).toUpperCase()}
+                    // secondary={`${cols.filter(col => columnState[col.id]).length}/${cols.length}`}
+                    // secondaryTypographyProps={{ variant: 'caption' }}
+                  />
+                  {openGroups.includes(group) ? (
+                    <ExpandLessIcon fontSize="small" />
+                  ) : (
+                    <ExpandMoreIcon fontSize="small" />
+                  )}
+                </ListItem>
+
+                <Collapse in={openGroups.includes(group)} timeout="auto">
+                  <Box>
+                    {cols.map(col => (
+                      <ListItem
+                        key={col.id}
+                        button
+                        dense
+                        style={{ 
+                          paddingTop: 2, 
+                          paddingBottom: 2,
+                          paddingLeft: 32,
+                          backgroundColor: '#070707d7'
+                        }}
+                        onClick={() =>
+                          onChange({
+                            ...columnState,
+                            [col.id]: !columnState[col.id],
+                          })
+                        }
+                      >
+                        <Checkbox
+                          checked={columnState[col.id] || false}
+                          size="small"
+                          edge="start"
+                          disableRipple
+                          style={{ padding: 4, color: '#dbe1e7' }}
+                        />
+                        <ListItemText 
+                          primary={col.label} 
+                          primaryTypographyProps={{ variant: 'body2', style: { color: '#dbe1e7' } }}
+                        />
+                      </ListItem>
+                    ))}
+                  </Box>
+                </Collapse>
+              </React.Fragment>
+            ))}
+          </ScrollArea>
+
+          <Footer>
+            <Button 
+              size="small" 
+              onClick={handleHideAll}
+              variant="outlined"
+              // disabled={activeColumnCount === 0}
+              style={{ borderColor: '#ddd', color: '#666' }}
+            >
+              {allHidden ? "SHOW ALL" : "HIDE ALL"}
+            </Button>
+            <Button 
+              size="small" 
+              onClick={() => setOpen(false)}
+              variant="contained"
+              style={{ 
+                backgroundColor: '#1976d2', 
+                color: '#fff',
+                marginLeft: 8
+              }}
+            >
+              SAVE
+            </Button>
+          </Footer>
+        </DrawerContainer>
+      </Drawer>
+    </>
+  );
+};
+
+/* ------------------------------
+   View Toggle
+-------------------------------- */
+
+const ViewToggle: React.FC<{
+  viewMode: ViewMode;
+  onChange: (mode: ViewMode) => void;
+}> = ({ viewMode, onChange }) => (
+  <ToggleContainer>
+    <IconButton
+      onClick={() => onChange("list")}
+      size="small"
+      style={{ padding: 8 }}
+      title="List View"
+    >
+      <ViewListIcon color={viewMode === "list" ? "primary" : "action"} />
+    </IconButton>
+    <IconButton
+      onClick={() => onChange("group")}
+      size="small"
+      style={{ padding: 8 }}
+      title="Group View"
+    >
+      <ViewModuleIcon color={viewMode === "group" ? "primary" : "action"} />
+    </IconButton>
+  </ToggleContainer>
+);
+
+/* ------------------------------
+   Main Toolbar
+-------------------------------- */
+
+const ShotDataTableToolbar: React.FC<Props> = ({
+  viewMode,
+  onViewChange,
+  searchValue,
+  onSearchChange,
+  filters,
+  onFilterChange,
+  columnsState,
+  onColumnsChange,
+  onReset,
+}) => {
+
+  const DEFAULT_FILTERS: Filters = {
+    shotGroups: [],
+    approvalStatus: [],
+    workStatus: [],
+  };
+
+  const handleReset = () => {
+    onSearchChange("");
+    onFilterChange(DEFAULT_FILTERS);
+    onColumnsChange(DEFAULT_COLUMN_STATE);
+    
+    if (onReset) {
+      onReset();
+    }
+  };
+
+  const hasChanges = 
+    searchValue !== "" ||
+    Object.values(filters).flat().length > 0 ||
+    Object.values(columnsState).filter(Boolean).length !== ALL_COLUMNS.length;
+
+  return (
+    <StyledToolbar>
+      <LeftSection>
+        <ViewToggle viewMode={viewMode} onChange={onViewChange} />
+      </LeftSection>
+
+      <RightSection>
+        <SearchContainer>
+          <StyledInput
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search shots..."
+          />
+        </SearchContainer>
+
+        <FilterMenu filters={filters} onChange={onFilterChange} />
+
+        <ColumnSelector
+          columnState={columnsState}
+          onChange={onColumnsChange}
+        />
+
+        {hasChanges && (
+          <ResetButton
+            variant="outlined"
+            size="small"
+            startIcon={<RestoreIcon />}
+            onClick={handleReset}
+          >
+            Reset
+          </ResetButton>
+        )}
+      </RightSection>
+    </StyledToolbar>
+  );
+};
+
+export default ShotDataTableToolbar;
