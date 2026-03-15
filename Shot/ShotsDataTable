@@ -1,0 +1,613 @@
+import React, { useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tooltip,
+} from "@material-ui/core";
+import {
+  ShotRowProps,
+  ShotsDataTableProps,
+  Colors,
+  Column,
+  RecordTableHeadProps,
+  Shot, // <-- Add Shot type import
+} from "./types";
+import { useFetchShotReviewInfos, useFetchShotThumbnails } from './hooks';
+
+const SHOT_PHASES: { [key: string]: Colors } = {
+  lay: {
+    lineColor: '#3295FD',
+    backgroundColor: '#004288',
+  },
+  anm: {
+    lineColor: '#FD5E63',
+    backgroundColor: '#5c0003',
+  },
+  gnz: {
+    lineColor: '#C061FD',
+    backgroundColor: '#340055',
+  },
+  mat: {
+    lineColor: '#FE7DB3',
+    backgroundColor: '#5f0028',
+  },
+  fx: {
+    lineColor: '#FDCD44',
+    backgroundColor: '#CCA537',
+  },
+  cmp: {
+    lineColor: '#D5F762',
+    backgroundColor: '#4a6101',
+  },
+};
+
+type Status = Readonly<{
+  displayName: string,
+  color: string,
+}>;
+
+const APPROVAL_STATUS: { [key: string]: Status } = {
+  check: {
+    displayName: 'Check',
+    color: '#ca25ed',
+  },
+  clientReview: {
+    displayName: 'Client Review',
+    color: '#005fbd',
+  },
+  dirReview: {
+    displayName: 'Dir Review',
+    color: '#007fff',
+  },
+  epdReview: {
+    displayName: 'EPD Review',
+    color: '#4fa7ff',
+  },
+  clientOnHold: {
+    displayName: 'Client On Hold',
+    color: '#d69b00',
+  },
+  dirOnHold: {
+    displayName: 'Dir On Hold',
+    color: '#ffcc00',
+  },
+  epdOnHold: {
+    displayName: 'EPD On Hold',
+    color: '#ffdd55',
+  },
+  execRetake: {
+    displayName: 'Exec Retake',
+    color: '#a60000',
+  },
+  clientRetake: {
+    displayName: 'Client Retake',
+    color: '#c60000',
+  },
+  dirRetake: {
+    displayName: 'Dir Retake',
+    color: '#ff0000',
+  },
+  epdRetake: {
+    displayName: 'EPD Retake',
+    color: '#ff4f4f',
+  },
+  clientApproved: {
+    displayName: 'Client Approved',
+    color: '#1d7c39',
+  },
+  dirApproved: {
+    displayName: 'Dir Approved',
+    color: '#27ab4f',
+  },
+  epdApproved: {
+    displayName: 'EPD Approved',
+    color: '#5cda82',
+  },
+  other: {
+    displayName: 'Other',
+    color: '#9a9a9a',
+  },
+  omit: {
+    displayName: 'Omit',
+    color: '#646464',
+  },
+};
+
+const WORK_STATUS: { [key: string]: Status } = {
+  check: {
+    displayName: 'Check',
+    color: '#e287f5',
+  },
+  cgsvOnHold: {
+    displayName: 'CGSV On Hold',
+    color: '#ffdd55',
+  },
+  svOnHold: {
+    displayName: 'SV On Hold',
+    color: '#ffe373',
+  },
+  leadOnHold: {
+    displayName: 'Lead On Hold',
+    color: '#fff04f',
+  },
+  cgsvRetake: {
+    displayName: 'CGSV Retake',
+    color: '#ff4f4f',
+  },
+  svRetake: {
+    displayName: 'SV Retake',
+    color: '#ff8080',
+  },
+  leadRetake: {
+    displayName: 'Lead Retake',
+    color: '#ffbbbb',
+  },
+  cgsvApproved: {
+    displayName: 'CGSV Approved',
+    color: '#5cda82',
+  },
+  svApproved: {
+    displayName: 'SV Approved',
+    color: '#83e29f',
+  },
+  leadApproved: {
+    displayName: 'Lead Approved',
+    color: '#b9eec9',
+  },
+  svOther: {
+    displayName: 'SV Other',
+    color: '#9a9a9a',
+  },
+  leadOther: {
+    displayName: 'Lead Other',
+    color: '#dbdbdb',
+  },
+};
+
+const columns: Column[] = [
+  {
+    id: 'thumbnail',
+    label: 'Thumbnail',
+    fixed: true,
+  },
+  {
+    id: 'group_1_name',
+    label: 'Name 1',
+    fixed: true,
+  },
+  {
+    id: 'group_2_name',
+    label: 'Name 2',
+    fixed: true,
+  },
+  {
+    id: 'group_3_name',
+    label: 'Name 3',
+    fixed: true,
+  },
+  {
+    id: 'lay_work_status',
+    label: 'LAY WORK',
+    colors: SHOT_PHASES['lay'],
+  },
+  {
+    id: 'lay_approval_status',
+    label: 'LAY APPR',
+    colors: SHOT_PHASES['lay'],
+  },
+  {
+    id: 'lay_submitted_at',
+    label: 'LAY SUBMITTED',
+    colors: SHOT_PHASES['lay'],
+  },
+  {
+    id: 'anm_work_status',
+    label: 'ANM WORK',
+    colors: SHOT_PHASES['anm'],
+  },
+  {
+    id: 'anm_approval_status',
+    label: 'ANM APPR',
+    colors: SHOT_PHASES['anm'],
+  },
+  {
+    id: 'anm_submitted_at',
+    label: 'ANM SUBMITTED',
+    colors: SHOT_PHASES['anm'],
+  },
+  {
+    id: 'gnz_work_status',
+    label: 'GNZ WORK',
+    colors: SHOT_PHASES['gnz'],
+  },
+  {
+    id: 'gnz_approval_status',
+    label: 'GNZ APPR',
+    colors: SHOT_PHASES['gnz'],
+  },
+  {
+    id: 'gnz_submitted_at',
+    label: 'GNZ SUBMITTED',
+    colors: SHOT_PHASES['gnz'],
+  },
+  {
+    id: 'mat_work_status',
+    label: 'MAT WORK',
+    colors: SHOT_PHASES['mat'],
+  },
+  {
+    id: 'mat_approval_status',
+    label: 'MAT APPR',
+    colors: SHOT_PHASES['mat'],
+  },
+  {
+    id: 'mat_submitted_at',
+    label: 'MAT SUBMITTED',
+    colors: SHOT_PHASES['mat'],
+  },
+  {
+    id: 'fx_work_status',
+    label: 'FX WORK',
+    colors: SHOT_PHASES['fx'],
+  },
+  {
+    id: 'fx_approval_status',
+    label: 'FX APPR',
+    colors: SHOT_PHASES['fx'],
+  },
+  {
+    id: 'fx_submitted_at',
+    label: 'FX SUBMITTED',
+    colors: SHOT_PHASES['fx'],
+  },
+  {
+    id: 'cmp_work_status',
+    label: 'CMP WORK',
+    colors: SHOT_PHASES['cmp'],
+  },
+  {
+    id: 'cmp_approval_status',
+    label: 'CMP APPR',
+    colors: SHOT_PHASES['cmp'],
+  },
+  {
+    id: 'cmp_submitted_at',
+    label: 'CMP SUBMITTED',
+    colors: SHOT_PHASES['cmp'],
+  },
+  {
+    id: 'relation',
+    label: 'Relation',
+  },
+];
+
+type TooltipTableCellProps = {
+  tooltipText: string,
+  status: Status | undefined,
+  leftBorderStyle: string,
+  rightBorderStyle: string,
+  bottomBorderStyle: string,
+};
+
+const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = (
+  { tooltipText, status, leftBorderStyle, rightBorderStyle, bottomBorderStyle = 'none' }
+) => {
+  const [open, setOpen] = React.useState(false);
+  const isTooltipTextEmpty = tooltipText && tooltipText.trim().length > 0;
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+  };
+
+  const handleTooltipOpen = () => {
+    setOpen(true);
+  };
+
+  const statusText = (status != null) ? status['displayName'] : '-';
+
+  return (
+    <TableCell
+      style={{
+        color: (status != null) ? status['color'] : '',
+        fontStyle: (tooltipText === '') ? 'normal' : 'oblique',
+        borderLeft: leftBorderStyle,
+        borderRight: rightBorderStyle,
+        borderBottom: bottomBorderStyle,
+      }}
+      onClick={isTooltipTextEmpty ? handleTooltipOpen : undefined}
+    >
+      {isTooltipTextEmpty ? (
+        <Tooltip
+          title={
+            <div
+              style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+              {tooltipText}
+            </div>
+          }
+          onClose={handleTooltipClose}
+          open={open}
+          arrow
+        >
+          <span>{statusText}</span>
+        </Tooltip>
+      ) : (
+        <span>{statusText}</span>
+      )}
+    </TableCell >
+  );
+};
+
+const RecordTableHead: React.FC<RecordTableHeadProps> = ({
+  columns,
+  phaseComponents,
+  latestComponents,
+  columnsState,
+
+}) => {
+  return (
+    <TableHead>
+      <TableRow>
+        {columns.map((column) => {
+          const borderLineStyle = column.colors ? `solid 3px ${column.colors.lineColor}` : 'none';
+          const borderTopStyle = column.colors ? borderLineStyle : 'none';
+          const borderLeftStyle = (column.id.indexOf('work_status') !== -1) ? borderLineStyle : 'none';
+          const borderRightStyle = (column.id.indexOf('approval_status') !== -1) ? borderLineStyle : 'none';
+          
+          // For submitted_at columns that need component expansion
+          if (column.id.indexOf('_submitted_at') !== -1) {
+            const phase = column.id.replace('_submitted_at', '');
+            const components = phaseComponents[phase] || [];
+            
+            // If there are components, render one cell per component
+            if (components.length > 0) {
+              return components.map((component) => {
+                const id = component.toLowerCase() + '_submitted_at';
+                const label = `${component} SUBMITTED`;
+                return (
+                  <TableCell
+                    key={id}
+                    style={{
+                      backgroundColor: column.colors ? column.colors.backgroundColor : 'none',
+                      borderTop: borderTopStyle,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {label}
+                  </TableCell>
+                );
+              });
+            }
+          }
+          
+          // Regular columns (including submitted_at with no components)
+          return (
+            <TableCell
+              key={column.id}
+              style={{
+                backgroundColor: column.colors ? column.colors.backgroundColor : 'none',
+                borderTop: borderTopStyle,
+                borderLeft: borderLeftStyle,
+                borderRight: borderRightStyle,
+                whiteSpace: 'nowrap',
+                width: ['thumbnail', 'group_1_name', 'group_2_name', 'group_3_name'].includes(column.id) ? '120px' : 'auto',
+              }}
+            >
+              {column.label}
+            </TableCell>
+          );
+        })}
+      </TableRow>
+    </TableHead>
+  );
+};
+
+const ShotRow: React.FC<ShotRowProps> = ({
+  shot,
+  reviewInfos,
+  thumbnails,
+  phaseComponents,
+  latestComponents,
+  dateTimeFormat,
+  isLastRow,
+  columnsState,
+}) => {
+
+  const shotPath = shot.groups.join('/');
+
+  return (
+    <TableRow>
+      {/* Thumbnail */}
+      <TableCell>
+        {thumbnails[`${shotPath}-${shot.relation}`] ? (
+          <img
+            src={thumbnails[`${shotPath}-${shot.relation}`]}
+            alt={`${shotPath} thumbnail`}
+          />
+        ) : (
+            "No Thumbnail"
+        )}
+      </TableCell>
+
+      {/* Name Columns */}
+      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[0]}</TableCell>
+      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[1]}</TableCell>
+      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[2]}</TableCell>
+
+      {/* Phase Columns */}
+      {Object.entries(SHOT_PHASES).map(([phase, { lineColor }]) => {
+        const workColumn      = `${phase}_work_status`;
+        const approvalColumn  = `${phase}_approval_status`;
+        const submittedColumn = `${phase}_submitted_at`;
+
+        if (
+          !columnsState[workColumn] &&
+          !columnsState[approvalColumn] &&
+          !columnsState[submittedColumn]
+        ) {
+          return null;
+        }
+
+        const reviewInfoName =
+          `${shot.groups[0]}-${shot.groups[1]}-${shot.groups[2]}-${phase}`;
+
+        const info = reviewInfos[reviewInfoName];
+
+        const workStatus =
+          info && WORK_STATUS[info.work_status];
+
+        const approvalStatus =
+          info && APPROVAL_STATUS[info.approval_status];
+
+        const tooltipText =
+          info && info.review_comments
+            .filter(reviewComment => reviewComment.text !== '')
+            .map(reviewComment =>
+              `${reviewComment.language}:\n${reviewComment.text}`)
+            .join('\n') || '';
+
+        const borderLineStyle = `solid 3px ${lineColor}`;
+
+        const shotsKey =
+          `${shot.groups[0]}-${shot.groups[1]}-${shot.groups[2]}-${shot.relation}`;
+
+        const latestDocuments =
+          latestComponents[shotsKey] || [];
+
+        return (
+          <React.Fragment key={phase}>
+            {/* Work Status */}
+            {columnsState[workColumn] && (
+              <MultiLineTooltipTableCell
+                tooltipText={tooltipText}
+                status={workStatus}
+                leftBorderStyle={borderLineStyle}
+                rightBorderStyle={'none'}
+                bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
+              />
+            )}
+
+            {/* Approval Status */}
+            {columnsState[approvalColumn] && (
+              <MultiLineTooltipTableCell
+                tooltipText={tooltipText}
+                status={approvalStatus}
+                leftBorderStyle={'none'}
+                rightBorderStyle={borderLineStyle}
+                bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
+              />
+            )}
+
+            {/* Submitted Columns */}
+            {columnsState[submittedColumn] &&
+              (phase in phaseComponents
+                ? phaseComponents[phase]
+                : []
+              ).map(component => {
+
+                const latestDocument =
+                  latestDocuments.find(
+                    doc => doc.component === component
+                  );
+
+                return (
+                  <TableCell key={`${phase}-${component}`}>
+                    {latestDocument
+                      ? dateTimeFormat.format(
+                          new Date(
+                            latestDocument.latest_document.submitted_at_utc
+                          )
+                        )
+                      : '-'}
+                  </TableCell>
+                );
+              })}
+          </React.Fragment>
+        );
+      })}
+
+      {/* Relation */}
+      {columnsState["relation"] && (
+        <TableCell>{shot.relation}</TableCell>
+      )}
+
+    </TableRow>
+  );
+};
+
+const ShotsDataTable: React.FC<ShotsDataTableProps> = ({
+  project,
+  shots,
+  phaseComponents,
+  latestComponents,
+  tableFooter,
+  dateTimeFormat,
+  columnsState,
+}) => {
+  if (project == null) {
+    return null;
+  }
+  const { reviewInfos } = useFetchShotReviewInfos(project, shots);
+  const { thumbnails }  = useFetchShotThumbnails(project, shots);
+  const visibleColumns  = columns.filter(column => 
+    column.fixed || columnsState[column.id] !== false
+  );
+
+  // Debug logging
+  useEffect(() => {
+    if (shots.length > 0 && Object.keys(reviewInfos).length > 0) {
+      const allApprovalStatuses = new Set();
+      const allWorkStatuses = new Set();
+      
+      Object.values(reviewInfos).forEach(info => {
+        if (info && info.approval_status) {
+          allApprovalStatuses.add(info.approval_status);
+        }
+        if (info && info.work_status) {
+          allWorkStatuses.add(info.work_status);
+        }
+      });
+      
+      // console.log('📊 Available approval statuses:', Array.from(allApprovalStatuses));
+      // console.log('📊 Available work statuses:', Array.from(allWorkStatuses));
+    }
+  }, [shots, reviewInfos]);
+
+  return (
+    <Table 
+      stickyHeader
+      style={{
+        tableLayout: 'fixed',
+        width: 'auto',
+      }}
+    >
+      <RecordTableHead
+        key='shot-data-table-head'
+        columns={visibleColumns}
+        phaseComponents={phaseComponents}
+        latestComponents={latestComponents}
+        columnsState={columnsState}
+      />
+      <TableBody>
+        {shots.map((shot, index) => (
+          <ShotRow
+            key={`${shot.groups.join('/')}-${shot.relation}-${index}`}
+            shot={shot}
+            reviewInfos={reviewInfos}
+            thumbnails={thumbnails}
+            phaseComponents={phaseComponents}
+            latestComponents={latestComponents}
+            dateTimeFormat={dateTimeFormat}
+            isLastRow={(index === shots.length - 1)}
+            columnsState={columnsState}
+          />
+        ))}
+      </TableBody>
+      {tableFooter || null}
+    </Table>
+  );
+};
+
+export default ShotsDataTable;
