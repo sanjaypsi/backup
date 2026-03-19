@@ -1,0 +1,2043 @@
+{
+	"dir": "asc",
+	"hasNext": true,
+	"hasPrev": false,
+	"items": [
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "01",
+			"group_3": "001_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-09-10T01:36:58.406242Z",
+					"take": "0002"
+				},
+				"gnz": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-03-24T05:01:47.951763Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:42.736024Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:50:59.503281Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "02",
+			"group_3": "002_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-10-01T07:10:40.879207Z",
+					"take": "0002"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-03T07:54:49.253175Z",
+					"take": "0001"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-10-07T08:49:15.277893Z",
+					"take": "0007"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-02-13T02:13:02.156299Z",
+					"take": "0004"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-10-22T06:41:13.550438Z",
+					"take": "0004"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-09-04T01:23:09.192174Z",
+					"take": "0004"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T09:46:09.356292Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-06T06:46:31.941055Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:46.886685Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.251514Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "02",
+			"group_3": "003_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-11-26T07:47:40.87074Z",
+					"take": "0002"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-12T06:57:55.308891Z",
+					"take": "0001"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-10-15T06:41:31.686511Z",
+					"take": "0008"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-02-05T06:27:32.116978Z",
+					"take": "0002"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-11-08T07:01:52.836936Z",
+					"take": "0002"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-09-26T08:09:52.885546Z",
+					"take": "0005"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-05T02:21:46.302268Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-12-12T09:05:20.925243Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:46.928248Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.292935Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "004_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-09-24T00:19:00.743196Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-10-15T06:41:36.040373Z",
+					"take": "0004"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-10-22T07:01:04.475193Z",
+					"take": "0002"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-08-19T09:22:30.964742Z",
+					"take": "0002"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T09:49:30.844345Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-09T05:12:56.678904Z",
+					"take": "0002"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:46.974124Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.328785Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "005_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "dirOnHold",
+					"submitted_at_utc": "2024-11-07T10:53:42.402983Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-12T01:09:37.01251Z",
+					"take": "0002"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-09-08T07:36:34.098261Z",
+					"take": "0006"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-14T08:46:38.32203Z",
+					"take": "0003"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T09:53:23.795272Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-15T04:07:40.972018Z",
+					"take": "0003"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.025578Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.364542Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "006_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-12-16T08:01:55.800594Z",
+					"take": "0003"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-29T06:57:52.543082Z",
+					"take": "0003"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-20T07:19:51.231814Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T09:57:45.065009Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-20T07:23:58.446669Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.067078Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.601002Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "007_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-11-07T10:53:42.446002Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-29T06:57:54.521446Z",
+					"take": "0002"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-11-25T01:48:40.377778Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T09:59:36.792925Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-07T03:33:18.258912Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.323692Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:02.806947Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "008_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-12-06T05:10:11.151518Z",
+					"take": "0003"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-29T06:57:54.560343Z",
+					"take": "0002"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-09T08:58:12.238376Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T10:01:05.129331Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-09T09:10:35.209105Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.529469Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:03.284531Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "009_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-11-07T11:20:23.50452Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-09-08T07:38:11.902266Z",
+					"take": "0003"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-11-25T09:00:26.336379Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T10:05:35.095139Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-07T03:38:09.125628Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.703984Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:03.495133Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "009_01",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-07-23T16:18:00.608018Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rel": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "010_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-01-13T04:41:34.643966Z",
+					"take": "0004"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-30T06:44:44.390861Z",
+					"take": "0001"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-29T06:57:54.591293Z",
+					"take": "0004"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-09T10:23:16.436712Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-11T07:49:20.422561Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-01-09T10:34:30.213794Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T19:24:47.887048Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T02:51:03.715904Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "011_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-10-09T01:10:39.523648Z",
+					"take": "0002"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-06-05T02:38:35.497651Z",
+					"take": "0003"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-10-25T07:44:44.273359Z",
+					"take": "0001"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-09-24T00:19:00.862979Z",
+					"take": "0003"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T10:06:34.343274Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T20:11:43.390323Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T03:22:08.210999Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "012_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-10-04T07:16:45.397181Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-03T07:54:50.032758Z",
+					"take": "0001"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-07T12:52:19.355195Z",
+					"take": "0002"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-11-08T07:05:18.662955Z",
+					"take": "0002"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-09-24T00:19:00.701309Z",
+					"take": "0002"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-13T10:07:04.365541Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T20:11:46.000637Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T03:22:10.639388Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "03",
+			"group_3": "013_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-10-31T06:02:36.947506Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-03T07:54:50.052227Z",
+					"take": "0001"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-07T15:22:32.947232Z",
+					"take": "0002"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-12-06T09:28:41.08929Z",
+					"take": "0002"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-10-28T01:58:07.94532Z",
+					"take": "0006"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-22T07:20:20.233235Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-02-05T04:31:28.343103Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T20:11:46.046518Z",
+					"take": "0003"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T03:22:10.679281Z",
+					"take": "0001"
+				}
+			}
+		},
+		{
+			"root": "shots",
+			"project": "drk",
+			"group_1": "DRK101",
+			"group_2": "04",
+			"group_3": "014_00",
+			"relation": "com",
+			"component": "_review",
+			"phases": {
+				"anm": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2024-09-18T00:18:34.877234Z",
+					"take": "0001"
+				},
+				"cfxHair": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cloth": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"cmp": {
+					"work_status": "svApproved",
+					"approval_status": "clientApproved",
+					"submitted_at_utc": "2025-05-09T05:00:22.033169Z",
+					"take": "0001"
+				},
+				"crd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"crowd": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"drw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"dsp": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"fx": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"gnz": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2024-11-27T07:58:16.973976Z",
+					"take": "0003"
+				},
+				"lay": {
+					"work_status": "svApproved",
+					"approval_status": "dirApproved",
+					"submitted_at_utc": "2024-08-14T01:27:35.86442Z",
+					"take": "0001"
+				},
+				"lgt": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"mat": {
+					"work_status": "svApproved",
+					"approval_status": "epdApproved",
+					"submitted_at_utc": "2025-01-22T07:25:46.218367Z",
+					"take": "0002"
+				},
+				"matNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"matnuke": {
+					"work_status": "svApproved",
+					"approval_status": "check",
+					"submitted_at_utc": "2025-02-05T04:39:31.295206Z",
+					"take": "0001"
+				},
+				"rel": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-31T20:11:46.097951Z",
+					"take": "0002"
+				},
+				"rtcDrw": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcMatNuke": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"snd": {
+					"work_status": "check",
+					"approval_status": "check",
+					"submitted_at_utc": "2024-07-30T03:22:10.718176Z",
+					"take": "0002"
+				}
+			}
+		}
+	],
+	"page": 1,
+	"pageLast": 248,
+	"perPage": 15,
+	"sort": "group1_only",
+	"total": 3710
+}
