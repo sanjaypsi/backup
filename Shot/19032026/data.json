@@ -18,7 +18,7 @@
 					"submitted_at_utc": null,
 					"take": "-"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -90,7 +90,7 @@
 					"submitted_at_utc": null,
 					"take": "-"
 				},
-				"matNuke": {
+				"matnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -102,25 +102,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:42.736024Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -149,7 +149,7 @@
 					"submitted_at_utc": "2024-10-01T07:10:40.879207Z",
 					"take": "0002"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -221,12 +221,6 @@
 					"submitted_at_utc": "2025-01-13T09:46:09.356292Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -239,25 +233,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:46.886685Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -286,7 +280,7 @@
 					"submitted_at_utc": "2024-11-26T07:47:40.87074Z",
 					"take": "0002"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -358,12 +352,6 @@
 					"submitted_at_utc": "2024-12-05T02:21:46.302268Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -376,25 +364,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:46.928248Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -423,7 +411,7 @@
 					"submitted_at_utc": "2024-09-24T00:19:00.743196Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -495,12 +483,6 @@
 					"submitted_at_utc": "2025-01-13T09:49:30.844345Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -513,25 +495,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:46.974124Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -560,7 +542,7 @@
 					"submitted_at_utc": "2024-11-07T10:53:42.402983Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -632,12 +614,6 @@
 					"submitted_at_utc": "2025-01-13T09:53:23.795272Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -650,25 +626,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.025578Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -697,7 +673,7 @@
 					"submitted_at_utc": "2024-12-16T08:01:55.800594Z",
 					"take": "0003"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -769,12 +745,6 @@
 					"submitted_at_utc": "2025-01-13T09:57:45.065009Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -787,25 +757,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.067078Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -834,7 +804,7 @@
 					"submitted_at_utc": "2024-11-07T10:53:42.446002Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -906,12 +876,6 @@
 					"submitted_at_utc": "2025-01-13T09:59:36.792925Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -924,25 +888,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.323692Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -971,7 +935,7 @@
 					"submitted_at_utc": "2024-12-06T05:10:11.151518Z",
 					"take": "0003"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1043,12 +1007,6 @@
 					"submitted_at_utc": "2025-01-13T10:01:05.129331Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -1061,25 +1019,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.529469Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1108,7 +1066,7 @@
 					"submitted_at_utc": "2024-11-07T11:20:23.50452Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1180,12 +1138,6 @@
 					"submitted_at_utc": "2025-01-13T10:05:35.095139Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -1198,25 +1150,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.703984Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1245,7 +1197,7 @@
 					"submitted_at_utc": "2025-07-23T16:18:00.608018Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1317,7 +1269,7 @@
 					"submitted_at_utc": null,
 					"take": "-"
 				},
-				"matNuke": {
+				"matnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1329,25 +1281,25 @@
 					"submitted_at_utc": null,
 					"take": "-"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1376,7 +1328,7 @@
 					"submitted_at_utc": "2025-01-13T04:41:34.643966Z",
 					"take": "0004"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1448,12 +1400,6 @@
 					"submitted_at_utc": "2024-12-11T07:49:20.422561Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -1466,25 +1412,25 @@
 					"submitted_at_utc": "2024-07-31T19:24:47.887048Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1513,7 +1459,7 @@
 					"submitted_at_utc": "2024-10-09T01:10:39.523648Z",
 					"take": "0002"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1585,7 +1531,7 @@
 					"submitted_at_utc": "2025-01-13T10:06:34.343274Z",
 					"take": "0002"
 				},
-				"matNuke": {
+				"matnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1597,25 +1543,25 @@
 					"submitted_at_utc": "2024-07-31T20:11:43.390323Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1644,7 +1590,7 @@
 					"submitted_at_utc": "2024-10-04T07:16:45.397181Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1716,7 +1662,7 @@
 					"submitted_at_utc": "2025-01-13T10:07:04.365541Z",
 					"take": "0002"
 				},
-				"matNuke": {
+				"matnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1728,25 +1674,25 @@
 					"submitted_at_utc": "2024-07-31T20:11:46.000637Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1775,7 +1721,7 @@
 					"submitted_at_utc": "2024-10-31T06:02:36.947506Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1847,12 +1793,6 @@
 					"submitted_at_utc": "2025-01-22T07:20:20.233235Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -1865,25 +1805,25 @@
 					"submitted_at_utc": "2024-07-31T20:11:46.046518Z",
 					"take": "0003"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1912,7 +1852,7 @@
 					"submitted_at_utc": "2024-09-18T00:18:34.877234Z",
 					"take": "0001"
 				},
-				"cfxHair": {
+				"cfxhair": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
@@ -1984,12 +1924,6 @@
 					"submitted_at_utc": "2025-01-22T07:25:46.218367Z",
 					"take": "0002"
 				},
-				"matNuke": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
 				"matnuke": {
 					"work_status": "svApproved",
 					"approval_status": "check",
@@ -2002,25 +1936,25 @@
 					"submitted_at_utc": "2024-07-31T20:11:46.097951Z",
 					"take": "0002"
 				},
-				"rtcDrw": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMat": {
-					"work_status": "-",
-					"approval_status": "-",
-					"submitted_at_utc": null,
-					"take": "-"
-				},
-				"rtcMatNuke": {
+				"rtcdrw": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
 					"take": "-"
 				},
 				"rtcgnz": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmat": {
+					"work_status": "-",
+					"approval_status": "-",
+					"submitted_at_utc": null,
+					"take": "-"
+				},
+				"rtcmatnuke": {
 					"work_status": "-",
 					"approval_status": "-",
 					"submitted_at_utc": null,
