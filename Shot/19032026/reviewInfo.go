@@ -1553,8 +1553,9 @@ func buildShotOrderClause(alias, key, dir string) string {
 
 	case "work_status":
 		return fmt.Sprintf(
-			"(%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
-			col("work_status"),
+			"(CASE WHEN %s IS NULL OR %s = '-' OR %s = '' THEN 1 ELSE 0 END) ASC, "+
+				"LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
+			col("work_status"), col("work_status"), col("work_status"),
 			col("work_status"), dir,
 			col("group_1"),
 			col("group_2"),
@@ -1582,8 +1583,11 @@ func buildShotOrderClause(alias, key, dir string) string {
 			switch suffix {
 			case "submitted":
 				return fmt.Sprintf(
-					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, %s %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
+					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, "+
+						"(%s IS NULL) ASC, "+
+						"%s %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
 					col("phase"), phase,
+					col("submitted_at_utc"),
 					col("submitted_at_utc"), dir,
 					col("group_1"),
 					col("group_2"),
@@ -1592,9 +1596,11 @@ func buildShotOrderClause(alias, key, dir string) string {
 
 			case "work":
 				return fmt.Sprintf(
-					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, (%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
+					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, "+
+						"(CASE WHEN %s IS NULL OR %s = '-' OR %s = '' THEN 1 ELSE 0 END) ASC, "+
+						"LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
 					col("phase"), phase,
-					col("work_status"),
+					col("work_status"), col("work_status"), col("work_status"),
 					col("work_status"), dir,
 					col("group_1"),
 					col("group_2"),
@@ -1603,9 +1609,11 @@ func buildShotOrderClause(alias, key, dir string) string {
 
 			case "appr":
 				return fmt.Sprintf(
-					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, (%s IS NULL) ASC, LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
+					"(CASE WHEN %s = '%s' THEN 0 ELSE 1 END) ASC, "+
+						"(CASE WHEN %s IS NULL OR %s = '-' OR %s = '' THEN 1 ELSE 0 END) ASC, "+
+						"LOWER(%s) %s, LOWER(%s) ASC, LOWER(%s) ASC, LOWER(%s) ASC",
 					col("phase"), phase,
-					col("approval_status"),
+					col("approval_status"), col("approval_status"), col("approval_status"),
 					col("approval_status"), dir,
 					col("group_1"),
 					col("group_2"),
@@ -1782,9 +1790,15 @@ ranked AS (
         LOWER(group_2) ASC,
         LOWER(group_3) ASC,
         modified_at_utc DESC
-    ) AS _rank,
-    ROW_NUMBER() OVER (ORDER BY %s) AS _order
+    ) AS _rank
   FROM filtered
+),
+winners AS (
+  SELECT * FROM ranked WHERE _rank = 1
+),
+ordered AS (
+  SELECT *, ROW_NUMBER() OVER (ORDER BY %s) AS _order
+  FROM winners
 )
 SELECT
   root,
@@ -1796,8 +1810,7 @@ SELECT
   component,
   phase,
   submitted_at_utc
-FROM ranked
-WHERE _rank = 1
+FROM ordered
 ORDER BY _order ASC
 LIMIT ? OFFSET ?;
 `, orderClause)
