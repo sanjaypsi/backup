@@ -1,0 +1,63 @@
+WITH latest_phase AS (
+  SELECT
+    project,
+    root,
+    group_1,
+    group_2,
+    group_3,
+    relation,
+    component,
+    phase,
+    work_status,
+    approval_status,
+    submitted_at_utc,
+    modified_at_utc,
+    RIGHT(take, 4) AS take,
+    ROW_NUMBER() OVER (
+      PARTITION BY project, root, group_1, group_2, group_3, relation, phase
+      ORDER BY modified_at_utc DESC
+    ) AS rn
+  FROM t_review_info
+  WHERE project = 'drk' AND root = 'shots' AND deleted = 0
+),
+filtered AS (
+  SELECT *
+  FROM latest_phase
+  WHERE rn = 1
+),
+ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY project, root, group_1, group_2, group_3, relation
+      ORDER BY
+        LOWER(group_1) ASC,
+        LOWER(group_2) ASC,
+        LOWER(group_3) ASC,
+        modified_at_utc DESC
+    ) AS _rank,
+    ROW_NUMBER() OVER (
+      ORDER BY
+        LOWER(group_1) ASC,
+        LOWER(group_2) ASC,
+        LOWER(group_3) ASC
+    ) AS _order
+  FROM filtered
+)
+SELECT
+  root,
+  project,
+  group_1,
+  group_2,
+  group_3,
+  relation,
+  component,
+  phase,
+  work_status,
+  approval_status,
+  submitted_at_utc,
+  take
+FROM ranked
+WHERE _rank = 1
+ORDER BY _order ASC
+LIMIT 15 OFFSET 0;
