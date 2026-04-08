@@ -1,0 +1,621 @@
+import React, { useMemo, useState } from 'react';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+} from '@material-ui/core';
+import {
+    KeyboardArrowDown as ExpandIcon,
+    KeyboardArrowRight as CollapseIcon,
+} from '@material-ui/icons';
+import { ShotPivot, Colors, Column, ColumnState, ShotsDataTableProps } from './types';
+import { useFetchShotThumbnails } from './hooks';
+
+/* ── Phase Config ───────────────────────────────────────────────────────── */
+
+const SHOT_PHASES: { [key: string]: Colors } = {
+    lay:        { lineColor: '#3295FD', backgroundColor: '#004288' },
+    anm:        { lineColor: '#FD5E63', backgroundColor: '#5c0003' },
+    gnz:        { lineColor: '#C061FD', backgroundColor: '#340055' },
+    mat:        { lineColor: '#FE7DB3', backgroundColor: '#5f0028' },
+    matnuke:    { lineColor: '#FE7DB3', backgroundColor: '#3d0019' },
+    fx:         { lineColor: '#FDCD44', backgroundColor: '#CCA537' },
+    cmp:        { lineColor: '#D5F762', backgroundColor: '#4a6101' },
+    dsp:        { lineColor: '#FFD35D', backgroundColor: '#FFB54C' },
+    cloth:      { lineColor: '#FE9880', backgroundColor: '#FE8359' },
+    cfxhair:    { lineColor: '#FDA342', backgroundColor: '#FD8D03' },
+    crd:        { lineColor: '#FF8C12', backgroundColor: '#E88600' },
+    drw:        { lineColor: '#FDC0FF', backgroundColor: '#FDAFFB' },
+    rtcgnz:     { lineColor: '#D38AFF', backgroundColor: '#C061FD' },
+    rtcmat:     { lineColor: '#FFA3C5', backgroundColor: '#FE7DB3' },
+    rtcmatnuke: { lineColor: '#FFC4B4', backgroundColor: '#FEAD92' },
+    rtcdrw:     { lineColor: '#FFC3FC', backgroundColor: '#FDAFFB' },
+};
+
+const PHASE_ORDER = [
+    'lay', 'anm', 'gnz', 'mat', 'matnuke', 'fx', 'cmp',
+    'dsp', 'cloth', 'cfxhair', 'crd', 'drw',
+    'rtcgnz', 'rtcmat', 'rtcmatnuke', 'rtcdrw',
+];
+
+/* ── Status Maps ────────────────────────────────────────────────────────── */
+
+type Status = Readonly<{ displayName: string; color: string }>;
+
+const APPROVAL_STATUS: { [key: string]: Status } = {
+    check:          { displayName: 'Check',           color: '#ca25ed' },
+    clientReview:   { displayName: 'Client Review',   color: '#005fbd' },
+    dirReview:      { displayName: 'Dir Review',      color: '#007fff' },
+    epdReview:      { displayName: 'EPD Review',      color: '#4fa7ff' },
+    clientOnHold:   { displayName: 'Client On Hold',  color: '#d69b00' },
+    dirOnHold:      { displayName: 'Dir On Hold',     color: '#ffcc00' },
+    epdOnHold:      { displayName: 'EPD On Hold',     color: '#ffdd55' },
+    execRetake:     { displayName: 'Exec Retake',     color: '#a60000' },
+    clientRetake:   { displayName: 'Client Retake',   color: '#c60000' },
+    dirRetake:      { displayName: 'Dir Retake',      color: '#ff0000' },
+    epdRetake:      { displayName: 'EPD Retake',      color: '#ff4f4f' },
+    clientApproved: { displayName: 'Client Approved', color: '#1d7c39' },
+    dirApproved:    { displayName: 'Dir Approved',    color: '#27ab4f' },
+    epdApproved:    { displayName: 'EPD Approved',    color: '#5cda82' },
+    svApproved:     { displayName: 'SV Approved',     color: '#83e29f' },
+    other:          { displayName: 'Other',           color: '#9a9a9a' },
+    omit:           { displayName: 'Omit',            color: '#646464' },
+};
+
+const WORK_STATUS: { [key: string]: Status } = {
+    check:        { displayName: 'Check',         color: '#e287f5' },
+    cgsvOnHold:   { displayName: 'CGSV On Hold',  color: '#ffdd55' },
+    svOnHold:     { displayName: 'SV On Hold',    color: '#ffe373' },
+    leadOnHold:   { displayName: 'Lead On Hold',  color: '#fff04f' },
+    cgsvRetake:   { displayName: 'CGSV Retake',   color: '#ff4f4f' },
+    svRetake:     { displayName: 'SV Retake',     color: '#ff8080' },
+    leadRetake:   { displayName: 'Lead Retake',   color: '#ffbbbb' },
+    cgsvApproved: { displayName: 'CGSV Approved', color: '#5cda82' },
+    svApproved:   { displayName: 'SV Approved',   color: '#83e29f' },
+    leadApproved: { displayName: 'Lead Approved', color: '#b9eec9' },
+    svOther:      { displayName: 'SV Other',      color: '#9a9a9a' },
+    leadOther:    { displayName: 'Lead Other',    color: '#dbdbdb' },
+};
+
+/* ── Column Builder ─────────────────────────────────────────────────────── */
+
+const buildColumns = (): Column[] => {
+    const fixed: Column[] = [
+        { id: 'thumbnail',    label: 'THUMBNAIL', fixed: true },
+        { id: 'group_1_name', label: 'NAME 1',    fixed: true },
+        { id: 'group_2_name', label: 'NAME 2',    fixed: true },
+        { id: 'group_3_name', label: 'NAME 3',    fixed: true },
+    ];
+    const phase: Column[] = PHASE_ORDER.flatMap(p => {
+        const colors = SHOT_PHASES[p];
+        const label  = p.toUpperCase();
+        return [
+            { id: `${p}_work_status`,     label: `${label} WORK`,      colors },
+            { id: `${p}_approval_status`, label: `${label} APPR`,      colors },
+            { id: `${p}_take`,            label: `${label} TAKE`,      colors },
+            { id: `${p}_submitted_at`,    label: `${label} SUBMITTED`, colors },
+        ];
+    });
+    const tail: Column[] = [{ id: 'relation', label: 'RELATION' }];
+    return [...fixed, ...phase, ...tail];
+};
+
+const ALL_COLUMNS = buildColumns();
+
+/* ── Aggregation Helpers ────────────────────────────────────────────────── */
+
+/**
+ * For a set of shots and a given phase + field type,
+ * returns "approvedCount / total" where:
+ *   - total   = shots that have any value for that field
+ *   - approved = shots whose approval_status ends with 'Approved'
+ *               (or work_status ends with 'Approved')
+ */
+type AggCell = { approved: number; total: number } | null;
+
+const isApprovedStatus = (val: string | null | undefined): boolean => {
+    if (!val) return false;
+    return val.toLowerCase().includes('approved');
+};
+
+const aggregatePhaseField = (
+    shots: ShotPivot[],
+    phase: string,
+    field: 'work_status' | 'approval_status' | 'take' | 'submitted_at_utc',
+): AggCell => {
+    let total    = 0;
+    let approved = 0;
+    for (const shot of shots) {
+        const pd = shot.phases[phase];
+        if (!pd) continue;
+        const val = pd[field];
+        if (!val || val === '-') continue;
+        total++;
+        if (field === 'approval_status' && isApprovedStatus(val)) approved++;
+        if (field === 'work_status'     && isApprovedStatus(val)) approved++;
+    }
+    if (total === 0) return null;
+    return { approved, total };
+};
+
+const AggCellDisplay: React.FC<{
+    agg:              AggCell;
+    lineColor:        string;
+    leftBorder:       string;
+    rightBorder:      string;
+    isCountField:     boolean; // work/appr show count; take/submitted just show total
+}> = ({ agg, lineColor, leftBorder, rightBorder, isCountField }) => {
+    if (!agg) {
+        return (
+            <TableCell style={{
+                borderLeft:  leftBorder,
+                borderRight: rightBorder,
+                color:       '#555',
+                whiteSpace:  'nowrap',
+                fontSize:    12,
+            }}>
+                –
+            </TableCell>
+        );
+    }
+
+    const text = isCountField
+        ? `${agg.approved} / ${agg.total}`
+        : `${agg.total}`;
+
+    const color = isCountField
+        ? agg.approved === agg.total
+            ? '#5cda82'   // all approved → green
+            : agg.approved > 0
+                ? '#ffcc00' // some approved → yellow
+                : '#ff4f4f' // none approved → red
+        : lineColor;
+
+    return (
+        <TableCell style={{
+            borderLeft:  leftBorder,
+            borderRight: rightBorder,
+            color,
+            fontWeight:  600,
+            whiteSpace:  'nowrap',
+            fontSize:    12,
+        }}>
+            {text}
+        </TableCell>
+    );
+};
+
+/* ── Table Head ─────────────────────────────────────────────────────────── */
+const getShotSortValue = (shot: ShotPivot, sortKey: string): any => {
+    // if (sortKey === 'group1_only')   return shot.group_1.toLowerCase();
+    // if (sortKey === 'group2_only')   return shot.group_2.toLowerCase();
+    if (sortKey === 'group3_only')   return shot.group_3.toLowerCase();
+    if (sortKey === 'relation_only') return shot.relation.toLowerCase();
+
+    // phase columns — e.g. "lay_work", "lay_appr", "lay_take", "lay_submitted"
+    const underscoreIdx = sortKey.indexOf('_');
+    if (underscoreIdx === -1) return '';
+    const phase = sortKey.substring(0, underscoreIdx);
+    const field = sortKey.substring(underscoreIdx + 1);
+    const pd    = shot.phases[phase];
+    if (!pd) return '';
+
+    if (field === 'submitted') {
+        const d = new Date(pd.submitted_at_utc || '');
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+    if (field === 'take') return parseInt(pd.take || '0', 10) || 0;
+    if (field === 'work') return (pd.work_status     || '').toLowerCase();
+    if (field === 'appr') return (pd.approval_status || '').toLowerCase();
+    return '';
+};
+
+// Helper to map column id to sort key
+function getOrderKey(colId: string): string | null {
+    // if (colId === 'group_1_name') return 'group1_only';
+    // if (colId === 'group_2_name') return 'group2_only';
+    if (colId === 'group_3_name') return 'group3_only';
+    if (colId === 'relation')     return 'relation_only';
+    // phase columns: e.g. lay_work_status, lay_approval_status, lay_take, lay_submitted_at
+    const match = colId.match(/^([a-z0-9]+)_(work_status|approval_status|take|submitted_at)$/);
+    if (match) {
+        const [, phase, field] = match;
+        if (field === 'work_status')     return `${phase}_work`;
+        if (field === 'approval_status') return `${phase}_appr`;
+        if (field === 'take')            return `${phase}_take`;
+        if (field === 'submitted_at')    return `${phase}_submitted`;
+    }
+    return null;
+}
+
+const GroupTableHead: React.FC<{
+    columns:      Column[];
+    columnsState: ColumnState;
+    sortKey:      string;
+    sortDir:      'asc' | 'desc';
+    onSortChange: (key: string) => void;
+}> = ({ columns, columnsState, sortKey, sortDir, onSortChange }) => (
+    <TableHead>
+        <TableRow>
+            {columns.map(col => {
+                const lineColor  = col.colors && col.colors.lineColor;
+                const borderLine = lineColor ? `solid 3px ${lineColor}` : 'none';
+                const isWork     = col.id.endsWith('_work_status');
+                const orderKey   = getOrderKey(col.id);
+                const isActive   = orderKey !== null && orderKey === sortKey;
+
+                return (
+                    <TableCell
+                        key={col.id}
+                        onClick={orderKey ? () => onSortChange(orderKey) : undefined}
+                        style={{
+                            backgroundColor: col.colors && col.colors.backgroundColor || undefined,
+                            borderTop:       lineColor ? borderLine : 'none',
+                            borderLeft:      isWork && lineColor ? borderLine : 'none',
+                            whiteSpace:      'nowrap',
+                            cursor:          orderKey ? 'pointer' : 'default',
+                            userSelect:      'none',
+                            color:           isActive ? '#fff' : undefined,
+                        }}
+                    >
+                        {col.label}{' '}
+                        {orderKey && (
+                            <span style={{ fontSize: 10, opacity: isActive ? 1 : 0.3 }}>
+                                {isActive ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                            </span>
+                        )}
+                    </TableCell>
+                );
+            })}
+        </TableRow>
+    </TableHead>
+);
+
+/* ── Shot Data Row ──────────────────────────────────────────────────────── */
+
+const ShotDataRow: React.FC<{
+    shot:           ShotPivot;
+    thumbnails:     { [key: string]: string };
+    dateTimeFormat: Intl.DateTimeFormat;
+    columnsState:   ColumnState;
+    isLastRow:      boolean;
+}> = ({ shot, thumbnails, dateTimeFormat, columnsState, isLastRow }) => {
+    const thumbKey = `${shot.group_1}-${shot.group_2}-${shot.group_3}-${shot.relation}`;
+
+    return (
+        <TableRow>
+            {/* Thumbnail */}
+            <TableCell>
+                {thumbnails[thumbKey] ? (
+                    <img src={thumbnails[thumbKey]} alt={thumbKey} style={{ width: 80, height: 'auto' }} />
+                ) : (
+                    <span style={{ color: '#555', fontSize: 11 }}>No Thumbnail</span>
+                )}
+            </TableCell>
+
+            {/* NAME 1 — empty, shown in group_1 header */}
+            <TableCell />
+
+            {/* NAME 2 — empty, shown in group_2 header */}
+            <TableCell />
+
+            {/* NAME 3 — this is the shot identifier */}
+            <TableCell style={{ fontWeight: 500 }}>
+                {shot.group_3}
+            </TableCell>
+
+            {/* Phase columns */}
+            {PHASE_ORDER.map(phase => {
+                const colors     = SHOT_PHASES[phase];
+                const lineColor  = colors && colors.lineColor || '#fff';
+                const borderLine = `solid 3px ${lineColor}`;
+                const bottomLine = isLastRow ? borderLine : 'none';
+                const isLast     = phase === PHASE_ORDER[PHASE_ORDER.length - 1];
+                const phaseData  = shot.phases[phase];
+
+                const workCol      = `${phase}_work_status`;
+                const apprCol      = `${phase}_approval_status`;
+                const takeCol      = `${phase}_take`;
+                const submittedCol = `${phase}_submitted_at`;
+
+                const workStatus = phaseData && phaseData.work_status && phaseData.work_status !== '-'
+                    ? WORK_STATUS[phaseData.work_status] : undefined;
+                const approvalStatus = phaseData && phaseData.approval_status && phaseData.approval_status !== '-'
+                    ? APPROVAL_STATUS[phaseData.approval_status] : undefined;
+
+                return (
+                    <React.Fragment key={phase}>
+                        {columnsState[workCol] !== false && (
+                            <TableCell style={{
+                                color:        workStatus && workStatus.color || '',
+                                borderLeft:   borderLine,
+                                // borderBottom: bottomLine,
+                                whiteSpace:   'nowrap',
+                            }}>
+                                {workStatus && workStatus.displayName || '–'}
+                            </TableCell>
+                        )}
+                        {columnsState[apprCol] !== false && (
+                            <TableCell style={{
+                                color:        approvalStatus && approvalStatus.color || '',
+                                // borderBottom: bottomLine,
+                                whiteSpace:   'nowrap',
+                            }}>
+                                {approvalStatus && approvalStatus.displayName || '–'}
+                            </TableCell>
+                        )}
+                        {columnsState[takeCol] !== false && (
+                            <TableCell style={{ whiteSpace: 'nowrap', 
+                            // borderBottom: bottomLine 
+                            }}>
+                                {phaseData && phaseData.take || '–'}
+                            </TableCell>
+                        )}
+                        {columnsState[submittedCol] !== false && (
+                            <TableCell style={{
+                                whiteSpace:  'nowrap',
+                                // borderBottom: bottomLine,
+                                borderRight: isLast ? borderLine : 'none',
+                            }}>
+                                {phaseData && phaseData.submitted_at_utc && phaseData.submitted_at_utc !== null
+                                    ? dateTimeFormat.format(new Date(phaseData.submitted_at_utc))
+                                    : '–'}
+                            </TableCell>
+                        )}
+                    </React.Fragment>
+                );
+            })}
+
+            {/* Relation */}
+            {columnsState['relation'] !== false && (
+                <TableCell>{shot.relation}</TableCell>
+            )}
+        </TableRow>
+    );
+};
+
+/* ── Group2 Header Row ──────────────────────────────────────────────────── */
+const Group2HeaderRow: React.FC<{
+    group2: string;
+    shots: ShotPivot[];
+    total: number; // 👈 added
+    isExpanded: boolean;
+    onToggle: () => void;
+    columnsState: ColumnState;
+}> = ({ group2, shots, total, isExpanded, onToggle, columnsState }) => {
+    return (
+        <TableRow
+            onClick={onToggle}
+            style={{
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255,255,255,0.04)',
+            }}
+        >
+            <TableCell />
+            <TableCell />
+
+            {/* ✅ NAME 2 */}
+            <TableCell style={{
+                fontWeight: 600,
+                color: '#a0c4ff',
+                whiteSpace: 'nowrap',
+            }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {isExpanded
+                        ? <ExpandIcon fontSize="small" />
+                        : <CollapseIcon fontSize="small" />
+                    }
+                    {group2}
+                    <span style={{ color: '#666', fontSize: 11 }}>
+                        ({shots.length} / {total})
+                    </span>
+                </span>
+            </TableCell>
+
+            <TableCell />
+
+            {/* ❌ REMOVE aggregation → replace with empty cells */}
+            {PHASE_ORDER.map(phase => (
+                <React.Fragment key={phase}>
+                    {columnsState[`${phase}_work_status`] !== false && <TableCell />}
+                    {columnsState[`${phase}_approval_status`] !== false && <TableCell />}
+                    {columnsState[`${phase}_take`] !== false && <TableCell />}
+                    {columnsState[`${phase}_submitted_at`] !== false && <TableCell />}
+                </React.Fragment>
+            ))}
+
+            {columnsState['relation'] !== false && <TableCell />}
+        </TableRow>
+    );
+};
+
+/* ── Group1 Header Row ──────────────────────────────────────────────────── */
+const Group1HeaderRow: React.FC<{
+    group1: string;
+    allShots: ShotPivot[];
+    group2Total: number;
+    isExpanded: boolean;
+    onToggle: () => void;
+    columnsState: ColumnState;
+    visibleCols: number;
+}> = ({ group1, allShots, group2Total, isExpanded, onToggle, columnsState }) => {
+    return (
+        <TableRow
+            onClick={onToggle}
+            style={{
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255,255,255,0.07)',
+            }}
+        >
+            <TableCell />
+
+            {/* ✅ NAME 1 */}
+            <TableCell style={{
+                fontWeight: 700,
+                color: '#e0e0e0',
+                whiteSpace: 'nowrap',
+            }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {isExpanded
+                        ? <ExpandIcon fontSize="small" />
+                        : <CollapseIcon fontSize="small" />
+                    }
+                    {group1}
+                    <span style={{ color: '#777', fontSize: 11 }}>
+                        ({allShots.length} / {group2Total})
+                    </span>
+                </span>
+            </TableCell>
+
+            <TableCell />
+            <TableCell />
+
+            {/* ❌ REMOVE aggregation */}
+            {PHASE_ORDER.map(phase => (
+                <React.Fragment key={phase}>
+                    {columnsState[`${phase}_work_status`] !== false && <TableCell />}
+                    {columnsState[`${phase}_approval_status`] !== false && <TableCell />}
+                    {columnsState[`${phase}_take`] !== false && <TableCell />}
+                    {columnsState[`${phase}_submitted_at`] !== false && <TableCell />}
+                </React.Fragment>
+            ))}
+
+            {columnsState['relation'] !== false && <TableCell />}
+        </TableRow>
+    );
+};
+
+
+/* ── Grouped Data Builder ───────────────────────────────────────────────── */
+
+type Group2Data = {
+    group2: string;
+    shots:  ShotPivot[];
+};
+
+type Group1Data = {
+    group1:   string;
+    group2s:  Group2Data[];
+    allShots: ShotPivot[];
+};
+
+const buildGroupedData = (shots: ShotPivot[]): Group1Data[] => {
+    const map = new Map<string, Map<string, ShotPivot[]>>();
+
+    for (const shot of shots) {
+        if (!map.has(shot.group_1)) map.set(shot.group_1, new Map());
+        const g2map = map.get(shot.group_1)!;
+        if (!g2map.has(shot.group_2)) g2map.set(shot.group_2, []);
+        g2map.get(shot.group_2)!.push(shot);
+    }
+
+    return Array.from(map.entries()).map(([group1, g2map]) => {
+        const group2s = Array.from(g2map.entries()).map(([group2, shots]) => ({
+            group2,
+            shots,
+        }));
+        return {
+            group1,
+            group2s,
+            allShots: group2s.flatMap(g => g.shots),
+        };
+    });
+};
+
+/* ── Main Component ─────────────────────────────────────────────────────── */
+
+const ShotsDataTableGroup: React.FC<ShotsDataTableProps> = ({
+    project,
+    shots,
+    dateTimeFormat,
+    columnsState,
+    sortKey,
+    sortDir,
+    onSortChange,
+}) => {
+    if (project == null) return null;
+
+    const grouped = useMemo(() => buildGroupedData(shots), [shots]);
+
+    const [expandedGroup1, setExpandedGroup1] = useState<{ [key: string]: boolean }>({});
+    const [expandedGroup2, setExpandedGroup2] = useState<{ [key: string]: boolean }>({});
+
+    const isGroup1Expanded = (g1: string) => expandedGroup1[g1] !== false;
+    const isGroup2Expanded = (g1: string, g2: string) => expandedGroup2[`${g1}/${g2}`] !== false;
+
+    const toggleGroup1 = (g1: string) =>
+        setExpandedGroup1(prev => ({ ...prev, [g1]: !isGroup1Expanded(g1) }));
+
+    const toggleGroup2 = (g1: string, g2: string) =>
+        setExpandedGroup2(prev => ({
+            ...prev,
+            [`${g1}/${g2}`]: !isGroup2Expanded(g1, g2),
+        }));
+
+    const shotsForThumbnail = shots.map(s => ({
+        groups:   [s.group_1, s.group_2, s.group_3],
+        relation: s.relation,
+    }));
+    const { thumbnails } = useFetchShotThumbnails(project, shotsForThumbnail);
+
+    const visibleColumns = ALL_COLUMNS.filter(
+        col => col.fixed || columnsState[col.id] !== false,
+    );
+
+    return (
+        <Table stickyHeader style={{ tableLayout: 'fixed', width: 'auto' }}>
+            <GroupTableHead
+                columns={visibleColumns}
+                columnsState={columnsState}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSortChange={onSortChange}
+            />
+            <TableBody>
+                {grouped.map(g1data => (
+                    <React.Fragment key={g1data.group1}>
+
+                        <Group1HeaderRow
+                            group1={g1data.group1}
+                            allShots={g1data.allShots}
+                            group2Total={g1data.group2s.length}
+                            isExpanded={isGroup1Expanded(g1data.group1)}
+                            onToggle={() => toggleGroup1(g1data.group1)}
+                            columnsState={columnsState}
+                            visibleCols={visibleColumns.length}
+                        />
+
+                        {isGroup1Expanded(g1data.group1) && g1data.group2s.map(g2data => (
+                            <React.Fragment key={`${g1data.group1}/${g2data.group2}`}>
+                                <Group2HeaderRow
+                                    group2={g2data.group2}
+                                    shots={g2data.shots}
+                                        total={g2data.shots.length}
+                                        isExpanded={isGroup2Expanded(g1data.group1, g2data.group2)}
+                                        onToggle={() => toggleGroup2(g1data.group1, g2data.group2)}
+                                        columnsState={columnsState}
+                                    />
+                                    {isGroup2Expanded(g1data.group1, g2data.group2) &&
+                                        g2data.shots.map((shot, idx) => (
+                                            <ShotDataRow
+                                                key={`${shot.group_1}-${shot.group_2}-${shot.group_3}-${shot.relation}-${idx}`}
+                                                shot={shot}
+                                                thumbnails={thumbnails}
+                                                dateTimeFormat={dateTimeFormat}
+                                                columnsState={columnsState}
+                                                isLastRow={idx === g2data.shots.length - 1}
+                                            />
+                                        ))
+                                    }
+                                </React.Fragment>
+                        ))}
+                    </React.Fragment>
+                ))}
+            </TableBody>
+        </Table>
+    );
+};
+
+export default ShotsDataTableGroup;
