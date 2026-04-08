@@ -1687,10 +1687,23 @@ func (r *ReviewInfo) CountShotSubmissions(
 	shotNameKey string,
 	approvalStatuses []string,
 	workStatuses []string,
+	group1Filter []string,
 ) (int64, error) {
 
 	aggSQL := buildPhaseAggregationSQL()
 	havingClause, havingArgs := buildShotStatusHaving(approvalStatuses, workStatuses)
+
+	// Build group1 filter condition
+	group1Cond := ""
+	var group1Args []any
+	if len(group1Filter) > 0 {
+		placeholders := make([]string, len(group1Filter))
+		for i := range group1Filter {
+			placeholders[i] = "?"
+			group1Args = append(group1Args, group1Filter[i])
+		}
+		group1Cond = " AND group_1 IN (" + strings.Join(placeholders, ",") + ")"
+	}
 
 	// name search
 	nameCond := ""
@@ -1698,11 +1711,11 @@ func (r *ReviewInfo) CountShotSubmissions(
 	if strings.TrimSpace(shotNameKey) != "" {
 		like := "%" + strings.ToLower(strings.TrimSpace(shotNameKey)) + "%"
 		nameCond = ` AND (
-      LOWER(group_1) LIKE ? OR
-      LOWER(group_2) LIKE ? OR
-      LOWER(group_3) LIKE ? OR
-      LOWER(relation) LIKE ?
-    )`
+            LOWER(group_1) LIKE ? OR
+            LOWER(group_2) LIKE ? OR
+            LOWER(group_3) LIKE ? OR
+            LOWER(relation) LIKE ?
+        )`
 		nameArgs = []any{like, like, like, like}
 	}
 
@@ -1714,7 +1727,7 @@ WITH latest_phase AS (
       ORDER BY modified_at_utc DESC
     ) rn
   FROM t_review_info
-  WHERE project = ? AND root='shots' AND deleted=0` + nameCond + `
+  WHERE project = ? AND root='shots' AND deleted=0` + nameCond + group1Cond + `
 ),
 filtered AS (
   SELECT * FROM latest_phase WHERE rn=1
@@ -1732,6 +1745,7 @@ SELECT COUNT(*) FROM aggregated;
 
 	args := []any{project}
 	args = append(args, nameArgs...)
+	args = append(args, group1Args...)
 	args = append(args, havingArgs...)
 
 	var total int64
@@ -1746,11 +1760,24 @@ func (r *ReviewInfo) ListLatestShotsDynamic(
 	shotNameKey string,
 	approvalStatuses []string,
 	workStatuses []string,
+	group1Filter []string,
 ) ([]shotKeyRow, error) {
 
 	aggSQL := buildPhaseAggregationSQL()
 	orderClause := buildShotOrderClause("", orderKey, direction)
 	havingClause, havingArgs := buildShotStatusHaving(approvalStatuses, workStatuses)
+
+	// Build group1 filter condition
+	group1Cond := ""
+	var group1Args []any
+	if len(group1Filter) > 0 {
+		placeholders := make([]string, len(group1Filter))
+		for i := range group1Filter {
+			placeholders[i] = "?"
+			group1Args = append(group1Args, group1Filter[i])
+		}
+		group1Cond = " AND group_1 IN (" + strings.Join(placeholders, ",") + ")"
+	}
 
 	// name search
 	nameCond := ""
@@ -1758,11 +1785,11 @@ func (r *ReviewInfo) ListLatestShotsDynamic(
 	if strings.TrimSpace(shotNameKey) != "" {
 		like := "%" + strings.ToLower(strings.TrimSpace(shotNameKey)) + "%"
 		nameCond = ` AND (
-      LOWER(group_1) LIKE ? OR
-      LOWER(group_2) LIKE ? OR
-      LOWER(group_3) LIKE ? OR
-      LOWER(relation) LIKE ?
-    )`
+            LOWER(group_1) LIKE ? OR
+            LOWER(group_2) LIKE ? OR
+            LOWER(group_3) LIKE ? OR
+            LOWER(relation) LIKE ?
+        )`
 		nameArgs = []any{like, like, like, like}
 	}
 
@@ -1774,7 +1801,7 @@ WITH latest_phase AS (
       ORDER BY modified_at_utc DESC
     ) rn
   FROM t_review_info
-  WHERE project = ? AND root='shots' AND deleted=0` + nameCond + `
+  WHERE project = ? AND root='shots' AND deleted=0` + nameCond + group1Cond + `
 ),
 filtered AS (
   SELECT * FROM latest_phase WHERE rn=1
@@ -1800,6 +1827,7 @@ LIMIT ? OFFSET ?
 
 	args := []any{project}
 	args = append(args, nameArgs...)
+	args = append(args, group1Args...)
 	args = append(args, havingArgs...)
 	args = append(args, limit, offset)
 
@@ -1818,14 +1846,16 @@ func (r *ReviewInfo) ListShotsPivot(
 	shotNameKey string,
 	approvalStatuses []string,
 	workStatuses []string,
+	group1Filter []string, // ADD THIS
+
 ) ([]ShotPivot, int64, map[string]int, error) {
 
-	total, err := r.CountShotSubmissions(ctx, project, shotNameKey, approvalStatuses, workStatuses)
+	total, err := r.CountShotSubmissions(ctx, project, shotNameKey, approvalStatuses, workStatuses, group1Filter) // ADD group1Filter HERE
 	if err != nil {
 		return nil, 0, nil, err
 	}
 
-	keys, err := r.ListLatestShotsDynamic(ctx, project, orderKey, direction, limit, offset, shotNameKey, approvalStatuses, workStatuses)
+	keys, err := r.ListLatestShotsDynamic(ctx, project, orderKey, direction, limit, offset, shotNameKey, approvalStatuses, workStatuses, group1Filter) // ADD group1Filter HERE
 	if err != nil {
 		return nil, 0, nil, err
 	}
@@ -1915,8 +1945,11 @@ WHERE project=? AND root='shots' AND deleted=0 AND (
 		SELECT group_1, COUNT(DISTINCT CONCAT(group_1, group_2, group_3, relation, COALESCE(component, ''))) AS cnt
 		FROM t_review_info
 		WHERE project = ? AND root = 'shots' AND deleted = 0
-		GROUP BY group_1;	
 	`
+	if len(group1Filter) > 0 {
+		groupCountQuery += " AND group_1 IN (?" + strings.Repeat(",?", len(group1Filter)-1) + ")"
+	}
+	groupCountQuery += " GROUP BY group_1;"
 
 	type groupCountRow struct {
 		Group1 string `gorm:"column:group_1"`
