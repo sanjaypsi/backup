@@ -1,613 +1,677 @@
-import React, { useEffect } from "react";
+import React, { useMemo, useRef } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
 } from "@material-ui/core";
-import {
-  ShotRowProps,
-  ShotsDataTableProps,
-  Colors,
-  Column,
-  RecordTableHeadProps,
-  Shot, // <-- Add Shot type import
-} from "./types";
-import { useFetchShotReviewInfos, useFetchShotThumbnails } from './hooks';
+import { ShotPivot, Colors, Column, ShotsDataTableProps, RecordTableHeadProps } from "./types";
+import { useFetchShotThumbnails, useFetchLatestShotComponents } from './hooks';
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Phase Colors
+   ────────────────────────────────────────────────────────────────────────── */
 const SHOT_PHASES: { [key: string]: Colors } = {
-  lay: {
-    lineColor: '#3295FD',
-    backgroundColor: '#004288',
-  },
-  anm: {
-    lineColor: '#FD5E63',
-    backgroundColor: '#5c0003',
-  },
-  gnz: {
-    lineColor: '#C061FD',
-    backgroundColor: '#340055',
-  },
-  mat: {
-    lineColor: '#FE7DB3',
-    backgroundColor: '#5f0028',
-  },
-  fx: {
-    lineColor: '#FDCD44',
-    backgroundColor: '#CCA537',
-  },
-  cmp: {
-    lineColor: '#D5F762',
-    backgroundColor: '#4a6101',
-  },
+    lay:        { lineColor: '#3295FD', backgroundColor: '#004288' },
+    anm:        { lineColor: '#FD5E63', backgroundColor: '#5c0003' },
+    gnz:        { lineColor: '#C061FD', backgroundColor: '#340055' },
+    mat:        { lineColor: '#FE7DB3', backgroundColor: '#5f0028' },
+    matnuke:    { lineColor: '#FE7DB3', backgroundColor: '#3d0019' },
+    fx:         { lineColor: '#FDCD44', backgroundColor: '#CCA537' },
+    cmp:        { lineColor: '#D5F762', backgroundColor: '#4a6101' },
+    dsp:        { lineColor: '#FFD35D', backgroundColor: '#FFB54C' },
+    cloth:      { lineColor: '#FE9880', backgroundColor: '#FE8359' },
+    cfxhair:    { lineColor: '#FDA342', backgroundColor: '#FD8D03' },
+    crd:        { lineColor: '#FF8C12', backgroundColor: '#E88600' },
+    drw:        { lineColor: '#FDC0FF', backgroundColor: '#FDAFFB' },
+    rtcgnz:     { lineColor: '#D38AFF', backgroundColor: '#C061FD' },
+    rtcmat:     { lineColor: '#FFA3C5', backgroundColor: '#FE7DB3' },
+    rtcmatnuke: { lineColor: '#FFC4B4', backgroundColor: '#FEAD92' },
+    rtcdrw:     { lineColor: '#FFC3FC', backgroundColor: '#FDAFFB' },
 };
 
-type Status = Readonly<{
-  displayName: string,
-  color: string,
-}>;
+const DEFAULT_PHASE_COLORS: Colors = { lineColor: '#888', backgroundColor: '#444' };
+
+// Teal/cyan — distinct from all phase colors. Used for the CamDataType column.
+const CAM_DATA_TYPE_COLORS: Colors = { lineColor: '#2DD4BF', backgroundColor: '#0F4D47' };
+
+const getPhaseColors = (phase: string): Colors => {
+    return SHOT_PHASES[phase.toLowerCase()] || DEFAULT_PHASE_COLORS;
+};
+
+const getOrderedPhases = (phaseComponents: { [key: string]: string[] }): string[] => {
+    const knownOrder    = Object.keys(SHOT_PHASES);
+    const settingPhases = Object.keys(phaseComponents || {});
+    const settingByLower: { [key: string]: string } = {};
+    settingPhases.forEach(s => { settingByLower[s.toLowerCase()] = s; });
+
+    const ordered: string[] = [];
+    knownOrder.forEach(p => {
+        if (settingByLower[p]) ordered.push(settingByLower[p]);
+        else ordered.push(p);
+    });
+    settingPhases.forEach(s => {
+        if (!knownOrder.includes(s.toLowerCase())) ordered.push(s);
+    });
+    return ordered;
+};
+
+const getPhaseComponentIds = (
+    phase: string,
+    phaseComponents: { [key: string]: string[] },
+): string[] => {
+    const ids = (phaseComponents && phaseComponents[phase]) || [];
+    return ids.filter(id => id.toLowerCase() !== phase.toLowerCase());
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Status Maps
+   ────────────────────────────────────────────────────────────────────────── */
+type Status = Readonly<{ displayName: string; color: string }>;
 
 const APPROVAL_STATUS: { [key: string]: Status } = {
-  check: {
-    displayName: 'Check',
-    color: '#ca25ed',
-  },
-  clientReview: {
-    displayName: 'Client Review',
-    color: '#005fbd',
-  },
-  dirReview: {
-    displayName: 'Dir Review',
-    color: '#007fff',
-  },
-  epdReview: {
-    displayName: 'EPD Review',
-    color: '#4fa7ff',
-  },
-  clientOnHold: {
-    displayName: 'Client On Hold',
-    color: '#d69b00',
-  },
-  dirOnHold: {
-    displayName: 'Dir On Hold',
-    color: '#ffcc00',
-  },
-  epdOnHold: {
-    displayName: 'EPD On Hold',
-    color: '#ffdd55',
-  },
-  execRetake: {
-    displayName: 'Exec Retake',
-    color: '#a60000',
-  },
-  clientRetake: {
-    displayName: 'Client Retake',
-    color: '#c60000',
-  },
-  dirRetake: {
-    displayName: 'Dir Retake',
-    color: '#ff0000',
-  },
-  epdRetake: {
-    displayName: 'EPD Retake',
-    color: '#ff4f4f',
-  },
-  clientApproved: {
-    displayName: 'Client Approved',
-    color: '#1d7c39',
-  },
-  dirApproved: {
-    displayName: 'Dir Approved',
-    color: '#27ab4f',
-  },
-  epdApproved: {
-    displayName: 'EPD Approved',
-    color: '#5cda82',
-  },
-  other: {
-    displayName: 'Other',
-    color: '#9a9a9a',
-  },
-  omit: {
-    displayName: 'Omit',
-    color: '#646464',
-  },
+    check:          { displayName: 'Check',           color: '#ca25ed' },
+    clientReview:   { displayName: 'Client Review',   color: '#005fbd' },
+    dirReview:      { displayName: 'Dir Review',      color: '#007fff' },
+    epdReview:      { displayName: 'EPD Review',      color: '#4fa7ff' },
+    clientOnHold:   { displayName: 'Client On Hold',  color: '#d69b00' },
+    dirOnHold:      { displayName: 'Dir On Hold',     color: '#ffcc00' },
+    epdOnHold:      { displayName: 'EPD On Hold',     color: '#ffdd55' },
+    execRetake:     { displayName: 'Exec Retake',     color: '#a60000' },
+    clientRetake:   { displayName: 'Client Retake',   color: '#c60000' },
+    dirRetake:      { displayName: 'Dir Retake',      color: '#ff0000' },
+    epdRetake:      { displayName: 'EPD Retake',      color: '#ff4f4f' },
+    clientApproved: { displayName: 'Client Approved', color: '#45ff0d' },
+    dirApproved:    { displayName: 'Dir Approved',    color: '#fff04f' },
+    epdApproved:    { displayName: 'EPD Approved',    color: '#5cda82' },
+    svApproved:     { displayName: 'SV Approved',     color: '#83e29f' },
+    other:          { displayName: 'Other',           color: '#9a9a9a' },
+    omit:           { displayName: 'Omit',            color: '#646464' },
 };
 
 const WORK_STATUS: { [key: string]: Status } = {
-  check: {
-    displayName: 'Check',
-    color: '#e287f5',
-  },
-  cgsvOnHold: {
-    displayName: 'CGSV On Hold',
-    color: '#ffdd55',
-  },
-  svOnHold: {
-    displayName: 'SV On Hold',
-    color: '#ffe373',
-  },
-  leadOnHold: {
-    displayName: 'Lead On Hold',
-    color: '#fff04f',
-  },
-  cgsvRetake: {
-    displayName: 'CGSV Retake',
-    color: '#ff4f4f',
-  },
-  svRetake: {
-    displayName: 'SV Retake',
-    color: '#ff8080',
-  },
-  leadRetake: {
-    displayName: 'Lead Retake',
-    color: '#ffbbbb',
-  },
-  cgsvApproved: {
-    displayName: 'CGSV Approved',
-    color: '#5cda82',
-  },
-  svApproved: {
-    displayName: 'SV Approved',
-    color: '#83e29f',
-  },
-  leadApproved: {
-    displayName: 'Lead Approved',
-    color: '#b9eec9',
-  },
-  svOther: {
-    displayName: 'SV Other',
-    color: '#9a9a9a',
-  },
-  leadOther: {
-    displayName: 'Lead Other',
-    color: '#dbdbdb',
-  },
+    check:        { displayName: 'Check',         color: '#e287f5' },
+    cgsvOnHold:   { displayName: 'CGSV On Hold',  color: '#ffdd55' },
+    svOnHold:     { displayName: 'SV On Hold',    color: '#ffe373' },
+    leadOnHold:   { displayName: 'Lead On Hold',  color: '#fff04f' },
+    cgsvRetake:   { displayName: 'CGSV Retake',   color: '#ff4f4f' },
+    svRetake:     { displayName: 'SV Retake',     color: '#ff8080' },
+    leadRetake:   { displayName: 'Lead Retake',   color: '#ffbbbb' },
+    cgsvApproved: { displayName: 'CGSV Approved', color: '#5cda82' },
+    svApproved:   { displayName: 'SV Approved',   color: '#83e29f' },
+    leadApproved: { displayName: 'Lead Approved', color: '#b9eec9' },
+    svOther:      { displayName: 'SV Other',      color: '#9a9a9a' },
+    leadOther:    { displayName: 'Lead Other',    color: '#dbdbdb' },
 };
 
-const columns: Column[] = [
-  {
-    id: 'thumbnail',
-    label: 'Thumbnail',
-    fixed: true,
-  },
-  {
-    id: 'group_1_name',
-    label: 'Name 1',
-    fixed: true,
-  },
-  {
-    id: 'group_2_name',
-    label: 'Name 2',
-    fixed: true,
-  },
-  {
-    id: 'group_3_name',
-    label: 'Name 3',
-    fixed: true,
-  },
-  {
-    id: 'lay_work_status',
-    label: 'LAY WORK',
-    colors: SHOT_PHASES['lay'],
-  },
-  {
-    id: 'lay_approval_status',
-    label: 'LAY APPR',
-    colors: SHOT_PHASES['lay'],
-  },
-  {
-    id: 'lay_submitted_at',
-    label: 'LAY SUBMITTED',
-    colors: SHOT_PHASES['lay'],
-  },
-  {
-    id: 'anm_work_status',
-    label: 'ANM WORK',
-    colors: SHOT_PHASES['anm'],
-  },
-  {
-    id: 'anm_approval_status',
-    label: 'ANM APPR',
-    colors: SHOT_PHASES['anm'],
-  },
-  {
-    id: 'anm_submitted_at',
-    label: 'ANM SUBMITTED',
-    colors: SHOT_PHASES['anm'],
-  },
-  {
-    id: 'gnz_work_status',
-    label: 'GNZ WORK',
-    colors: SHOT_PHASES['gnz'],
-  },
-  {
-    id: 'gnz_approval_status',
-    label: 'GNZ APPR',
-    colors: SHOT_PHASES['gnz'],
-  },
-  {
-    id: 'gnz_submitted_at',
-    label: 'GNZ SUBMITTED',
-    colors: SHOT_PHASES['gnz'],
-  },
-  {
-    id: 'mat_work_status',
-    label: 'MAT WORK',
-    colors: SHOT_PHASES['mat'],
-  },
-  {
-    id: 'mat_approval_status',
-    label: 'MAT APPR',
-    colors: SHOT_PHASES['mat'],
-  },
-  {
-    id: 'mat_submitted_at',
-    label: 'MAT SUBMITTED',
-    colors: SHOT_PHASES['mat'],
-  },
-  {
-    id: 'fx_work_status',
-    label: 'FX WORK',
-    colors: SHOT_PHASES['fx'],
-  },
-  {
-    id: 'fx_approval_status',
-    label: 'FX APPR',
-    colors: SHOT_PHASES['fx'],
-  },
-  {
-    id: 'fx_submitted_at',
-    label: 'FX SUBMITTED',
-    colors: SHOT_PHASES['fx'],
-  },
-  {
-    id: 'cmp_work_status',
-    label: 'CMP WORK',
-    colors: SHOT_PHASES['cmp'],
-  },
-  {
-    id: 'cmp_approval_status',
-    label: 'CMP APPR',
-    colors: SHOT_PHASES['cmp'],
-  },
-  {
-    id: 'cmp_submitted_at',
-    label: 'CMP SUBMITTED',
-    colors: SHOT_PHASES['cmp'],
-  },
-  {
-    id: 'relation',
-    label: 'Relation',
-  },
-];
+/* ──────────────────────────────────────────────────────────────────────────
+   Build Columns
+   ────────────────────────────────────────────────────────────────────────── */
+const buildColumns = (phaseComponents: { [key: string]: string[] }): Column[] => {
+    const fixed: Column[] = [
+        { id: 'thumbnail',    label: 'THUMBNAIL', fixed: true },
+        { id: 'group_1_name', label: 'NAME 1',    fixed: true },
+        { id: 'group_2_name', label: 'NAME 2',    fixed: true },
+        { id: 'group_3_name', label: 'NAME 3',    fixed: true },
+    ];
 
+    const orderedPhases = getOrderedPhases(phaseComponents);
+
+    const phaseCols: Column[] = orderedPhases.flatMap(p => {
+        const colors  = getPhaseColors(p);
+        const label   = p.toUpperCase();
+        const colBase = p.toLowerCase();
+
+        const base: Column[] = [
+            { id: `${colBase}_approval_status`, label: `${label} APPR`, colors },
+            { id: `${colBase}_work_status`,     label: `${label} WORK`, colors },
+            { id: `${colBase}_take`,            label: `${label} TAKE`, colors },
+        ];
+
+        const componentIds = getPhaseComponentIds(p, phaseComponents);
+
+        if (componentIds.length === 0) {
+            base.push({
+                id:    `${colBase}_submitted_at`,
+                label: `${label} SUBMITTED`,
+                colors,
+            });
+        }
+
+        const compCols: Column[] = componentIds.map(id => ({
+            id,
+            label: `${id.toUpperCase()} SUBMITTED`,
+            colors,
+        }));
+
+        return [...base, ...compCols];
+    });
+
+    // ← NEW: cam_data_type goes immediately before relation (the task's "to the left of Relation")
+    return [
+        ...fixed,
+        ...phaseCols,
+        { id: 'cam_data_type', label: 'CAMDATATYPE', colors: CAM_DATA_TYPE_COLORS },
+        { id: 'relation',      label: 'RELATION' },
+    ];
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   MultiLineTooltipTableCell
+   ────────────────────────────────────────────────────────────────────────── */
 type TooltipTableCellProps = {
-  tooltipText: string,
-  status: Status | undefined,
-  leftBorderStyle: string,
-  rightBorderStyle: string,
-  bottomBorderStyle: string,
+    status:            Status | undefined;
+    leftBorderStyle:   string;
+    rightBorderStyle:  string;
+    bottomBorderStyle: string;
+    isSelected?:       boolean;
+    onDoubleClick?:    () => void;
+    isClickable?:      boolean;
 };
 
-const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = (
-  { tooltipText, status, leftBorderStyle, rightBorderStyle, bottomBorderStyle = 'none' }
-) => {
-  const [open, setOpen] = React.useState(false);
-  const isTooltipTextEmpty = tooltipText && tooltipText.trim().length > 0;
+const MultiLineTooltipTableCell: React.FC<TooltipTableCellProps> = ({
+    status,
+    leftBorderStyle,
+    rightBorderStyle,
+    bottomBorderStyle = 'none',
+    isSelected = false,
+    onDoubleClick,
+    isClickable = false,
+}) => {
+    const statusText = status != null ? status.displayName : '-';
 
-  const handleTooltipClose = () => {
-    setOpen(false);
-  };
-
-  const handleTooltipOpen = () => {
-    setOpen(true);
-  };
-
-  const statusText = (status != null) ? status['displayName'] : '-';
-
-  return (
-    <TableCell
-      style={{
-        color: (status != null) ? status['color'] : '',
-        fontStyle: (tooltipText === '') ? 'normal' : 'oblique',
-        borderLeft: leftBorderStyle,
-        borderRight: rightBorderStyle,
-        borderBottom: bottomBorderStyle,
-      }}
-      onClick={isTooltipTextEmpty ? handleTooltipOpen : undefined}
-    >
-      {isTooltipTextEmpty ? (
-        <Tooltip
-          title={
-            <div
-              style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
-              {tooltipText}
-            </div>
-          }
-          onClose={handleTooltipClose}
-          open={open}
-          arrow
+    return (
+        <TableCell
+            onDoubleClick={onDoubleClick}
+            style={{
+                color:           status != null ? status.color : '',
+                borderLeft:      leftBorderStyle,
+                borderRight:     rightBorderStyle,
+                borderBottom:    bottomBorderStyle,
+                whiteSpace:      'nowrap',
+                backgroundColor: isSelected ? 'transparent' : undefined, // 'rgba(0, 183, 255, 0.18)',
+                cursor:          isClickable ? 'pointer' : 'default',
+            }}
         >
-          <span>{statusText}</span>
-        </Tooltip>
-      ) : (
-        <span>{statusText}</span>
-      )}
-    </TableCell >
-  );
+            <span>{statusText}</span>
+        </TableCell>
+    );
+};
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Table Head
+   ────────────────────────────────────────────────────────────────────────── */
+const getOrderKey = (colId: string): string | null => {
+    if (colId === 'group_1_name') return 'group1_only';
+    if (colId === 'group_2_name') return 'group2_only';
+    if (colId === 'group_3_name') return 'group3_only';
+    if (colId === 'relation')     return 'relation_only';
+
+    if (colId.endsWith('_work_status'))     return colId.replace('_work_status', '_work');
+    if (colId.endsWith('_approval_status')) return colId.replace('_approval_status', '_appr');
+    if (colId.endsWith('_submitted_at'))    return colId.replace('_submitted_at', '_submitted');
+    if (colId.endsWith('_take'))            return colId;
+
+    return null;
 };
 
 const RecordTableHead: React.FC<RecordTableHeadProps> = ({
-  columns,
-  phaseComponents,
-  latestComponents,
-  columnsState,
-
-}) => {
-  return (
+    columns,
+    columnsState,
+    sortKey,
+    sortDir,
+    onSortChange,
+}) => (
     <TableHead>
-      <TableRow>
-        {columns.map((column) => {
-          const borderLineStyle = column.colors ? `solid 3px ${column.colors.lineColor}` : 'none';
-          const borderTopStyle = column.colors ? borderLineStyle : 'none';
-          const borderLeftStyle = (column.id.indexOf('work_status') !== -1) ? borderLineStyle : 'none';
-          const borderRightStyle = (column.id.indexOf('approval_status') !== -1) ? borderLineStyle : 'none';
-          
-          // For submitted_at columns that need component expansion
-          if (column.id.indexOf('_submitted_at') !== -1) {
-            const phase = column.id.replace('_submitted_at', '');
-            const components = phaseComponents[phase] || [];
-            
-            // If there are components, render one cell per component
-            if (components.length > 0) {
-              return components.map((component) => {
-                const id = component.toLowerCase() + '_submitted_at';
-                const label = `${component} SUBMITTED`;
+        <TableRow>
+            {columns.map((col) => {
+                const lineColor   = col.colors && col.colors.lineColor;
+                const borderLine  = lineColor ? `solid 3px ${lineColor}` : 'none';
+                const isAppr      = col.id.endsWith('_approval_status');
+                const wantsLeftBar = isAppr || col.id === 'cam_data_type';   // ← NEW
+                const orderKey    = getOrderKey(col.id);
+                const isActive    = orderKey === sortKey;
+
+                const handleSortClick = () => {
+                    if (orderKey) {
+                        onSortChange(orderKey);
+                    }
+                };
+
                 return (
-                  <TableCell
-                    key={id}
-                    style={{
-                      backgroundColor: column.colors ? column.colors.backgroundColor : 'none',
-                      borderTop: borderTopStyle,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {label}
-                  </TableCell>
+                    <TableCell
+                        key={col.id}
+                        onClick={handleSortClick}
+                        style={{
+                            backgroundColor: (col.colors && col.colors.backgroundColor) || undefined,
+                            borderTop:  lineColor ? borderLine : 'none',
+                            borderLeft: wantsLeftBar && lineColor ? borderLine : 'none',
+                            borderRight: col.id === 'cam_data_type' && lineColor ? borderLine : 'none',
+                            whiteSpace: 'nowrap',
+                            cursor:     orderKey ? 'pointer' : 'default',
+                            fontWeight: isActive ? 'bold' : 'normal',
+                            userSelect: orderKey ? 'none' : 'auto',
+                        }}
+                        title={orderKey ? `Click to sort ${sortDir === 'asc' ? 'descending' : 'ascending'}` : ''}
+                     >
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 12, fontWeight: 500, textAlign: 'center' }}>
+                                {col.label}
+                            </span>
+                            {isActive && (
+                                <span style={{
+                                    fontSize: 11,
+                                    color: '#fcfeff',
+                                    lineHeight: '11px',
+                                    fontWeight: 'bold',
+                                    marginTop: 2,
+                                }}>
+                                    {sortDir === 'asc' ? '▲' : '▼'}
+                                </span>
+                            )}
+                        </div>
+                    </TableCell>
                 );
-              });
-            }
-          }
-          
-          // Regular columns (including submitted_at with no components)
-          return (
-            <TableCell
-              key={column.id}
-              style={{
-                backgroundColor: column.colors ? column.colors.backgroundColor : 'none',
-                borderTop: borderTopStyle,
-                borderLeft: borderLeftStyle,
-                borderRight: borderRightStyle,
-                whiteSpace: 'nowrap',
-                width: ['thumbnail', 'group_1_name', 'group_2_name', 'group_3_name'].includes(column.id) ? '120px' : 'auto',
-              }}
-            >
-              {column.label}
-            </TableCell>
-          );
-        })}
-      </TableRow>
+            })}
+
+        </TableRow>
     </TableHead>
-  );
+);
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Shot Row
+   ────────────────────────────────────────────────────────────────────────── */
+type ShotRowProps = {
+    shot:             ShotPivot;
+    thumbnails:       { [key: string]: string };
+    dateTimeFormat:   Intl.DateTimeFormat;
+    isLastRow:        boolean;
+    columnsState:     { [key: string]: boolean };
+    phaseComponents:  { [key: string]: string[] };
+    latestComponents: { [key: string]: any[] };
+    camDataTypes?:    { [shotKey: string]: string };   // ← NEW
+    selectedCellIds?: Set<string>;
+    onCellSelect?:    (cellId: string) => void;
+    selectedRowId?:   string | null;
+    onRowSelect?:     (rowId: string | null) => void;
 };
 
 const ShotRow: React.FC<ShotRowProps> = ({
-  shot,
-  reviewInfos,
-  thumbnails,
-  phaseComponents,
-  latestComponents,
-  dateTimeFormat,
-  isLastRow,
-  columnsState,
+    shot,
+    thumbnails,
+    dateTimeFormat,
+    isLastRow,
+    columnsState,
+    phaseComponents,
+    latestComponents,
+    camDataTypes,                                       // ← NEW
+    selectedCellIds,
+    onCellSelect,
+    selectedRowId,
+    onRowSelect,
 }) => {
+    const thumbKey = `${shot.group_1}-${shot.group_2}-${shot.group_3}-${shot.relation}`;
+    const compKey  = `${shot.group_1}-${shot.group_2}-${shot.group_3}-${shot.relation}`;
+    const rowId = `${shot.root}|${shot.project}|${shot.group_1}|${shot.group_2}|${shot.group_3}|${shot.relation}|${shot.component}`;
+    const isRowSelected = selectedRowId === rowId;
 
-  const shotPath = shot.groups.join('/');
+    const getCellSel = (colId: string) => {
+        const cellId         = `${rowId}::${colId}`;
+        const isCellSelected = selectedCellIds ? selectedCellIds.has(cellId) : false;
+        const onDblCellClick = onCellSelect ? () => onCellSelect(cellId) : undefined;
+        const selBg          = isCellSelected ? 'transparent' : undefined; // 'rgba(0, 183, 255, 0.18)';
+        return { cellId, isCellSelected, onDblCellClick, selBg };
+    };
 
-  return (
-    <TableRow>
-      {/* Thumbnail */}
-      <TableCell>
-        {thumbnails[`${shotPath}-${shot.relation}`] ? (
-          <img
-            src={thumbnails[`${shotPath}-${shot.relation}`]}
-            alt={`${shotPath} thumbnail`}
-          />
-        ) : (
-            "No Thumbnail"
-        )}
-      </TableCell>
-
-      {/* Name Columns */}
-      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[0]}</TableCell>
-      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[1]}</TableCell>
-      <TableCell style={{ whiteSpace: 'nowrap', width: 'auto' }}>{shot.groups[2]}</TableCell>
-
-      {/* Phase Columns */}
-      {Object.entries(SHOT_PHASES).map(([phase, { lineColor }]) => {
-        const workColumn      = `${phase}_work_status`;
-        const approvalColumn  = `${phase}_approval_status`;
-        const submittedColumn = `${phase}_submitted_at`;
-
-        if (
-          !columnsState[workColumn] &&
-          !columnsState[approvalColumn] &&
-          !columnsState[submittedColumn]
-        ) {
-          return null;
+    const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleRowClick = () => {
+        if (!onRowSelect) return;
+        if (clickTimer.current) clearTimeout(clickTimer.current);
+        clickTimer.current = setTimeout(() => {
+            onRowSelect(rowId);
+            clickTimer.current = null;
+        }, 250);
+    };
+    const handleRowDoubleClick = () => {
+        if (clickTimer.current) {
+            clearTimeout(clickTimer.current);
+            clickTimer.current = null;
         }
+    };
 
-        const reviewInfoName =
-          `${shot.groups[0]}-${shot.groups[1]}-${shot.groups[2]}-${phase}`;
+    const orderedPhases = getOrderedPhases(phaseComponents);
 
-        const info = reviewInfos[reviewInfoName];
+    return (
+        <TableRow
+            hover
+            onClick={handleRowClick}
+            onDoubleClick={handleRowDoubleClick}
+            style={{
+                backgroundColor: isRowSelected ? 'rgb(12, 132, 245)' : undefined,
+                cursor:          onRowSelect ? 'pointer' : 'default',
+            }}
+        >
+            {/* Thumbnail */}
+            {(() => {
+                const sel = getCellSel('thumbnail');
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{
+                            backgroundColor: sel.selBg,
+                            cursor:          onCellSelect ? 'pointer' : 'default',
+                        }}
+                    >
+                        {thumbnails[thumbKey] ? (
+                            <img
+                                src={thumbnails[thumbKey]}
+                                alt=""
+                                style={{ width: 100, height: 'auto' }}
+                            />
+                        ) : (
+                            <span style={{ fontSize: 12}}>No Thumbnail</span>
+                        )}
+                    </TableCell>
+                );
+            })()}
 
-        const workStatus =
-          info && WORK_STATUS[info.work_status];
+            {/* Name columns */}
+            {(() => {
+                const sel = getCellSel('group_1_name');
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{ backgroundColor: sel.selBg, cursor: onCellSelect ? 'pointer' : 'default' }}
+                    >
+                        {shot.group_1}
+                    </TableCell>
+                );
+            })()}
+            {(() => {
+                const sel = getCellSel('group_2_name');
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{ backgroundColor: sel.selBg, cursor: onCellSelect ? 'pointer' : 'default' }}
+                    >
+                        {shot.group_2}
+                    </TableCell>
+                );
+            })()}
+            {(() => {
+                const sel = getCellSel('group_3_name');
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{ backgroundColor: sel.selBg, cursor: onCellSelect ? 'pointer' : 'default' }}
+                    >
+                        {shot.group_3}
+                    </TableCell>
+                );
+            })()}
 
-        const approvalStatus =
-          info && APPROVAL_STATUS[info.approval_status];
+            {/* Phase columns (dynamic) */}
+            {orderedPhases.map((phase, phaseIdx) => {
+                const colors      = getPhaseColors(phase);
+                const lineColor   = colors.lineColor;
+                const borderLine  = `solid 3px ${lineColor}`;
+                const bottomLine  = isLastRow ? borderLine : 'none';
+                const isLastPhase = phaseIdx === orderedPhases.length - 1;
 
-        const tooltipText =
-          info && info.review_comments
-            .filter(reviewComment => reviewComment.text !== '')
-            .map(reviewComment =>
-              `${reviewComment.language}:\n${reviewComment.text}`)
-            .join('\n') || '';
+                const phaseData =
+                    (shot.phases && shot.phases[phase]) ||
+                    (shot.phases && shot.phases[phase.toLowerCase()]);
 
-        const borderLineStyle = `solid 3px ${lineColor}`;
+                const colBase      = phase.toLowerCase();
+                const workCol      = `${colBase}_work_status`;
+                const apprCol      = `${colBase}_approval_status`;
+                const takeCol      = `${colBase}_take`;
+                const submittedCol = `${colBase}_submitted_at`;
 
-        const shotsKey =
-          `${shot.groups[0]}-${shot.groups[1]}-${shot.groups[2]}-${shot.relation}`;
+                const workStatus =
+                    phaseData && phaseData.work_status && phaseData.work_status !== '-'
+                        ? WORK_STATUS[phaseData.work_status]
+                        : undefined;
 
-        const latestDocuments =
-          latestComponents[shotsKey] || [];
+                const approvalStatus =
+                    phaseData && phaseData.approval_status && phaseData.approval_status !== '-'
+                        ? APPROVAL_STATUS[phaseData.approval_status]
+                        : undefined;
 
-        return (
-          <React.Fragment key={phase}>
-            {/* Work Status */}
-            {columnsState[workColumn] && (
-              <MultiLineTooltipTableCell
-                tooltipText={tooltipText}
-                status={workStatus}
-                leftBorderStyle={borderLineStyle}
-                rightBorderStyle={'none'}
-                bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-              />
-            )}
-
-            {/* Approval Status */}
-            {columnsState[approvalColumn] && (
-              <MultiLineTooltipTableCell
-                tooltipText={tooltipText}
-                status={approvalStatus}
-                leftBorderStyle={'none'}
-                rightBorderStyle={borderLineStyle}
-                bottomBorderStyle={isLastRow ? borderLineStyle : 'none'}
-              />
-            )}
-
-            {/* Submitted Columns */}
-            {columnsState[submittedColumn] &&
-              (phase in phaseComponents
-                ? phaseComponents[phase]
-                : []
-              ).map(component => {
-
-                const latestDocument =
-                  latestDocuments.find(
-                    doc => doc.component === component
-                  );
+                const componentIds  = getPhaseComponentIds(phase, phaseComponents);
+                const hasComponents = componentIds.length > 0;
 
                 return (
-                  <TableCell key={`${phase}-${component}`}>
-                    {latestDocument
-                      ? dateTimeFormat.format(
-                          new Date(
-                            latestDocument.latest_document.submitted_at_utc
-                          )
-                        )
-                      : '-'}
-                  </TableCell>
+                    <React.Fragment key={phase}>
+                        {columnsState[apprCol] !== false && (() => {
+                            const sel = getCellSel(apprCol);
+                            return (
+                                <MultiLineTooltipTableCell
+                                    status={approvalStatus}
+                                    leftBorderStyle={borderLine}
+                                    rightBorderStyle={'none'}
+                                    bottomBorderStyle={bottomLine}
+                                    isSelected={sel.isCellSelected}
+                                    onDoubleClick={sel.onDblCellClick}
+                                    isClickable={!!onCellSelect}
+                                />
+                            );
+                        })()}
+
+                        {columnsState[workCol] !== false && (() => {
+                            const sel = getCellSel(workCol);
+                            return (
+                                <MultiLineTooltipTableCell
+                                    status={workStatus}
+                                    leftBorderStyle={'none'}
+                                    rightBorderStyle={'none'}
+                                    bottomBorderStyle={bottomLine}
+                                    isSelected={sel.isCellSelected}
+                                    onDoubleClick={sel.onDblCellClick}
+                                    isClickable={!!onCellSelect}
+                                />
+                            );
+                        })()}
+
+                        {columnsState[takeCol] !== false && (() => {
+                            const sel = getCellSel(takeCol);
+                            return (
+                                <TableCell
+                                    onDoubleClick={sel.onDblCellClick}
+                                    style={{
+                                        whiteSpace:      'nowrap',
+                                        borderBottom:    bottomLine,
+                                        backgroundColor: sel.selBg,
+                                        cursor:          onCellSelect ? 'pointer' : 'default',
+                                    }}
+                                >
+                                    {(phaseData && phaseData.take) || '–'}
+                                </TableCell>
+                            );
+                        })()}
+
+                        {!hasComponents && columnsState[submittedCol] !== false && (() => {
+                            const sel = getCellSel(submittedCol);
+                            return (
+                                <TableCell
+                                    onDoubleClick={sel.onDblCellClick}
+                                    style={{
+                                        whiteSpace:      'nowrap',
+                                        borderBottom:    bottomLine,
+                                        borderRight:     isLastPhase ? borderLine : 'none',
+                                        backgroundColor: sel.selBg,
+                                        cursor:          onCellSelect ? 'pointer' : 'default',
+                                    }}
+                                >
+                                    {phaseData && phaseData.submitted_at_utc
+                                        ? dateTimeFormat.format(new Date(phaseData.submitted_at_utc))
+                                        : '–'}
+                                </TableCell>
+                            );
+                        })()}
+
+                        {componentIds.map((componentId, compIdx) => {
+                            if (columnsState[componentId] === false) return null;
+
+                            const componentList =
+                                (latestComponents && latestComponents[compKey]) || [];
+
+                            const item =
+                                componentList.find(
+                                    (x: any) => x.component === componentId,
+                                ) ||
+                                componentList.find(
+                                    (x: any) =>
+                                        x.component &&
+                                        x.component.toLowerCase() ===
+                                            componentId.toLowerCase(),
+                                );
+
+                            const submittedAt =
+                                item &&
+                                item.latest_document &&
+                                item.latest_document.submitted_at_utc;
+
+                            const text = submittedAt
+                                ? dateTimeFormat.format(new Date(submittedAt))
+                                : '–';
+
+                            const isLastComponentOfLastPhase =
+                                isLastPhase && compIdx === componentIds.length - 1;
+
+                            const sel = getCellSel(componentId);
+                            return (
+                                <TableCell
+                                    key={componentId}
+                                    onDoubleClick={sel.onDblCellClick}
+                                    style={{
+                                        whiteSpace:      'nowrap',
+                                        borderBottom:    bottomLine,
+                                        borderRight:
+                                            isLastComponentOfLastPhase ? borderLine : 'none',
+                                        backgroundColor: sel.selBg,
+                                        cursor:          onCellSelect ? 'pointer' : 'default',
+                                    }}
+                                >
+                                    {text}
+                                </TableCell>
+                            );
+                        })}
+                    </React.Fragment>
                 );
-              })}
-          </React.Fragment>
-        );
-      })}
+            })}
 
-      {/* Relation */}
-      {columnsState["relation"] && (
-        <TableCell>{shot.relation}</TableCell>
-      )}
+            {/* ← NEW: CamDataType — sits to the left of Relation */}
+            {columnsState['cam_data_type'] !== false && (() => {
+                const sel = getCellSel('cam_data_type');
+                const shotKey = `${shot.group_1}/${shot.group_2}/${shot.group_3}/${shot.relation}`;
+                const value = camDataTypes ? camDataTypes[shotKey] : undefined;
+                // const bottomLine = isLastRow ? 'solid 3px #2DD4BF' : 'none';
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{
+                            whiteSpace:      'nowrap',
+                            // borderLeft:      'solid 3px #2DD4BF',
+                            // borderRight:     'solid 3px #2DD4BF',
+                            // borderBottom:    bottomLine,
+                            // backgroundColor: sel.selBg,
+                            cursor:          onCellSelect ? 'pointer' : 'default',
+                        }}
+                    >
+                        {value || '–'}
+                    </TableCell>
+                );
+            })()}
 
-    </TableRow>
-  );
+            {/* Relation */}
+            {columnsState['relation'] !== false && (() => {
+                const sel = getCellSel('relation');
+                return (
+                    <TableCell
+                        onDoubleClick={sel.onDblCellClick}
+                        style={{ backgroundColor: sel.selBg, cursor: onCellSelect ? 'pointer' : 'default' }}
+                    >
+                        {shot.relation}
+                    </TableCell>
+                );
+            })()}
+        </TableRow>
+    );
 };
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Main Table
+   ────────────────────────────────────────────────────────────────────────── */
 const ShotsDataTable: React.FC<ShotsDataTableProps> = ({
-  project,
-  shots,
-  phaseComponents,
-  latestComponents,
-  tableFooter,
-  dateTimeFormat,
-  columnsState,
+    project,
+    shots,
+    tableFooter,
+    dateTimeFormat,
+    columnsState,
+    sortKey,
+    sortDir,
+    onSortChange,
+    phaseComponents,
+    camDataTypes,                                       // ← NEW
+    selectedCellIds,
+    onCellSelect,
+    selectedRowId,
+    onRowSelect,
 }) => {
-  if (project == null) {
-    return null;
-  }
-  const { reviewInfos } = useFetchShotReviewInfos(project, shots);
-  const { thumbnails }  = useFetchShotThumbnails(project, shots);
-  const visibleColumns  = columns.filter(column => 
-    column.fixed || columnsState[column.id] !== false
-  );
+    if (project == null) return null;
 
-  // Debug logging
-  useEffect(() => {
-    if (shots.length > 0 && Object.keys(reviewInfos).length > 0) {
-      const allApprovalStatuses = new Set();
-      const allWorkStatuses = new Set();
-      
-      Object.values(reviewInfos).forEach(info => {
-        if (info && info.approval_status) {
-          allApprovalStatuses.add(info.approval_status);
-        }
-        if (info && info.work_status) {
-          allWorkStatuses.add(info.work_status);
-        }
-      });
-      
-      // console.log('📊 Available approval statuses:', Array.from(allApprovalStatuses));
-      // console.log('📊 Available work statuses:', Array.from(allWorkStatuses));
-    }
-  }, [shots, reviewInfos]);
+    const shotsForThumbnail = useMemo(() => shots.map(s => ({
+        groups:   [s.group_1, s.group_2, s.group_3],
+        relation: s.relation,
+    })), [JSON.stringify(shots)]);
 
-  return (
-    <Table 
-      stickyHeader
-      style={{
-        tableLayout: 'fixed',
-        width: 'auto',
-      }}
-    >
-      <RecordTableHead
-        key='shot-data-table-head'
-        columns={visibleColumns}
-        phaseComponents={phaseComponents}
-        latestComponents={latestComponents}
-        columnsState={columnsState}
-      />
-      <TableBody>
-        {shots.map((shot, index) => (
-          <ShotRow
-            key={`${shot.groups.join('/')}-${shot.relation}-${index}`}
-            shot={shot}
-            reviewInfos={reviewInfos}
-            thumbnails={thumbnails}
-            phaseComponents={phaseComponents}
-            latestComponents={latestComponents}
-            dateTimeFormat={dateTimeFormat}
-            isLastRow={(index === shots.length - 1)}
-            columnsState={columnsState}
-          />
-        ))}
-      </TableBody>
-      {tableFooter || null}
-    </Table>
-  );
+    const { thumbnails }       = useFetchShotThumbnails(project, shotsForThumbnail);
+    const { latestComponents } = useFetchLatestShotComponents(
+        project, shotsForThumbnail, phaseComponents,
+    );
+
+    const allColumns     = buildColumns(phaseComponents);
+    const visibleColumns = allColumns.filter(col =>
+        col.fixed || columnsState[col.id] !== false,
+    );
+
+    return (
+        <>
+        <Table stickyHeader style={{ tableLayout: 'fixed', width: 'auto' }}>
+            <RecordTableHead
+                columns={visibleColumns}
+                phaseComponents={phaseComponents}
+                latestComponents={latestComponents}
+                columnsState={columnsState}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSortChange={onSortChange}
+            />
+            <TableBody>
+                {shots.map((shot, index) => (
+                    <ShotRow
+                        key={`${shot.group_1}-${shot.group_2}-${shot.group_3}-${shot.relation}-${index}`}
+                        shot={shot}
+                        thumbnails={thumbnails}
+                        dateTimeFormat={dateTimeFormat}
+                        isLastRow={index === shots.length - 1}
+                        columnsState={columnsState}
+                        phaseComponents={phaseComponents}
+                        latestComponents={latestComponents}
+                        camDataTypes={camDataTypes}     // ← NEW
+                        selectedCellIds={selectedCellIds}
+                        onCellSelect={onCellSelect}
+                        selectedRowId={selectedRowId}
+                        onRowSelect={onRowSelect}
+                    />
+                ))}
+            </TableBody>
+        </Table>
+        {tableFooter}
+        </>
+    );
 };
 
 export default ShotsDataTable;
